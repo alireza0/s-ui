@@ -76,7 +76,7 @@ confirm() {
 }
 
 confirm_restart() {
-    confirm "Restart the panel, Attention: Restarting the panel will also restart xray" "y"
+    confirm "Restart the panel, Attention: Restarting the panel will also restart s-ui" "y"
     if [[ $? == 0 ]]; then
         restart
     else
@@ -90,7 +90,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/main/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -109,7 +109,7 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/main/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "Update is complete, Panel has automatically restarted "
         exit 0
@@ -117,7 +117,7 @@ update() {
 }
 
 custom_version() {
-    echo "Enter the panel version (like 1.6.0):"
+    echo "Enter the panel version (like 0.0.1):"
     read panel_version
 
     if [ -z "$panel_version" ]; then
@@ -125,7 +125,7 @@ custom_version() {
     exit 1
     fi
 
-    download_link="https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh"
+    download_link="https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh"
 
     # Use the entered panel version in the download link
     install_command="bash <(curl -Ls $download_link) $panel_version"
@@ -135,23 +135,25 @@ custom_version() {
 }
 
 uninstall() {
-    confirm "Are you sure you want to uninstall the panel? xray will also uninstalled!" "n"
+    confirm "Are you sure you want to uninstall the panel? singbox will also uninstalled!" "n"
     if [[ $? != 0 ]]; then
         if [[ $# == 0 ]]; then
             show_menu
         fi
         return 0
     fi
-    systemctl stop x-ui
-    systemctl disable x-ui
-    rm /etc/systemd/system/x-ui.service -f
+    systemctl stop s-ui
+    systemctl disable s-ui
+    systemctl stop sing-box
+    systemctl disable sing-box
+    rm /etc/systemd/system/s-ui.service -f
     systemctl daemon-reload
     systemctl reset-failed
-    rm /etc/x-ui/ -rf
-    rm /usr/local/x-ui/ -rf
+    rm /etc/s-ui/ -rf
+    rm /usr/local/s-ui/ -rf
 
     echo ""
-    echo -e "Uninstalled Successfully，If you want to remove this script，then after exiting the script run ${green}rm /usr/bin/x-ui -f${plain} to delete it."
+    echo -e "Uninstalled Successfully，If you want to remove this script，then after exiting the script run ${green}rm /usr/local/s-ui -f${plain} to delete it."
     echo ""
 
     if [[ $# == 0 ]]; then
