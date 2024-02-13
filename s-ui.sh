@@ -161,64 +161,18 @@ uninstall() {
     fi
 }
 
-reset_user() {
-    confirm "Reset your username and password to admin?" "n"
-    if [[ $? != 0 ]]; then
-        if [[ $# == 0 ]]; then
-            show_menu
-        fi
-        return 0
-    fi
-    /usr/local/x-ui/x-ui setting -username admin -password admin
-    echo -e "Username and password have been reset to ${green}admin${plain}，Please restart the panel now."
-    confirm_restart
-}
-
-reset_config() {
-    confirm "Are you sure you want to reset all panel settings，Account data will not be lost，Username and password will not change" "n"
-    if [[ $? != 0 ]]; then
-        if [[ $# == 0 ]]; then
-            show_menu
-        fi
-        return 0
-    fi
-    /usr/local/x-ui/x-ui setting -reset
-    echo -e "All panel settings have been reset to default，Please restart the panel now，and use the default ${green}54321${plain} Port to Access the web Panel"
-    confirm_restart
-}
-
-check_config() {
-    info=$(/usr/local/x-ui/x-ui setting -show true)
-    if [[ $? != 0 ]]; then
-        LOGE "get current settings error,please check logs"
-        show_menu
-    fi
-    LOGI "${info}"
-}
-
-set_port() {
-    echo && echo -n -e "Enter port number[1-65535]: " && read port
-    if [[ -z "${port}" ]]; then
-        LOGD "Cancelled"
-        before_show_menu
-    else
-        /usr/local/x-ui/x-ui setting -port ${port}
-        echo -e "The port is set，Please restart the panel now，and use the new port ${green}${port}${plain} to access web panel"
-        confirm_restart
-    fi
-}
-
 start() {
     check_status
     if [[ $? == 0 ]]; then
         echo ""
         LOGI "Panel is running，No need to start again，If you need to restart, please select restart"
     else
-        systemctl start x-ui
+        systemctl start s-ui
+        systemctl start sing-box
         sleep 2
         check_status
         if [[ $? == 0 ]]; then
-            LOGI "x-ui Started Successfully"
+            LOGI "s-ui Started Successfully"
         else
             LOGE "panel Failed to start，Probably because it takes longer than two seconds to start，Please check the log information later"
         fi
@@ -235,11 +189,12 @@ stop() {
         echo ""
         LOGI "Panel stopped，No need to stop again!"
     else
-        systemctl stop x-ui
+        systemctl stop s-ui
+        systemctl stop sing-box
         sleep 2
         check_status
         if [[ $? == 1 ]]; then
-            LOGI "x-ui and xray stopped successfully"
+            LOGI "s-ui and sing-box stopped successfully"
         else
             LOGE "Panel stop failed，Probably because the stop time exceeds two seconds，Please check the log information later"
         fi
@@ -251,11 +206,12 @@ stop() {
 }
 
 restart() {
-    systemctl restart x-ui
+    systemctl restart s-ui
+    systemctl restart sing-box
     sleep 2
     check_status
     if [[ $? == 0 ]]; then
-        LOGI "x-ui and xray Restarted successfully"
+        LOGI "s-ui and sing-box Restarted successfully"
     else
         LOGE "Panel restart failed，Probably because it takes longer than two seconds to start，Please check the log information later"
     fi
@@ -265,18 +221,20 @@ restart() {
 }
 
 status() {
-    systemctl status x-ui -l
+    systemctl status s-ui -l
+    systemctl status sing-box -l
     if [[ $# == 0 ]]; then
         before_show_menu
     fi
 }
 
 enable() {
-    systemctl enable x-ui
+    systemctl enable s-ui
+    systemctl enable sing-box
     if [[ $? == 0 ]]; then
-        LOGI "x-ui Set to boot automatically on startup successfully"
+        LOGI "s-ui & sing-box Set to boot automatically on startup successfully"
     else
-        LOGE "x-ui Failed to set Autostart"
+        LOGE "s-ui & sing-box Failed to set Autostart"
     fi
 
     if [[ $# == 0 ]]; then
@@ -285,11 +243,12 @@ enable() {
 }
 
 disable() {
-    systemctl disable x-ui
+    systemctl disable s-ui
+    systemctl disable sing-box
     if [[ $? == 0 ]]; then
-        LOGI "x-ui Autostart Cancelled successfully"
+        LOGI "s-ui & sing-box Autostart Cancelled successfully"
     else
-        LOGE "x-ui Failed to cancel autostart"
+        LOGE "s-ui & sing-box Failed to cancel autostart"
     fi
 
     if [[ $# == 0 ]]; then
@@ -298,37 +257,30 @@ disable() {
 }
 
 show_log() {
-    journalctl -u x-ui.service -e --no-pager -f
+    journalctl -u s-ui.service -e --no-pager -f
     if [[ $# == 0 ]]; then
         before_show_menu
     fi
 }
 
-install_bbr() {
-    # temporary workaround for installing bbr
-    bash <(curl -L -s https://raw.githubusercontent.com/teddysun/across/master/bbr.sh)
-    echo ""
-    before_show_menu
-}
-
 update_shell() {
-    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/alireza0/x-ui/raw/main/x-ui.sh
+    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/alireza0/s-ui/raw/main/s-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "Failed to download script，Please check whether the machine can connect Github"
         before_show_menu
     else
-        chmod +x /usr/bin/x-ui
+        chmod +x /usr/bin/s-ui
         LOGI "Upgrade script succeeded，Please rerun the script" && exit 0
     fi
 }
 
 # 0: running, 1: not running, 2: not installed
 check_status() {
-    if [[ ! -f /etc/systemd/system/x-ui.service ]]; then
+    if [[ ! -f /etc/systemd/system/s-ui.service ]]; then
         return 2
     fi
-    temp=$(systemctl status x-ui | grep Active | awk '{print $3}' | cut -d "(" -f2 | cut -d ")" -f1)
+    temp=$(systemctl status s-ui | grep Active | awk '{print $3}' | cut -d "(" -f2 | cut -d ")" -f1)
     if [[ x"${temp}" == x"running" ]]; then
         return 0
     else
@@ -337,7 +289,7 @@ check_status() {
 }
 
 check_enabled() {
-    temp=$(systemctl is-enabled x-ui)
+    temp=$(systemctl is-enabled s-ui)
     if [[ x"${temp}" == x"enabled" ]]; then
         return 0
     else
@@ -388,7 +340,7 @@ show_status() {
         echo -e "Panel state: ${red}Not Installed${plain}"
         ;;
     esac
-    show_xray_status
+    show_s-ui_status
 }
 
 show_enable_status() {
@@ -400,8 +352,8 @@ show_enable_status() {
     fi
 }
 
-check_xray_status() {
-    count=$(ps -ef | grep "xray-linux" | grep -v "grep" | wc -l)
+check_s-ui_status() {
+    count=$(ps -ef | grep "s-ui-linux" | grep -v "grep" | wc -l)
     if [[ count -ne 0 ]]; then
         return 0
     else
@@ -409,12 +361,12 @@ check_xray_status() {
     fi
 }
 
-show_xray_status() {
-    check_xray_status
+show_s-ui_status() {
+    check_s-ui_status
     if [[ $? == 0 ]]; then
-        echo -e "xray state: ${green}Running${plain}"
+        echo -e "s-ui state: ${green}Running${plain}"
     else
-        echo -e "xray state: ${red}Not Running${plain}"
+        echo -e "s-ui state: ${red}Not Running${plain}"
     fi
 }
 
@@ -627,95 +579,51 @@ ssl_cert_issue_CF() {
     fi
 }
 
-update_geo() {
-    cd /usr/local/x-ui/bin
-    echo -e "${green}\t1.${plain} Update Geofiles [Recommended choice] "
-    echo -e "${green}\t2.${plain} Download from optional jsDelivr CDN "
-    echo -e "${green}\t0.${plain} Back To Main Menu "
-    read -p "Select: " select
-
-    case "$select" in
-        0)
-            show_menu
-            ;;
-
-        1)
-            wget -N "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" && echo -e "${green}Success${plain}\n" || echo -e "${red}Failure${plain}\n"
-            wget -N "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" && echo -e "${green}Success${plain}\n" || echo -e "${red}Failure${plain}\n"
-            wget "https://github.com/chocolate4u/Iran-v2ray-rules/releases/latest/download/geoip.dat" -O /tmp/wget && mv /tmp/wget geoip_IR.dat && echo -e "${green}Success${plain}\n" || echo -e "${red}Failure${plain}\n"
-            wget "https://github.com/chocolate4u/Iran-v2ray-rules/releases/latest/download/geosite.dat" -O /tmp/wget && mv /tmp/wget geosite_IR.dat && echo -e "${green}Success${plain}\n" || echo -e "${red}Failure${plain}\n"
-            echo -e "${green}Files are updated.${plain}"
-            confirm_restart
-            ;;
-
-        2)
-            wget -N "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat" && echo -e "${green}Success${plain}\n" || echo -e "${red}Failure${plain}\n"
-            wget -N "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat" && echo -e "${green}Success${plain}\n" || echo -e "${red}Failure${plain}\n"
-            wget "https://cdn.jsdelivr.net/gh/chocolate4u/Iran-v2ray-rules@release/geoip.dat" -O /tmp/wget && mv /tmp/wget geoip_IR.dat && echo -e "${green}Success${plain}\n" || echo -e "${red}Failure${plain}\n"
-            wget "https://cdn.jsdelivr.net/gh/chocolate4u/Iran-v2ray-rules@release/geosite.dat" -O /tmp/wget && mv /tmp/wget geosite_IR.dat && echo -e "${green}Success${plain}\n" || echo -e "${red}Failure${plain}\n"
-            echo -e "${green}Files are updated.${plain}"
-            confirm_restart
-            ;;
-
-        *)
-            LOGE "Please enter a correct number [0-2]\n"
-            update_geo
-            ;;
-    esac
-}
-
 show_usage() {
-    echo "X-UI Control Menu Usage"
+    echo "S-UI Control Menu Usage"
     echo "------------------------------------------"
     echo "SUBCOMMANDS:" 
-    echo "x-ui              - Admin Management Script"
-    echo "x-ui start        - Start"
-    echo "x-ui stop         - Stop"
-    echo "x-ui restart      - Restart"
-    echo "x-ui status       - Current Status"
-    echo "x-ui enable       - Enable Autostart on OS Startup"
-    echo "x-ui disable      - Disable Autostart on OS Startup"
-    echo "x-ui log          - Check Logs"
-    echo "x-ui update       - Update"
-    echo "x-ui install      - Install"
-    echo "x-ui uninstall    - Uninstall"
-    echo "x-ui help         - Control Menu Usage"
+    echo "S-ui              - Admin Management Script"
+    echo "S-ui start        - Start"
+    echo "S-ui stop         - Stop"
+    echo "S-ui restart      - Restart"
+    echo "S-ui status       - Current Status"
+    echo "S-ui enable       - Enable Autostart on OS Startup"
+    echo "S-ui disable      - Disable Autostart on OS Startup"
+    echo "S-ui log          - Check Logs"
+    echo "S-ui update       - Update"
+    echo "S-ui install      - Install"
+    echo "S-ui uninstall    - Uninstall"
+    echo "S-ui help         - Control Menu Usage"
     echo "------------------------------------------"
 }
 
 show_menu() {
     echo -e "
-  ${green}X-UI Admin Management Script ${plain}
+  ${green}S-UI Admin Management Script ${plain}
 ————————————————
   ${green}0.${plain} Exit 
 ————————————————
   ${green}1.${plain} Install
   ${green}2.${plain} Update
-  ${green}3.${plain} Custom Version
-  ${green}4.${plain} Uninstall
+  ${green}3.${plain} Uninstall
 ————————————————
-  ${green}5.${plain} Reset Username and Password
-  ${green}6.${plain} Reset Panel Settings
-  ${green}7.${plain} Set Panel Port
-  ${green}8.${plain} View Panel Settings
+  ${green}4.${plain} Start
+  ${green}5.${plain} Stop
+  ${green}6.${plain} Restart
+  ${green}7.${plain} Check State
+  ${green}8.${plain} Check Logs
 ————————————————
-  ${green}9.${plain} Start
-  ${green}10.${plain} Stop
-  ${green}11.${plain} Restart
-  ${green}12.${plain} Check State
-  ${green}13.${plain} Check Logs
+  ${green}9.${plain} Enable Autostart
+  ${green}10.${plain} Disable Autostart
 ————————————————
-  ${green}14.${plain} Enable Autostart
-  ${green}15.${plain} Disable Autostart
-————————————————
-  ${green}16.${plain} A Key Installation BBR (latest kernel)
-  ${green}17.${plain} SSL Certificate Management
-  ${green}18.${plain} Cloudflare SSL Certificate
-  ${green}19.${plain} Update Geo Files
+  ${green}11.${plain} A Key Installation BBR (latest kernel)
+  ${green}12.${plain} SSL Certificate Management
+  ${green}13.${plain} Cloudflare SSL Certificate
 ————————————————
  "
     show_status
-    echo && read -p "Please enter your selection [0-19]: " num
+    echo && read -p "Please enter your selection [0-13]: " num
 
     case "${num}" in
     0)
@@ -728,58 +636,40 @@ show_menu() {
         check_install && update
         ;;
     3)
-        check_install && custom_version
-        ;;
-    4)
         check_install && uninstall
         ;;
-    5)
-        check_install && reset_user
-        ;;
-    6)
-        check_install && reset_config
-        ;;
-    7)
-        check_install && set_port
-        ;;
-    8)
-        check_install && check_config
-        ;;
-    9)
+    4)
         check_install && start
         ;;
-    10)
+    5)
         check_install && stop
         ;;
-    11)
+    6)
         check_install && restart
         ;;
-    12)
+    7)
         check_install && status
         ;;
-    13)
+    8)
         check_install && show_log
         ;;
-    14)
+    9)
         check_install && enable
         ;;
-    15)
+    10)
         check_install && disable
         ;;
-    16)
+    11)
         install_bbr
         ;;
-    17)
+    12)
         ssl_cert_issue_main
         ;;
-    18)
+    13)
         ssl_cert_issue_CF
         ;;
-    19)
-        update_geo
-        ;;
     *)
-        LOGE "Please enter the correct number [0-19]"
+        LOGE "Please enter the correct number [0-13]"
         ;;
     esac
 }
