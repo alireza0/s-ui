@@ -121,6 +121,7 @@ install_s-ui() {
     systemctl daemon-reload
     systemctl enable s-ui  --now
     systemctl enable sing-box --now
+    systemctl start s-ui
 
     echo -e "${green}s-ui v${last_version}${plain} installation finished, it is up and running now..."
     echo -e ""
