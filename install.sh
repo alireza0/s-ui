@@ -111,6 +111,7 @@ install_s-ui() {
     tar zxvf s-ui-linux-${arch}.tar.gz
     rm s-ui-linux-${arch}.tar.gz -f
     chmod +x s-ui/sui s-ui/bin/sing-box s-ui/bin/runSingbox.sh
+    chmod +x s-ui bin/s-ui-linux-$(arch)
     cp -rf s-ui /usr/local/
     cp -f s-ui/*.service /etc/systemd/system/
     wget --no-check-certificate -O /usr/bin/s-ui https://raw.githubusercontent.com/Shellgate/s-ui/main/s-ui.sh
