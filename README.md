@@ -26,6 +26,11 @@
 | Dark/Light Theme                       | :heavy_check_mark: |
 
 
+## Default Installation Informarion
+- Panel Port: 2095
+- Subscription Port: 2096
+- User/Passowrd: admin
+
 ## Install & Upgrade to Latest Version
 
 ```sh
