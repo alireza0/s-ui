@@ -113,6 +113,9 @@ install_s-ui() {
     chmod +x s-ui/sui s-ui/bin/sing-box s-ui/bin/runSingbox.sh
     cp -rf s-ui /usr/local/
     cp -f s-ui/*.service /etc/systemd/system/
+    wget --no-check-certificate -O /usr/bin/s-ui https://raw.githubusercontent.com/Shellgate/s-ui/main/s-ui.sh
+    chmod +x /usr/local/s-ui/s-ui.sh
+    chmod +x /usr/bin/s-ui
     rm -rf s-ui
 
     systemctl daemon-reload
