@@ -1,0 +1,90 @@
+name: Release S-UI
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [amd64, arm64, arm]
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.1
+
+      - name: Setup Go
+        uses: actions/setup-go@v5.0.0
+        with:
+          go-version: '1.21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Install dependencies for arm64 and arm
+        if: matrix.platform == 'arm64' || matrix.platform == 'arm'
+        run: |
+          sudo apt-get update
+          sudo apt install gcc-aarch64-linux-gnu
+          if [ "${{ matrix.platform }}" == "arm" ]; then
+            sudo apt install gcc-arm-linux-gnueabihf
+          fi
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+          mv frontend/dist backend/web/html
+
+      - name: Set evironments
+        run: |
+          export CGO_ENABLED=1
+          export GOOS=linux
+          export GOARCH=${{ matrix.platform }}
+          if [ "${{ matrix.platform }}" == "arm64" ]; then
+            export CC=aarch64-linux-gnu-gcc
+          elif [ "${{ matrix.platform }}" == "arm" ]; then
+            export CC=arm-linux-gnueabihf-gcc
+          fi
+
+      - name: Build sing-box
+        run: |
+          git clone -b v1.8.5 https://github.com/SagerNet/sing-box
+          cd sing-box
+          go build -tags with_v2ray_api,with_clash_api,with_grpc,with_quic,with_ech -o sing-box ./cmd/sing-box
+          cd ..
+
+      - name: Build s-ui
+        run: |
+          cd backend
+          go build -o ../sui main.go
+          cd ..
+          
+          mkdir s-ui
+          cp sui s-ui/
+          cp s-ui.service s-ui/
+          cp sing-box.service s-ui/
+          mkdir s-ui/bin
+          cp sing-box/sing-box s-ui/bin/
+          cp runSingbox.sh s-ui/bin/
+          
+      - name: Package
+        run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
+        
+      - name: Upload
+        uses: svenstaro/upload-release-action@2.7.0
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file: s-ui-linux-${{ matrix.platform }}.tar.gz
+          asset_name: s-ui-linux-${{ matrix.platform }}.tar.gz
+          prerelease: true
+          overwrite: true
