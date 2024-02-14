@@ -81,20 +81,20 @@ install_s-ui() {
     cd /tmp/
 
     if [ $# == 0 ]; then
-        last_version=$(curl -Ls "https://api.github.com/repos/alireza0/s-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+        last_version=$(curl -Ls "https://api.github.com/repos/Shellgate/s-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
         if [[ ! -n "$last_version" ]]; then
             echo -e "${red}Failed to fetch s-ui version, it maybe due to Github API restrictions, please try it later${plain}"
             exit 1
         fi
         echo -e "Got s-ui latest version: ${last_version}, beginning the installation..."
-        wget -N --no-check-certificate -O /tmp/s-ui-linux-${arch}.tar.gz https://github.com/alireza0/s-ui/releases/download/${last_version}/s-ui-linux-${arch}.tar.gz
+        wget -N --no-check-certificate -O /tmp/s-ui-linux-${arch}.tar.gz https://github.com/Shellgate/s-ui/releases/download/${last_version}/s-ui-linux-${arch}.tar.gz
         if [[ $? -ne 0 ]]; then
             echo -e "${red}Dowanloading s-ui failed, please be sure that your server can access Github ${plain}"
             exit 1
         fi
     else
         last_version=$1
-        url="https://github.com/alireza0/s-ui/releases/download/${last_version}/s-ui-linux-${arch}.tar.gz"
+        url="https://github.com/Shellgate/s-ui/releases/download/${last_version}/s-ui-linux-${arch}.tar.gz"
         echo -e "Begining to install s-ui v$1"
         wget -N --no-check-certificate -O /tmp/s-ui-linux-${arch}.tar.gz ${url}
         if [[ $? -ne 0 ]]; then
@@ -114,7 +114,7 @@ install_s-ui() {
     chmod +x s-ui bin/s-ui-linux-$(arch)
     cp -rf s-ui /usr/local/
     cp -f s-ui/*.service /etc/systemd/system/
-    wget --no-check-certificate -O /usr/bin/s-ui https://raw.githubusercontent.com/alireza0/s-ui/main/s-ui.sh
+    wget --no-check-certificate -O /usr/bin/s-ui https://raw.githubusercontent.com/Shellgate/s-ui/main/s-ui.sh
     chmod +x /usr/local/s-ui/s-ui.sh
     chmod +x /usr/bin/s-ui
     rm -rf s-ui
