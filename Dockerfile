@@ -43,5 +43,4 @@ COPY --from=backend-builder /app/sui /app/
 COPY --from=singbox-builder /app/sing-box/sing-box /app/bin/
 COPY runSingbox.sh /app/bin/
 COPY docker-entrypoint.sh /app/
-VOLUME [ "s-ui" ]
 CMD [ "./docker-entrypoint.sh" ]

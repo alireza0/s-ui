@@ -64,11 +64,30 @@ curl -fsSL https://get.docker.com | sh
 mkdir s-ui && cd s-ui
 docker run -itd \
     -p 2095:2095 -p 443:443 -p 80:80 \
-    -v $PWD/db/:/usr/local/s-ui/db/ \
+    -v $PWD/db/:/app/db/ \
     -v $PWD/cert/:/root/cert/ \
     --name s-ui --restart=unless-stopped \
     alireza7/s-ui:latest
 ```
+
+**or**
+> Use docker-compose
+
+paste the following into a file named `docker-compose.yml`
+
+```yaml
+version: "3.8"
+services:
+  s-ui:
+    image: alireza7/s-ui
+    container_name: s-ui
+    volumes:
+      - ./db:/app/db/
+      - ./cert/:/root/cert/
+    restart: unless-stopped
+    network_mode: host
+```
+then run `docker compose up -d` and you will be up and running 
 
 > Build your own image
 
