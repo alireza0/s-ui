@@ -45,6 +45,19 @@ bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.s
 bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh) 0.0.1
 ```
 
+## Uninstall S-UI
+
+```sh
+systemctl disable sing-box --now
+systemctl disable s-ui  --now
+
+rm -f /etc/systemd/system/s-ui.service
+rm -f /etc/systemd/system/sing-box.service
+systemctl daemon-reload
+
+rm -fr /usr/local/s-ui
+```
+
 ## Install using Docker
 
 <details>
