@@ -80,7 +80,7 @@ jobs:
         run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
         
       - name: Upload
-        uses: svenstaro/upload-release-action@2.7.0
+        uses: svenstaro/upload-release-action@2.9.0
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
