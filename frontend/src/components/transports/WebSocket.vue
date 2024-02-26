@@ -9,6 +9,15 @@
     </v-col>
     <v-col cols="12" sm="6" md="4">
       <v-text-field
+      :label="$t('transport.host')"
+      hide-details
+      v-model="host">
+      </v-text-field>
+    </v-col>
+  </v-row>
+  <v-row>
+    <v-col cols="12" sm="6" md="4">
+      <v-text-field
       label="Max Early Data"
       hide-details
       type="number"
@@ -42,10 +51,16 @@ export default {
       get() { return this.WS.max_early_data ? this.WS.max_early_data : '' },
       set(newValue:number) { this.$props.transport.max_early_data = newValue != 0 ? newValue : undefined }
     },
+    host: {
+      get() { return this.WS.headers?.Host ? this.WS.headers.Host : '' },
+      set(newValue:string) {
+        this.$props.transport.headers = newValue != "" ? { Host: newValue } : undefined
+      }
+    },
   },
   mounted() {
-    this.WS.early_data_header_name = 'Sec-WebSocket-Protocol'
-    this.WS.path = '/'
+    this.WS.early_data_header_name ??= 'Sec-WebSocket-Protocol'
+    this.WS.path ??= '/'
   }
 }
 </script>

@@ -25,7 +25,9 @@ export interface HTTP extends TransportBasics {
 
 export interface WebSocket extends TransportBasics {
   path: string
-  headers?: {}
+  headers?: {
+    Host: string
+  }
   max_early_data?: number
   early_data_header_name?: string
 }

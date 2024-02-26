@@ -150,6 +150,7 @@ export namespace LinkUtil {
       case TrspTypes.WebSocket:
         const tw = <WebSocket>t
         params.path = tw.path?? null
+        params.host = tw.headers?.Host?? null
         break
       case TrspTypes.gRPC:
         const tg = <gRPC>t
