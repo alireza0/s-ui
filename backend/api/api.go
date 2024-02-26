@@ -27,7 +27,8 @@ func NewAPIHandler(g *gin.RouterGroup) {
 
 func (a *APIHandler) initRouter(g *gin.RouterGroup) {
 	g.Use(func(c *gin.Context) {
-		if c.Request.URL.Path != "/api/login" && c.Request.URL.Path != "/api/logout" {
+		path := c.Request.URL.Path
+		if !strings.HasSuffix(path, "login") && !strings.HasSuffix(path, "logout") {
 			checkLogin(c)
 		}
 	})
@@ -62,7 +63,11 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		}
 
 		err = SetLoginUser(c, loginUser)
-		logger.Info("user ", loginUser, " login success")
+		if err == nil {
+			logger.Info("user ", loginUser, " login success")
+		} else {
+			logger.Warning("login failed: ", err)
+		}
 
 		jsonMsg(c, "", nil)
 	case "save":

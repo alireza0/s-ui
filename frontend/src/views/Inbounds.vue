@@ -53,7 +53,7 @@
               <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="Object.hasOwn(item,'users')">
                 <span v-for="u in findInbounsUsers(item)">{{ u }}<br /></span>
               </v-tooltip>
-              {{ Object.hasOwn(item,'users') ? item.users.length : '-' }}
+              {{ Array.isArray(item.users) ? item.users.length : '-' }}
             </v-col>
           </v-row>
           <v-row>

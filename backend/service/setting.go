@@ -21,6 +21,7 @@ var defaultValueMap = map[string]string{
 	"webSecret":     common.Random(32),
 	"webCertFile":   "",
 	"webKeyFile":    "",
+	"webPath":       "/app/",
 	"sessionMaxAge": "0",
 	"timeLocation":  "Asia/Tehran",
 	"subListen":     "",
@@ -158,6 +159,20 @@ func (s *SettingService) GetKeyFile() (string, error) {
 	return s.getString("webKeyFile")
 }
 
+func (s *SettingService) GetWebPath() (string, error) {
+	webPath, err := s.getString("webPath")
+	if err != nil {
+		return "", err
+	}
+	if !strings.HasPrefix(webPath, "/") {
+		webPath = "/" + webPath
+	}
+	if !strings.HasSuffix(webPath, "/") {
+		webPath += "/"
+	}
+	return webPath, nil
+}
+
 func (s *SettingService) GetSecret() ([]byte, error) {
 	secret, err := s.getString("webSecret")
 	if secret == defaultValueMap["webSecret"] {
@@ -275,6 +290,17 @@ func (s *SettingService) Save(tx *gorm.DB, changes []model.Changes) error {
 			err = s.fileExists(obj)
 			if err != nil {
 				return common.NewError(" -> ", obj, " is not exists")
+			}
+		}
+
+		// Correct Pathes start and ends with `/`
+		if key == "webPath" ||
+			key == "subPath" {
+			if !strings.HasPrefix(obj, "/") {
+				obj = "/" + obj
+			}
+			if !strings.HasSuffix(obj, "/") {
+				obj += "/"
 			}
 		}
 

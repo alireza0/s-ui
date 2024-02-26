@@ -15,7 +15,7 @@ const Data = defineStore('Data', {
   }),
   actions: {
     async loadData() {
-      const msg = await HttpUtils.get('/api/load', this.lastLoad >0 ? {lu: this.lastLoad} : {} )
+      const msg = await HttpUtils.get('api/load', this.lastLoad >0 ? {lu: this.lastLoad} : {} )
       if(msg.success) {
         this.lastLoad = Math.floor((new Date()).getTime()/1000)
 
@@ -36,7 +36,7 @@ const Data = defineStore('Data', {
         config: JSON.stringify(FindDiff.Config(this.config,this.oldData.config)),
         clients: JSON.stringify(FindDiff.Clients(this.clients,this.oldData.clients)),
       }
-      const msg = await HttpUtils.post('/api/save',diff)
+      const msg = await HttpUtils.post('api/save',diff)
       if(msg.success) {
         this.loadData()
       }
@@ -46,7 +46,7 @@ const Data = defineStore('Data', {
         config: JSON.stringify([{key: "inbounds", action: "del", index: index, obj: null}]),
         clients: JSON.stringify(FindDiff.Clients(this.clients,this.oldData.clients)),
       }
-      const msg = await HttpUtils.post('/api/save',diff)
+      const msg = await HttpUtils.post('api/save',diff)
       if(msg.success) {
         this.loadData()
       }
@@ -56,7 +56,7 @@ const Data = defineStore('Data', {
         config: JSON.stringify(FindDiff.Config(this.config,this.oldData.config)),
         clients:JSON.stringify([{key: "clients", action: "del", index: id, obj: null}]),
       }
-      const msg = await HttpUtils.post('/api/save',diff)
+      const msg = await HttpUtils.post('api/save',diff)
       if(msg.success) {
         this.loadData()
       }

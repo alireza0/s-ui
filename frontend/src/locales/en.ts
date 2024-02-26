@@ -86,6 +86,7 @@ export default {
     sub: "Subscription",
     addr: "Address",
     port: "Port",
+    webPath: "Base URI",
     domain: "Domain",
     sslKey: "SSL Key Path",
     sslCert: "SSL Certificate Path",

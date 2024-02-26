@@ -33,6 +33,9 @@
             <v-text-field v-model="webPort" :label="$t('setting.port')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
+            <v-text-field v-model="settings.webPath" :label="$t('setting.webPath')" hide-details></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
             <v-text-field v-model="settings.webDomain" :label="$t('setting.domain')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
@@ -143,6 +146,7 @@ const settings = ref({
 	webPort: "2095",
 	webCertFile: "",
 	webKeyFile: "",
+  webPath: "/app/",
 	sessionMaxAge: "0",
 	timeLocation: "Asia/Tehran",
   subListen: "",
@@ -166,7 +170,7 @@ const changeLocale = (l: any) => {
 
 const loadData = async () => {
   loading.value = true
-  const msg = await HttpUtils.get('/api/setting')
+  const msg = await HttpUtils.get('api/setting')
   loading.value = false
   if (msg.success) {
     settings.value = msg.obj
@@ -179,7 +183,7 @@ const saveChanges = async () => {
   const diff = {
     settings: JSON.stringify(FindDiff.Settings(settings.value,oldSettings.value)),
   }
-  const msg = await HttpUtils.post('/api/save', diff)
+  const msg = await HttpUtils.post('api/save', diff)
   if (msg.success) {
     loadData()
   }
@@ -190,17 +194,17 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 const restartApp = async () => {
   loading.value = true
-  const msg = await HttpUtils.post('/api/restartApp',{})
+  const msg = await HttpUtils.post('api/restartApp',{})
   if (msg.success) {
     const isTLS = settings.value.webCertFile !== "" || settings.value.webKeyFile !== ""
-    const url = buildURL(settings.value.webDomain,settings.value.webPort.toString(),isTLS)
+    const url = buildURL(settings.value.webDomain,settings.value.webPort.toString(),isTLS, settings.value.webPath)
     await sleep(3000)
     window.location.replace(url)
   }
   loading.value = false
 }
 
-const buildURL = (host: string, port: string, isTLS: boolean ) => {
+const buildURL = (host: string, port: string, isTLS: boolean, path: string) => {
   if (!host || host.length == 0) host = window.location.hostname
   if (!port || port.length == 0) port = window.location.port
 
@@ -212,7 +216,7 @@ const buildURL = (host: string, port: string, isTLS: boolean ) => {
       port = `:${port}`
   }
 
-  return `${protocol}//${host}${port}/settings`
+  return `${protocol}//${host}${port}${path}settings`
 }
 
 const subEncode = computed({
@@ -244,7 +248,6 @@ const subUpdates = computed({
   get: () => { return parseInt(settings.value.subUpdates) },
   set: (v:number) => { settings.value.subUpdates = v.toString() }
 })
-
 
 const stateChange = computed(() => {
   return !FindDiff.deepCompare(settings.value,oldSettings.value)

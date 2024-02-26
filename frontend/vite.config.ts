@@ -7,6 +7,7 @@ import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
+  base: '',
   plugins: [
     vue({
       template: { transformAssetUrls },
@@ -40,7 +41,7 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': {
+      '/app/api': {
         target: 'http://localhost:2095',
         changeOrigin: true,
       },

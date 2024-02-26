@@ -59,7 +59,7 @@ const menu = [
 ]
 
 const logout = async () => {
-  const response = await HttpUtil.get('/api/logout')
+  const response = await HttpUtil.get('api/logout')
   if(response.success){
     router.push('/login')
   }

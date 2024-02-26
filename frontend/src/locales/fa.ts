@@ -86,6 +86,7 @@ export default {
     sub: "سابسکریپشن",
     addr: "آدرس",
     port: "پورت",
+    webPath: "مسیر پایه",
     domain: "دامنه",
     sslKey: "مسیر فایل کلید",
     sslCert: "مسیر فایل گواهی",

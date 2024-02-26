@@ -184,7 +184,7 @@ const reloadItems = computed({
 
 const reloadData = async () => {
   const request = [...new Set(reloadItems.value.map(r => r.split('-')[1]))]
-  const data = await HttpUtils.get('/api/status',{ r: request.join(',')})
+  const data = await HttpUtils.get('api/status',{ r: request.join(',')})
   if (data.success) {
     tilesData.value = data.obj
   }
