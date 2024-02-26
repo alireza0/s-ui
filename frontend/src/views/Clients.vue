@@ -73,7 +73,7 @@
                   {{ $t('remained') }}: {{ HumanReadable.sizeFormat(item.volume - (item.up + item.down)) }}
                 </template>
               </v-tooltip>
-              {{ item.volume>0 ? HumanReadable.sizeFormat(item.up + item.down) : $t('unlimited') }}
+              {{ HumanReadable.sizeFormat(item.up + item.down) }}
             </v-col>
           </v-row>
           <v-row>
