@@ -3,7 +3,7 @@ WORKDIR /app
 COPY frontend/ ./
 RUN npm install && npm run build
 
-FROM golang:1.21-alpine AS backend-builder
+FROM golang:1.22-alpine AS backend-builder
 WORKDIR /app
 ARG TARGETARCH
 ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
