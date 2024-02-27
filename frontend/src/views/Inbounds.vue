@@ -236,7 +236,7 @@ const buildInboundsUsers = (inbound:InboundWithUser):Inbound => {
       // Remove flow in non tls VLESS
       if (inbound.type == InTypes.VLESS) {
         const vlessInbound = <VLESS>inbound
-        if (!vlessInbound.tls?.enabled) clientConfig["vless"].flow = undefined
+        if (!vlessInbound.tls?.enabled) delete(clientConfig["vless"].flow)
       }
       users.push(clientConfig[inbound.type])
     })
