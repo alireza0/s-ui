@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"embed"
+	"html/template"
 	"io"
 	"io/fs"
 	"net"
@@ -53,6 +54,14 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 
 	engine := gin.Default()
 
+	// Load the HTML template
+	t := template.New("").Funcs(engine.FuncMap)
+	template, err := t.ParseFS(content, "html/index.html")
+	if err != nil {
+		return nil, err
+	}
+	engine.SetHTMLTemplate(template)
+
 	base_url, err := s.settingService.GetWebPath()
 	if err != nil {
 		return nil, err
@@ -95,9 +104,6 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 
 	group_api := engine.Group(base_url + "api")
 	api.NewAPIHandler(group_api)
-
-	// Load the HTML template
-	engine.LoadHTMLFiles("backend/web/html/index.html")
 
 	// Serve index.html as the entry point
 	// Handle all other routes by serving index.html
