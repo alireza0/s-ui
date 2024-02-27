@@ -27,6 +27,7 @@ export default {
     clients: "Clients",
     rules: "Rules",
     basics: "Basics",
+    admins: "Admins",
     settings: "Settings",
   },
   main: {
@@ -83,6 +84,12 @@ export default {
   },
   menu: {
     logout: "Logout",
+  },
+  admin: {
+    changeCred: "Change credentials",
+    oldPass: "Current Password",
+    newUname: "New Username",
+    newPass: "New Password",
   },
   setting: {
     interface: "Interface",

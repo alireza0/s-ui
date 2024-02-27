@@ -27,6 +27,7 @@ export default {
     clients: "کاربران",
     rules: "قوانین",
     basics: "ترازها",
+    admins: "ادمین‌ها",
     settings: "پیکربندی",
   },
   main: {
@@ -83,6 +84,12 @@ export default {
   },
   menu: {
     logout: "خروج",
+  },
+  admin: {
+    changeCred: "ویرایش داده‌ها",
+    oldPass: "رمز کنونی",
+    newUname: "نام کاربری جدید",
+    newPass: "رمز جدید",
   },
   setting: {
     interface: "نما",

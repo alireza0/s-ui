@@ -70,6 +70,19 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		}
 
 		jsonMsg(c, "", nil)
+	case "changePass":
+		id := c.Request.FormValue("id")
+		oldPass := c.Request.FormValue("oldPass")
+		newUsername := c.Request.FormValue("newUsername")
+		newPass := c.Request.FormValue("newPass")
+		err = a.UserService.ChangePass(id, oldPass, newUsername, newPass)
+		if err == nil {
+			logger.Info("change user credentials success")
+			jsonMsg(c, "save", nil)
+		} else {
+			logger.Warning("change user credentials failed:", err)
+			jsonMsg(c, "", err)
+		}
 	case "save":
 		loginUser := GetLoginUser(c)
 		data := map[string]string{}
@@ -104,6 +117,13 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 			return
 		}
 		jsonObj(c, data, nil)
+	case "users":
+		users, err := a.UserService.GetUsers()
+		if err != nil {
+			jsonMsg(c, "", err)
+			return
+		}
+		jsonObj(c, *users, nil)
 	case "setting":
 		data, err := a.SettingService.GetAllSetting()
 		if err != nil {

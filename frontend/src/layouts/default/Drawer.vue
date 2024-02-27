@@ -55,6 +55,7 @@ const menu = [
   { title: 'pages.outbounds', icon: 'mdi-cloud-upload',  path: '/outbounds' },
   { title: 'pages.rules', icon: 'mdi-routes',  path: '/rules' },
   { title: 'pages.basics', icon: 'mdi-application-cog',  path: '/basics' },
+  { title: 'pages.admins', icon: 'mdi-account-tie',  path: '/admins' },
   { title: 'pages.settings', icon: 'mdi-cog',  path: '/settings' },
 ]
 
