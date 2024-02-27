@@ -25,3 +25,10 @@ const isMobile = computed( ():boolean =>{
   return smAndDown.value
 })
 </script>
+
+<style>
+.v-card-subtitle {
+  text-align: center;
+  border-bottom: 1px solid gray;
+}
+</style>

@@ -24,7 +24,7 @@
     @close="closeStats"
   />
   <v-row>
-    <v-col cols="12">
+    <v-col cols="12" justify="center" align="center">
       <v-btn color="primary" @click="showModal(-1)">{{ $t('actions.add') }}</v-btn>
     </v-col>
   </v-row>

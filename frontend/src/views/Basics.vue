@@ -337,10 +337,3 @@ const enableClashApi = computed({
   }
 })
 </script>
-
-<style>
-.v-card-subtitle {
-  text-align: center;
-  border-bottom: 1px solid gray;
-}
-</style>
