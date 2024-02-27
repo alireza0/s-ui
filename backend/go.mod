@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/gin-contrib/gzip v0.0.6
-	github.com/gin-gonic/gin v1.9.0
+	github.com/gin-gonic/gin v1.9.1
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/v2fly/v2ray-core/v5 v5.13.0
 	gorm.io/driver/sqlite v1.5.5
