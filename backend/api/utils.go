@@ -69,7 +69,7 @@ func pureJsonMsg(c *gin.Context, success bool, msg string) {
 func checkLogin(c *gin.Context) {
 	if !IsLogin(c) {
 		if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-			pureJsonMsg(c, false, "Not authorized")
+			pureJsonMsg(c, false, "Invalid login")
 		} else {
 			c.Redirect(http.StatusTemporaryRedirect, "/login")
 		}

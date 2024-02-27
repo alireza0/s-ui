@@ -1,5 +1,6 @@
 import api from './api'
 import { i18n } from '@/locales'
+import router from '@/router'
 import Message from "@/store/modules/message"
 
 export interface Msg {
@@ -14,8 +15,20 @@ function _handleMsg(msg: any): void {
     return
   }
   if(msg.msg){
+    if (!msg.success && msg.msg == "Invalid login") {
+      sb.showMessage(i18n.global.t('invalidLogin'),'error', 5000)
+      logout()
+      return
+    }
     const message = msg.success ? i18n.global.t('success') + ": " + i18n.global.t('actions.' + msg.msg) : i18n.global.t('failed') + ": " + msg.msg
     sb.showMessage(message, msg.success ? 'success' : 'error', 5000)
+  }
+}
+
+export const logout = async () => {
+  const response = await HttpUtils.get('api/logout')
+  if(response.success){
+    router.push('/login')
   }
 }
 

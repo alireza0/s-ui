@@ -3,12 +3,12 @@
       <v-row justify="center" align="center">
         <v-col cols="12" sm="8" md="4">
           <v-card>
-            <v-card-title class="headline">Login</v-card-title>
+            <v-card-title class="headline" v-text="$t('login.title')"></v-card-title>
             <v-card-text>
               <v-form @submit.prevent="login" ref="form">
                 <v-text-field v-model="username" :label="$t('login.username')" :rules="usernameRules" required></v-text-field>
                 <v-text-field v-model="password" :label="$t('login.password')" :rules="passwordRules" type="password" required></v-text-field>
-                <v-btn :loading="loading" type="submit" color="primary" block class="mt-2">Login</v-btn>
+                <v-btn :loading="loading" type="submit" color="primary" block class="mt-2" v-text="$t('actions.submit')"></v-btn>
               </v-form>
               <v-select
                 density="compact"

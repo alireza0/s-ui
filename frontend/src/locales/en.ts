@@ -17,6 +17,7 @@ export default {
   network: "Network",
   copyToClipboard: "Copy to clipboard",
   noData: "No data!",
+  invalidLogin: "Invalid Login!",
   online: "Online",
   pages: {
     login: "Login",
@@ -69,10 +70,12 @@ export default {
     del: "Delete",
     save: "Save",
     update: "Update",
+    submit: "Submit",
     close: "Close",
     restartApp: "Restart App",
   },
   login: {
+    title: "Login",
     username: "Username",
     unRules: "Username can not be empty",
     password: "Password",

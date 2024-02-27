@@ -17,6 +17,7 @@ export default {
   network: "شبکه",
   copyToClipboard: "کپی در حافظه",
   noData: "بدون داده!",
+  invalidLogin: "ورود نامعتبر!",
   online: "آنلاین",
   pages: {
     login: "ورود",
@@ -69,10 +70,12 @@ export default {
     del: "حذف",
     save: "ذخیره",
     update: "بروزرسانی",
+    submit: "ارسال",
     close: "بستن",
     restartApp: "ریستارت پنل",
   },
   login: {
+    title: "ورود",
     username: "نام کاربری",
     unRules: "نام کاربری نمی‌تواند خالی باشد",
     password: "کلمه عبور",
