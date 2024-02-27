@@ -143,9 +143,9 @@ export default {
       usePath: 0,
       defaults: defaultInTls,
       alpn: [
-        { title: "H3", value: 'HTTP/3' },
-        { title: "H2", value: 'HTTP/2' },
-        { title: "Http1.1", value: 'HTTP/1.1' },
+        { title: "H3", value: 'h3' },
+        { title: "H2", value: 'h2' },
+        { title: "Http/1.1", value: 'http/1.1' },
       ],
       tlsVersions: [ '1.0', '1.1', '1.2', '1.3' ],
       cipher_suites: [

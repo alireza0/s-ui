@@ -12,7 +12,7 @@ export interface iTls {
 }
 
 export const defaultInTls: iTls = {
-  alpn: ['HTTP/3', 'HTTP/2', 'HTTP/1.1'],
+  alpn: ['h3', 'h2', 'http/1.1'],
   min_version: "1.2",
   max_version: "1.3",
   cipher_suites: [""],
