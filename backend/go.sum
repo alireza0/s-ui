@@ -1,3 +1,5 @@
+github.com/Calidity/gin-sessions v1.3.1 h1:nF3dCBWa7TZ4j26iYLwGRmzZy9YODhWoOS3fmi+snyE=
+github.com/Calidity/gin-sessions v1.3.1/go.mod h1:I0+QE6qkO50TeN/n6If6novvxHk4Isvr23U8EdvPdns=
 github.com/adrg/xdg v0.4.0 h1:RzRqFcjH4nE5C6oTAxhBtoE2IRyjBSa62SCbyPidvls=
 github.com/adrg/xdg v0.4.0/go.mod h1:N6ag73EX4wyxeaoeHctc1mas01KZgsj5tYiAIwqJE/E=
 github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 h1:+JkXLHME8vLJafGhOH4aoV2Iu8bR55nU6iKMVfYVLjY=

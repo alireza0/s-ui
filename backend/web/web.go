@@ -17,9 +17,9 @@ import (
 	"strconv"
 	"strings"
 
+	sessions "github.com/Calidity/gin-sessions"
+	"github.com/Calidity/gin-sessions/cookie"
 	"github.com/gin-contrib/gzip"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
@@ -76,7 +76,7 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	assetsBasePath := base_url + "assets/"
 
 	store := cookie.NewStore(secret)
-	engine.Use(sessions.Sessions("session", store))
+	engine.Use(sessions.Sessions("s-ui", store))
 
 	engine.Use(func(c *gin.Context) {
 		uri := c.Request.RequestURI

@@ -54,6 +54,7 @@ require (
 )
 
 require (
+	github.com/Calidity/gin-sessions v1.3.1
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/validator/v10 v10.17.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
