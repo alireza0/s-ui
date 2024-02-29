@@ -100,6 +100,7 @@ export default {
     domain: "دامنه",
     sslKey: "مسیر فایل کلید",
     sslCert: "مسیر فایل گواهی",
+    webUri: "آدرس نهایی پنل",
     sessionAge: "بیشینه زمان لاگین ماندن",
     timeLoc: "منطقه زمانی",
     subEncode: "رمزگذاری",

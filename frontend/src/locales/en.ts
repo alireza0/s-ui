@@ -100,6 +100,7 @@ export default {
     domain: "Domain",
     sslKey: "SSL Key Path",
     sslCert: "SSL Certificate Path",
+    webUri: "Panel URI",
     sessionAge: "Session Maximum Age",
     timeLoc: "Timezone Location",
     subEncode: "Enable Encoding",

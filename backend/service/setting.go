@@ -22,6 +22,7 @@ var defaultValueMap = map[string]string{
 	"webCertFile":   "",
 	"webKeyFile":    "",
 	"webPath":       "/app/",
+	"webURI":        "",
 	"sessionMaxAge": "0",
 	"timeLocation":  "Asia/Tehran",
 	"subListen":     "",

@@ -45,6 +45,9 @@
             <v-text-field v-model="settings.webCertFile" :label="$t('setting.sslCert')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
+            <v-text-field v-model="settings.webURI" :label="$t('setting.webUri')" hide-details></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
             <v-text-field
               type="number"
               v-model.number="sessionMaxAge"
@@ -147,6 +150,7 @@ const settings = ref({
 	webCertFile: "",
 	webKeyFile: "",
   webPath: "/app/",
+  webURI: "",
 	sessionMaxAge: "0",
 	timeLocation: "Asia/Tehran",
   subListen: "",
@@ -196,8 +200,11 @@ const restartApp = async () => {
   loading.value = true
   const msg = await HttpUtils.post('api/restartApp',{})
   if (msg.success) {
-    const isTLS = settings.value.webCertFile !== "" || settings.value.webKeyFile !== ""
-    const url = buildURL(settings.value.webDomain,settings.value.webPort.toString(),isTLS, settings.value.webPath)
+    let url = settings.value.webURI
+    if (url !== "") {
+      const isTLS = settings.value.webCertFile !== "" || settings.value.webKeyFile !== ""
+      url = buildURL(settings.value.webDomain,settings.value.webPort.toString(),isTLS, settings.value.webPath)
+    }
     await sleep(3000)
     window.location.replace(url)
   }
