@@ -5,10 +5,11 @@ import (
 	"os"
 	"os/signal"
 	"s-ui/app"
+	"s-ui/cmd"
 	"syscall"
 )
 
-func main() {
+func runApp() {
 	app := app.NewApp()
 
 	err := app.Init()
@@ -34,5 +35,14 @@ func main() {
 			app.Stop()
 			return
 		}
+	}
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		runApp()
+		return
+	} else {
+		cmd.ParseCmd()
 	}
 }

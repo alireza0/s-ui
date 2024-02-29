@@ -13,6 +13,40 @@ import (
 type UserService struct {
 }
 
+func (s *UserService) GetFirstUser() (*model.User, error) {
+	db := database.GetDB()
+
+	user := &model.User{}
+	err := db.Model(model.User{}).
+		First(user).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *UserService) UpdateFirstUser(username string, password string) error {
+	if username == "" {
+		return common.NewError("username can not be empty")
+	} else if password == "" {
+		return common.NewError("password can not be empty")
+	}
+	db := database.GetDB()
+	user := &model.User{}
+	err := db.Model(model.User{}).First(user).Error
+	if database.IsNotFound(err) {
+		user.Username = username
+		user.Password = password
+		return db.Model(model.User{}).Create(user).Error
+	} else if err != nil {
+		return err
+	}
+	user.Username = username
+	user.Password = password
+	return db.Save(user).Error
+}
+
 func (s *UserService) Login(username string, password string, remoteIP string) (string, error) {
 	user := s.CheckUser(username, password, remoteIP)
 	if user == nil {

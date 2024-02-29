@@ -69,6 +69,11 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 	return &allSetting, nil
 }
 
+func (s *SettingService) ResetSettings() error {
+	db := database.GetDB()
+	return db.Where("1 = 1").Delete(model.Setting{}).Error
+}
+
 func (s *SettingService) getSetting(key string) (*model.Setting, error) {
 	db := database.GetDB()
 	setting := &model.Setting{}
@@ -174,6 +179,16 @@ func (s *SettingService) GetWebPath() (string, error) {
 	return webPath, nil
 }
 
+func (s *SettingService) SetWebPath(webPath string) error {
+	if !strings.HasPrefix(webPath, "/") {
+		webPath = "/" + webPath
+	}
+	if !strings.HasSuffix(webPath, "/") {
+		webPath += "/"
+	}
+	return s.setString("webPath", webPath)
+}
+
 func (s *SettingService) GetSecret() ([]byte, error) {
 	secret, err := s.getString("webSecret")
 	if secret == defaultValueMap["webSecret"] {
@@ -211,6 +226,10 @@ func (s *SettingService) GetSubPort() (int, error) {
 	return s.getInt("subPort")
 }
 
+func (s *SettingService) SetSubPort(subPort int) error {
+	return s.setInt("subPort", subPort)
+}
+
 func (s *SettingService) GetSubPath() (string, error) {
 	subPath, err := s.getString("subPath")
 	if err != nil {
@@ -223,6 +242,16 @@ func (s *SettingService) GetSubPath() (string, error) {
 		subPath += "/"
 	}
 	return subPath, nil
+}
+
+func (s *SettingService) SetSubPath(subPath string) error {
+	if !strings.HasPrefix(subPath, "/") {
+		subPath = "/" + subPath
+	}
+	if !strings.HasSuffix(subPath, "/") {
+		subPath += "/"
+	}
+	return s.setString("subPath", subPath)
 }
 
 func (s *SettingService) GetSubDomain() (string, error) {
