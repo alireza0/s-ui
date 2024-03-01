@@ -59,7 +59,7 @@ func GetBinFolderPath() string {
 func GetDBFolderPath() string {
 	dbFolderPath := os.Getenv("SUI_DB_FOLDER")
 	if dbFolderPath == "" {
-		dbFolderPath = "db"
+		dbFolderPath = "/usr/local/s-ui/db"
 	}
 	return dbFolderPath
 }
