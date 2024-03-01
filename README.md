@@ -28,7 +28,9 @@
 
 ## Default Installation Informarion
 - Panel Port: 2095
+- Panel Path: /app/
 - Subscription Port: 2096
+- Subscription Path: /sub/
 - User/Passowrd: admin
 
 ## Install & Upgrade to Latest Version
@@ -95,6 +97,7 @@ docker build -t s-ui .
 
 - English
 - Farsi
+- Chinese (Simplified)
 
 ## Features
 
@@ -153,5 +156,4 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 </details>
 
 ## Stargazers over Time
-
-[![Stargazers over time](https://starchart.cc/alireza0/s-ui.svg)](https://starchart.cc/alireza0/s-ui)
+[![Stargazers over time](https://starchart.cc/alireza0/s-ui.svg?variant=adaptive)](https://starchart.cc/alireza0/s-ui)
