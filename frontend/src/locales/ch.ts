@@ -9,7 +9,7 @@ export default {
   yes: "确认",
   no: "取消",
   unlimited: "无限",
-  remained: "Remained",
+  remained: "剩下的",
   type: "类型",
   submit: "提交",
   reset: "重置",
@@ -17,6 +17,7 @@ export default {
   network: "网络",
   copyToClipboard: "复制到剪切板",
   noData: "无数据!",
+  invalidLogin: "登录无效！",
   online: "在线",
   pages: {
     login: "登录",
@@ -26,6 +27,7 @@ export default {
     clients: "用户管理",
     rules: "路由列表",
     basics: "基础信息",
+    admins: "管理员",
     settings: "设置",
   },
   main: {
@@ -69,10 +71,12 @@ export default {
     del: "删除",
     save: "保存",
     update: "更新",
+    submit: "提交",
     close: "关闭",
     restartApp: "重启S-UI",
   },
   login: {
+    title: "登录",
     username: "用户名",
     unRules: "用户名不能为空",
     password: "密码",
@@ -81,14 +85,22 @@ export default {
   menu: {
     logout: "退出登录",
   },
+  admin: {
+    changeCred: "更改凭据",
+    oldPass: "当前密码",
+    newUname: "新用户名",
+    newPass: "新密码",
+  },
   setting: {
     interface: "界面",
     sub: "订阅",
     addr: "地址",
     port: "端口",
+    webPath: "基本URI"
     domain: "域名",
     sslKey: "SSL 密钥(Key) 路径",
     sslCert: "SSL 证书（cert）路径",
+    webUri: "面板 URI",
     sessionAge: "会话最大连接数",
     timeLoc: "时区",
     subEncode: "启用编码",
@@ -114,13 +126,13 @@ export default {
     tls: "TLS",
     clients: "启用客户端",
     multiplex: "多路复用",
-    transport: "Transport",
+    transport: "运输",
   },
   transport: {
-    enable: "Enable Transport",
-    host: "Host",
-    hosts: "Hosts",
-    path: "Path",
+    enable: "启用传输",
+    host: "主持人",
+    hosts: "主办方",
+    path: "小路",
   },
   tls : {
     enable: "启用 TLS",
@@ -129,7 +141,7 @@ export default {
     certPath: "证书文件路径",
     keyPath: "密钥文件路径",
     cert: "证书",
-    key: "Key",
+    key: "钥匙",
   },
   stats: {
     upload: "上传",
