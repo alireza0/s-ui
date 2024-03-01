@@ -185,19 +185,23 @@ view_admin() {
 
 reset_setting() {
     confirm "Are you sure you want to reset settings to default ?" "n"
-    if [[ $? != 0 ]]; then
+    if [[ $? == 0 ]]; then
         /usr/local/s-ui/sui setting -reset
     fi
     before_show_menu
 }
 
 set_setting() {
-    read -p "Enter the ${yellow}panel port${plain} (leave blank for existing/default value):" config_port
-    read -p "Enter the ${yellow}panel path${plain} (leave blank for existing/default value):" config_path
+    echo -e "Enter the ${yellow}panel port${plain} (leave blank for existing/default value):"
+    read config_port
+    echo -e "Enter the ${yellow}panel path${plain} (leave blank for existing/default value):"
+    read config_path
 
     # Sub configuration
-    read -p "Enter the ${yellow}subscription port${plain} (leave blank for existing/default value):" config_subPort
-    read -p "Enter the ${yellow}subscription path${plain} (leave blank for existing/default value):" config_subPath
+    echo -e "Enter the ${yellow}subscription port${plain} (leave blank for existing/default value):"
+    read config_subPort
+    echo -e "Enter the ${yellow}subscription path${plain} (leave blank for existing/default value):" 
+    read config_subPath
 
     # Set configs
     echo -e "${yellow}Initializing, please wait...${plain}"

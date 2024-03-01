@@ -67,6 +67,11 @@ func updateSetting(port int, path string, subPort int, subPath string) {
 }
 
 func showSetting() {
+	err := database.InitDB(config.GetDBPath())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	settingService := service.SettingService{}
 	allSetting, err := settingService.GetAllSetting()
 	if err != nil {

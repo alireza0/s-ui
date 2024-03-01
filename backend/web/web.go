@@ -108,6 +108,10 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	// Serve index.html as the entry point
 	// Handle all other routes by serving index.html
 	engine.NoRoute(func(c *gin.Context) {
+		if c.Request.URL.Path == strings.TrimSuffix(base_url, "/") {
+			c.Redirect(http.StatusTemporaryRedirect, base_url)
+			return
+		}
 		if !strings.HasPrefix(c.Request.URL.Path, base_url) {
 			c.String(404, "")
 			return

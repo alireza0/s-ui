@@ -42,6 +42,11 @@ func updateAdmin(username string, password string) {
 }
 
 func showAdmin() {
+	err := database.InitDB(config.GetDBPath())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	userService := service.UserService{}
 	userModel, err := userService.GetFirstUser()
 	if err != nil {
