@@ -23,25 +23,17 @@ else
 fi
 echo "The OS release is: $release"
 
-arch=$(arch)
+arch() {
+    case "$(uname -m)" in
+    x86_64 | x64 | amd64) echo 'amd64' ;;
+    i*86 | x86) echo '386' ;;
+    armv8* | armv8 | arm64 | aarch64) echo 'arm64' ;;
+    armv7* | armv7 | arm) echo 'armv7' ;;
+    *) echo -e "${green}Unsupported CPU architecture! ${plain}" && rm -f install.sh && exit 1 ;;
+    esac
+}
 
-if [[ $arch == "x86_64" || $arch == "x64" || $arch == "amd64" ]]; then
-    arch="amd64"
-elif [[ $arch == "aarch64" || $arch == "arm64" ]]; then
-    arch="arm64"
-elif [[ $arch == "s390x" ]]; then
-    arch="s390x"
-else
-    arch="amd64"
-    echo -e "${red} Failed to check system arch, will use default arch: ${arch}${plain}"
-fi
-
-echo "arch: ${arch}"
-
-if [ $(getconf WORD_BIT) != '32' ] && [ $(getconf LONG_BIT) != '64' ]; then
-    echo "s-ui dosen't support 32-bit(x86) system, please use 64 bit operating system(x86_64) instead, if there is something wrong, please get in touch with me!"
-    exit -1
-fi
+echo "arch: $(arch)"
 
 os_version=""
 os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
@@ -50,7 +42,7 @@ if [[ "${release}" == "centos" ]]; then
     if [[ ${os_version} -lt 8 ]]; then
         echo -e "${red} Please use CentOS 8 or higher ${plain}\n" && exit 1
     fi
-elif [[ "${release}" ==  "ubuntu" ]]; then
+elif [[ "${release}" == "ubuntu" ]]; then
     if [[ ${os_version} -lt 20 ]]; then
         echo -e "${red}please use Ubuntu 20 or higher version! ${plain}\n" && exit 1
     fi
@@ -70,27 +62,38 @@ fi
 
 
 install_base() {
-    if [[ "${release}" == "centos" ]] || [[ "${release}" == "fedora" ]] ; then
-        yum install wget curl tar unzip jq -y
-    else
-        apt install wget curl tar unzip jq -y
-    fi
+    case "${release}" in
+    centos)
+        yum -y update && yum install -y -q wget curl tar tzdata
+        ;;
+    fedora)
+        dnf -y update && dnf install -y -q wget curl tar tzdata
+        ;;
+    *)
+        apt-get update && apt install -y -q wget curl tar tzdata
+        ;;
+    esac
 }
 
 config_after_install() {
     echo -e "${yellow}Install/update finished! For security it's recommended to modify panel settings ${plain}"
     read -p "Do you want to continue with the modification [y/n]? ": config_confirm
     if [[ "${config_confirm}" == "y" || "${config_confirm}" == "Y" ]]; then
-        read -p "Please set up the panel port (leave blank for existing/default value):" config_port
-        read -p "Please set up the panel path (leave blank for existing/default value):" config_path
+        read -p "Enter the ${yellow}panel port${plain} (leave blank for existing/default value):" config_port
+        read -p "Enter the ${yellow}panel path${plain} (leave blank for existing/default value):" config_path
 
         # Sub configuration
-        read -p "Please set up the subscription port (leave blank for existing/default value):" config_port
-        read -p "Please set up the subscription path (leave blank for existing/default value):" config_path
+        read -p "Enter the ${yellow}subscription port${plain} (leave blank for existing/default value):" config_subPort
+        read -p "Enter the ${yellow}subscription path${plain} (leave blank for existing/default value):" config_subPath
 
         # Set configs
         echo -e "${yellow}Initializing, please wait...${plain}"
-        /usr/local/s-ui/sui setting -port ${config_port} -path ${config_path} -subPort ${config_subPort} -subPath ${config_subPath}
+        params=""
+        [ -z "$config_port" ] || params="$params -port $config_port"
+        [ -z "$config_path" ] || params="$params -path $config_path"
+        [ -z "$config_subPort" ] || params="$params -subPort $config_subPort"
+        [ -z "$config_subPath" ] || params="$params -subPath $config_subPath"
+        /usr/local/s-ui/sui setting ${params}
 
         read -p "Do you want to change admin credentials [y/n]? ": admin_confirm
         if [[ "${admin_confirm}" == "y" || "${admin_confirm}" == "Y" ]]; then
@@ -133,16 +136,16 @@ install_s-ui() {
             exit 1
         fi
         echo -e "Got s-ui latest version: ${last_version}, beginning the installation..."
-        wget -N --no-check-certificate -O /tmp/s-ui-linux-${arch}.tar.gz https://github.com/alireza0/s-ui/releases/download/${last_version}/s-ui-linux-${arch}.tar.gz
+        wget -N --no-check-certificate -O /tmp/s-ui-linux-$(arch).tar.gz https://github.com/alireza0/s-ui/releases/download/${last_version}/s-ui-linux-$(arch).tar.gz
         if [[ $? -ne 0 ]]; then
             echo -e "${red}Dowanloading s-ui failed, please be sure that your server can access Github ${plain}"
             exit 1
         fi
     else
         last_version=$1
-        url="https://github.com/alireza0/s-ui/releases/download/${last_version}/s-ui-linux-${arch}.tar.gz"
+        url="https://github.com/alireza0/s-ui/releases/download/${last_version}/s-ui-linux-$(arch).tar.gz"
         echo -e "Begining to install s-ui v$1"
-        wget -N --no-check-certificate -O /tmp/s-ui-linux-${arch}.tar.gz ${url}
+        wget -N --no-check-certificate -O /tmp/s-ui-linux-$(arch).tar.gz ${url}
         if [[ $? -ne 0 ]]; then
             echo -e "${red}dowanload s-ui v$1 failed,please check the verison exists${plain}"
             exit 1
@@ -154,8 +157,8 @@ install_s-ui() {
         systemctl stop sing-box
     fi
 
-    tar zxvf s-ui-linux-${arch}.tar.gz
-    rm s-ui-linux-${arch}.tar.gz -f
+    tar zxvf s-ui-linux-$(arch).tar.gz
+    rm s-ui-linux-$(arch).tar.gz -f
 
     wget --no-check-certificate -O /usr/bin/s-ui https://raw.githubusercontent.com/alireza0/s-ui/main/s-ui.sh
 

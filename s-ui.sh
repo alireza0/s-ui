@@ -164,7 +164,7 @@ uninstall() {
 reset_admin() {
     echo "It is not recommended to set admin's credentials to default!"
     confirm "Are you sure you want to reset admin's credentials to default ?" "n"
-    if [[ $? != 0 ]]; then
+    if [[ $? == 0 ]]; then
         /usr/local/s-ui/sui admin -reset
     fi
     before_show_menu
@@ -192,17 +192,21 @@ reset_setting() {
 }
 
 set_setting() {
-    echo "It is not recommended to set admin's credentials to a complex text."
-    read -p "Please set up the panel port (leave blank for existing/default value):" config_port
-    read -p "Please set up the panel path (leave blank for existing/default value):" config_path
+    read -p "Enter the ${yellow}panel port${plain} (leave blank for existing/default value):" config_port
+    read -p "Enter the ${yellow}panel path${plain} (leave blank for existing/default value):" config_path
 
     # Sub configuration
-    read -p "Please set up the subscription port (leave blank for existing/default value):" config_port
-    read -p "Please set up the subscription path (leave blank for existing/default value):" config_path
+    read -p "Enter the ${yellow}subscription port${plain} (leave blank for existing/default value):" config_subPort
+    read -p "Enter the ${yellow}subscription path${plain} (leave blank for existing/default value):" config_subPath
 
     # Set configs
     echo -e "${yellow}Initializing, please wait...${plain}"
-    /usr/local/s-ui/sui setting -port ${config_port} -path ${config_path} -subPort ${config_subPort} -subPath ${config_subPath}
+    params=""
+    [ -z "$config_port" ] || params="$params -port $config_port"
+    [ -z "$config_path" ] || params="$params -path $config_path"
+    [ -z "$config_subPort" ] || params="$params -subPort $config_subPort"
+    [ -z "$config_subPath" ] || params="$params -subPath $config_subPath"
+    /usr/local/s-ui/sui setting ${params}
     before_show_menu
 }
 

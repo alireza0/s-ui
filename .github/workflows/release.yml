@@ -10,14 +10,18 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [amd64, arm64, arm]
+        platform:
+          - amd64
+          - arm64
+          - armv7
+          - 386
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
 
       - name: Setup Go
-        uses: actions/setup-go@v5.0.0
+        uses: actions/setup-go@v5
         with:
           cache: false
           go-version: '1.22'
@@ -28,13 +32,15 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
           
-      - name: Install dependencies for arm64 and arm
-        if: matrix.platform == 'arm64' || matrix.platform == 'arm'
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt install gcc-aarch64-linux-gnu
-          if [ "${{ matrix.platform }}" == "arm" ]; then
+          if [ "${{ matrix.platform }}" == "arm64" ]; then
+            sudo apt install gcc-aarch64-linux-gnu
+          elif [ "${{ matrix.platform }}" == "armv7" ]; then
             sudo apt install gcc-arm-linux-gnueabihf
+          elif [ "${{ matrix.platform }}" == "386" ]; then
+            sudo apt install gcc-i686-linux-gnu
           fi
 
       - name: Build frontend
@@ -45,26 +51,30 @@ jobs:
           cd ..
           mv frontend/dist backend/web/html
 
-      - name: Set evironments
+      - name: Build s-ui & singbox
         run: |
           export CGO_ENABLED=1
           export GOOS=linux
           export GOARCH=${{ matrix.platform }}
           if [ "${{ matrix.platform }}" == "arm64" ]; then
+            export GOARCH=arm64
             export CC=aarch64-linux-gnu-gcc
-          elif [ "${{ matrix.platform }}" == "arm" ]; then
+          elif [ "${{ matrix.platform }}" == "armv7" ]; then
+            export GOARCH=arm
+            export GOARM=7
             export CC=arm-linux-gnueabihf-gcc
+          elif [ "${{ matrix.platform }}" == "386" ]; then
+            export GOARCH=386
+            export CC=i686-linux-gnu-gcc
           fi
 
-      - name: Build sing-box
-        run: |
+          #### Build Sing-Box
           git clone -b v1.8.5 https://github.com/SagerNet/sing-box
           cd sing-box
           go build -tags with_v2ray_api,with_clash_api,with_grpc,with_quic,with_ech -o sing-box ./cmd/sing-box
           cd ..
 
-      - name: Build s-ui
-        run: |
+          ### Build s-ui
           cd backend
           go build -o ../sui main.go
           cd ..
@@ -81,7 +91,7 @@ jobs:
         run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
         
       - name: Upload
-        uses: svenstaro/upload-release-action@2.9.0
+        uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
