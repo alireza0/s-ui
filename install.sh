@@ -77,6 +77,52 @@ install_base() {
     fi
 }
 
+config_after_install() {
+    echo -e "${yellow}Install/update finished! For security it's recommended to modify panel settings ${plain}"
+    read -p "Do you want to continue with the modification [y/n]? ": config_confirm
+    if [[ "${config_confirm}" == "y" || "${config_confirm}" == "Y" ]]; then
+        read -p "Please set up the panel port (leave blank for existing/default value):" config_port
+        read -p "Please set up the panel path (leave blank for existing/default value):" config_path
+
+        # Sub configuration
+        read -p "Please set up the subscription port (leave blank for existing/default value):" config_port
+        read -p "Please set up the subscription path (leave blank for existing/default value):" config_path
+
+        # Set configs
+        echo -e "${yellow}Initializing, please wait...${plain}"
+        /usr/local/s-ui/sui setting -port ${config_port} -path ${config_path} -subPort ${config_subPort} -subPath ${config_subPath}
+
+        read -p "Do you want to change admin credentials [y/n]? ": admin_confirm
+        if [[ "${admin_confirm}" == "y" || "${admin_confirm}" == "Y" ]]; then
+            # First admin credentials
+            read -p "Please set up your username:" config_account
+            read -p "Please set up your password:" config_password
+
+            # Set credentials
+            echo -e "${yellow}Initializing, please wait...${plain}"
+            /usr/local/s-ui/sui admin -username ${config_account} -password ${config_password}
+        else
+            echo -e "${yellow}Your current admin credentials: ${plain}"
+            /usr/local/s-ui/sui admin -show
+        fi
+    else
+        echo -e "${red}cancel...${plain}"
+        if [[ ! -f "/usr/local/s-ui/db/s-ui.db" ]]; then
+            local usernameTemp=$(head -c 6 /dev/urandom | base64)
+            local passwordTemp=$(head -c 6 /dev/urandom | base64)
+            echo -e "this is a fresh installation,will generate random login info for security concerns:"
+            echo -e "###############################################"
+            echo -e "${green}username:${usernameTemp}${plain}"
+            echo -e "${green}password:${passwordTemp}${plain}"
+            echo -e "###############################################"
+            echo -e "${red}if you forgot your login info,you can type ${green}s-ui${red} for configuration menu${plain}"
+            /usr/local/s-ui/sui admin -username ${usernameTemp} -password ${passwordTemp}
+        else
+            echo -e "${red} this is your upgrade,will keep old settings,if you forgot your login info,you can type ${green}s-ui${red} for configuration menu${plain}"
+        fi
+    fi
+}
+
 install_s-ui() {
     cd /tmp/
 
@@ -110,10 +156,15 @@ install_s-ui() {
 
     tar zxvf s-ui-linux-${arch}.tar.gz
     rm s-ui-linux-${arch}.tar.gz -f
-    chmod +x s-ui/sui s-ui/bin/sing-box s-ui/bin/runSingbox.sh
+
+    wget --no-check-certificate -O /usr/bin/s-ui https://raw.githubusercontent.com/alireza0/s-ui/main/s-ui.sh
+
+    chmod +x s-ui/sui s-ui/bin/sing-box s-ui/bin/runSingbox.sh /usr/bin/s-ui
     cp -rf s-ui /usr/local/
     cp -f s-ui/*.service /etc/systemd/system/
     rm -rf s-ui
+
+    config_after_install
 
     systemctl daemon-reload
     systemctl enable s-ui  --now
@@ -121,10 +172,7 @@ install_s-ui() {
 
     echo -e "${green}s-ui v${last_version}${plain} installation finished, it is up and running now..."
     echo -e ""
-    echo -e "s-ui usages: "
-    echo -e "----------------------------------------------"
-    echo -e "s-ui              - Enter     Run S-UI"
-    echo -e "----------------------------------------------"
+    s-ui help
 }
 
 echo -e "${green}Excuting...${plain}"
