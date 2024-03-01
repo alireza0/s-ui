@@ -1,7 +1,7 @@
 import { createI18n } from 'vue-i18n'
 import en from './en'
 import fa from './fa'
-import ch from './ch'
+import zhcn from './zhcn'
 
 
 export const i18n = createI18n({
@@ -17,6 +17,6 @@ export const i18n = createI18n({
 
 export const languages = [
   { title: 'English', value: 'en' },
-  { title: '简体中文', value: 'ch' },
   { title: 'فارسی', value: 'fa' },
+  { title: '简体中文', value: 'zhcn' },
 ]
