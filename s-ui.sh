@@ -422,6 +422,85 @@ show_s-ui_status() {
     fi
 }
 
+bbr_menu() {
+    echo -e "${green}\t1.${plain} Enable BBR"
+    echo -e "${green}\t2.${plain} Disable BBR"
+    echo -e "${green}\t0.${plain} Back to Main Menu"
+    read -p "Choose an option: " choice
+    case "$choice" in
+    0)
+        show_menu
+        ;;
+    1)
+        enable_bbr
+        ;;
+    2)
+        disable_bbr
+        ;;
+    *) echo "Invalid choice" ;;
+    esac
+}
+
+disable_bbr() {
+
+    if ! grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf || ! grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf; then
+        echo -e "${yellow}BBR is not currently enabled.${plain}"
+        exit 0
+    fi
+
+    # Replace BBR with CUBIC configurations
+    sed -i 's/net.core.default_qdisc=fq/net.core.default_qdisc=pfifo_fast/' /etc/sysctl.conf
+    sed -i 's/net.ipv4.tcp_congestion_control=bbr/net.ipv4.tcp_congestion_control=cubic/' /etc/sysctl.conf
+
+    # Apply changes
+    sysctl -p
+
+    # Verify that BBR is replaced with CUBIC
+    if [[ $(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}') == "cubic" ]]; then
+        echo -e "${green}BBR has been replaced with CUBIC successfully.${plain}"
+    else
+        echo -e "${red}Failed to replace BBR with CUBIC. Please check your system configuration.${plain}"
+    fi
+}
+
+enable_bbr() {
+    if grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf && grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf; then
+        echo -e "${green}BBR is already enabled!${plain}"
+        exit 0
+    fi
+
+    # Check the OS and install necessary packages
+    case "${release}" in
+    ubuntu | debian)
+        apt-get update && apt-get install -yqq --no-install-recommends ca-certificates
+        ;;
+    centos | almalinux | rocky)
+        yum -y update && yum -y install ca-certificates
+        ;;
+    fedora)
+        dnf -y update && dnf -y install ca-certificates
+        ;;
+    *)
+        echo -e "${red}Unsupported operating system. Please check the script and install the necessary packages manually.${plain}\n"
+        exit 1
+        ;;
+    esac
+
+    # Enable BBR
+    echo "net.core.default_qdisc=fq" | tee -a /etc/sysctl.conf
+    echo "net.ipv4.tcp_congestion_control=bbr" | tee -a /etc/sysctl.conf
+
+    # Apply changes
+    sysctl -p
+
+    # Verify that BBR is enabled
+    if [[ $(sysctl net.ipv4.tcp_congestion_control | awk '{print $3}') == "bbr" ]]; then
+        echo -e "${green}BBR has been enabled successfully.${plain}"
+    else
+        echo -e "${red}Failed to enable BBR. Please check your system configuration.${plain}"
+    fi
+}
+
 install_acme() {
     cd ~
     LOGI "install acme..."
@@ -685,7 +764,7 @@ show_menu() {
   ${green}23.${plain} Sing-Box Enable Autostart
   ${green}24.${plain} Sing-Box Disable Autostart
 ————————————————————————————————
-  ${green}25.${plain} A Key Installation BBR (latest kernel)
+  ${green}25.${plain} Enable or Disable BBR
   ${green}26.${plain} SSL Certificate Management
   ${green}27.${plain} Cloudflare SSL Certificate
 ————————————————————————————————
@@ -771,7 +850,7 @@ show_menu() {
         check_install && disable sing-box
         ;;
     25)
-        install_bbr
+        bbr_menu
         ;;
     26)
         ssl_cert_issue_main
