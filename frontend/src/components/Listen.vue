@@ -138,7 +138,7 @@ export default {
       },
       set(v:boolean) {
         this.$props.inbound.udp_fragment = v ? false : undefined
-        this.$props.inbound.udp_timeout = v ? false : undefined 
+        this.$props.inbound.udp_timeout = v ? '5m' : undefined 
       }
     },
     optionDetour: {
