@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  s-ui:
+    image: alireza7/s-ui
+    container_name: s-ui
+    volumes:
+      - ./db:/app/db/
+      - ./cert/:/root/cert/
+    restart: unless-stopped
+    network_mode: host
