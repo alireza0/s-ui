@@ -98,6 +98,7 @@ docker build -t s-ui .
 - English
 - Farsi
 - Chinese (Simplified)
+- Chinese (Traditional)
 
 ## Features
 
