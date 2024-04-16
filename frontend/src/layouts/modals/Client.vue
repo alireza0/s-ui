@@ -139,6 +139,7 @@
         <v-btn
           color="blue-darken-1"
           variant="tonal"
+          :loading="loading"
           @click="saveChanges"
         >
           {{ $t('actions.save') }}
@@ -160,6 +161,7 @@ export default {
     return {
       client: createClient(),
       title: "add",
+      loading: false,
       clientStats: false,
       tab: "t1",
       clientConfig: <any>[],
@@ -193,12 +195,14 @@ export default {
       this.$emit('close')
     },
     saveChanges() {
+      this.loading = true
       this.client.config = updateConfigs(JSON.stringify(this.clientConfig), this.client.name)
       this.client.links = JSON.stringify([
                             ...this.links,
                             ...this.extLinks.filter(l => l.uri != ''),
                             ...this.subLinks.filter(l => l.uri != '')])
       this.$emit('save', this.client, this.clientStats)
+      this.loading = false
     },
     setDate(newDate:number){
       this.client.expiry = newDate
