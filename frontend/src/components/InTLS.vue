@@ -149,7 +149,6 @@ export default {
       ],
       tlsVersions: [ '1.0', '1.1', '1.2', '1.3' ],
       cipher_suites: [
-        { title: "Automatic", value: "" },
         { title: "RSA-AES128-CBC-SHA", value: "TLS_RSA_WITH_AES_128_CBC_SHA" },
         { title: "RSA-AES256-CBC-SHA", value: "TLS_RSA_WITH_AES_256_CBC_SHA" },
         { title: "RSA-AES128-GCM-SHA256", value: "TLS_RSA_WITH_AES_128_GCM_SHA256" },
