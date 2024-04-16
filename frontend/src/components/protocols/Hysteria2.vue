@@ -73,11 +73,11 @@ export default {
   computed: {
     down_mbps: {
       get() { return this.hysteria2.down_mbps ? this.hysteria2.down_mbps : 0 },
-      set(newValue:any) { this.hysteria2.down_mbps = newValue.length == 0 ?  undefined : this.hysteria2.down_mbps }
+      set(newValue:number) { this.hysteria2.down_mbps = newValue?? undefined }
     },
     up_mbps: {
       get() { return this.hysteria2.up_mbps ? this.hysteria2.up_mbps : 0 },
-      set(newValue:any) { this.hysteria2.up_mbps = newValue.length == 0 ?  undefined : this.hysteria2.up_mbps }
+      set(newValue:number) { this.hysteria2.up_mbps = newValue?? undefined }
     },
     optionObfs: {
       get(): boolean { return this.hysteria2.obfs != undefined },
