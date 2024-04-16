@@ -99,18 +99,18 @@ export default {
 <style>
 .vpd-addon-list,
 .vpd-addon-list-item {
-  background-color: rgb(var(--v-theme-background));
-  border-color: rgb(var(--v-theme-background));
+  background-color: rgb(var(--v-theme-background)) !important;
+  border-color: rgb(var(--v-theme-background)) !important;
 }
 .vpd-content {
-  background-color: rgb(var(--v-theme-background));
+  background-color: rgb(var(--v-theme-background)) !important;
 }
 .vpd-addon-list-item.vpd-selected,
 .vpd-addon-list-item:hover {
-  background-color: rgb(var(--v-theme-primary));
+  background-color: rgb(var(--v-theme-primary)) !important;
 }
 .vpd-close-addon {
-  color: rgb(var(--v-theme-on-surface));
+  color: rgb(var(--v-theme-on-surface)) !important;
   background-color: transparent;
 }
 .vpd-controls {
