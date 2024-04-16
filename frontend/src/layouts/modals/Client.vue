@@ -210,7 +210,7 @@ export default {
   },
   computed: {
     clientInbounds: {
-      get() { return this.client.inbounds == "" ? [] : this.client.inbounds.split(',') },
+      get() { return this.client.inbounds == "" ? [] : this.client.inbounds.split(',').filter(i => this.inboundTags.includes(i)) },
       set(newValue:string[]) { this.client.inbounds = newValue.length == 0 ?  "" : newValue.join(',') }
     },
     expDate: {
