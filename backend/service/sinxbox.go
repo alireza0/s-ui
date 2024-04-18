@@ -26,7 +26,10 @@ func (s *SingBoxService) GetStats() error {
 }
 
 func (s *SingBoxService) GetSysStats() (*map[string]interface{}, error) {
-	s.V2rayAPI.Init(ApiAddr)
+	err := s.V2rayAPI.Init(ApiAddr)
+	if err != nil {
+		return nil, err
+	}
 	defer s.V2rayAPI.Close()
 	resp, err := s.V2rayAPI.GetSysStats()
 	if err != nil {

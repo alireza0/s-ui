@@ -1,0 +1,47 @@
+---
+version: "3"
+
+services:
+  s-ui:
+    image: alireza7/s-ui
+    container_name: s-ui
+    hostname: "S-UI docker"
+    volumes:
+      - "singbox:/app/bin"
+      - "$PWD/db:/app/db"
+      - "$PWD/cert:/app/cert"
+    environment:
+      SINGBOX_API: "sing-box:1080"
+      SUI_DB_FOLDER: "db"
+    tty: true
+    restart: unless-stopped
+    ports:
+      - "2095:2095"
+      - "2096:2096"
+    networks:
+      - s-ui
+    entrypoint: "./sui"
+
+  sing-box:
+    image: alireza7/s-ui-singbox
+    container_name: sing-box
+    volumes:
+      - "singbox:/app/"
+      - "$PWD/cert:/cert"
+    networks:
+      - s-ui
+    ports:
+      - "443:443"
+      - "1443:1443"
+      - "2443:2443"
+      - "3443:3443"
+    restart: unless-stopped
+    depends_on:
+      - s-ui
+
+networks:
+  s-ui:
+    driver: bridge
+
+volumes:
+  singbox:

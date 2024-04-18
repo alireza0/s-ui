@@ -1,8 +1,5 @@
-name: Docker Image CI
+name: Sing-box Docker Image CI
 on:
-  push:
-    tags:
-      - "*"
   workflow_dispatch:
 
 jobs:
@@ -11,18 +8,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Get latest release
+      id: get_release
+      run: |
+        latest_release=$(curl -Ls "https://api.github.com/repos/sagernet/sing-box/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+        echo "latest_release: $latest_release"
+        echo "latest_release=$latest_release" >> $GITHUB_OUTPUT
    
     - name: Docker meta
       id: meta
       uses: docker/metadata-action@v5
       with:
         images: |
-          alireza7/s-ui
-          ghcr.io/alireza0/s-ui
+          alireza7/s-ui-singbox
+          ghcr.io/alireza0/s-ui-singbox
         tags: |
-          type=ref,event=branch
-          type=ref,event=tag
-          type=pep440,pattern={{version}}
+          type=sha
+          type=pep440,pattern=${{ steps.get_release.outputs.latest_release }}
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -46,8 +49,9 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
-        context: .
+        context: core/
         push: true
+        build-args: SINGBOX_VER=${{ steps.get_release.outputs.latest_release }}
         platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/386
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}

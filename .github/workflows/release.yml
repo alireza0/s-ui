@@ -31,6 +31,7 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+          
       - name: Install dependencies
         run: |
           sudo apt-get update && sudo apt-get install upx -yq
@@ -70,13 +71,18 @@ jobs:
           #### Build Sing-Box
           git clone -b v1.8.7 https://github.com/SagerNet/sing-box
           cd sing-box
-          go build -v -gcflags=all="-l -B -C" -mod=mod -trimpath -ldflags "-s -w -buildid= -extldflags '-static'" -a -tags='netgo osusergo static_build with_v2ray_api with_clash_api with_grpc with_quic with_ech' -o sing-box ./cmd/sing-box
+          go build -v -gcflags=all="-l -B -C" -mod=mod -trimpath \
+          -ldflags "-s -w -buildid= -extldflags '-static'" -a \
+          -tags='netgo osusergo static_build with_quic with_grpc with_wireguard with_ech with_utls with_reality_server with_acme with_v2ray_api with_clash_api with_gvisor' \
+          -o sing-box ./cmd/sing-box
           upx --ultra-brute -9 -v --lzma --best --force sing-box
           cd ..
 
           ### Build s-ui
           cd backend
-          go build -v -gcflags=all="-l -B -C" -mod=mod -trimpath -ldflags "-s -w -buildid= -extldflags '-static'" -a -tags='netgo osusergo static_build sqlite_omit_load_extension' -o ../sui main.go
+          go build -v -gcflags=all="-l -B -C" -mod=mod -trimpath \
+          -ldflags "-s -w -buildid= -extldflags '-static'" -a -tags='netgo osusergo static_build sqlite_omit_load_extension' \
+          -o ../sui main.go
           cd ..
           upx --ultra-brute -9 -v --lzma --best --force sui
 
@@ -86,7 +92,7 @@ jobs:
           cp sing-box.service s-ui/
           mkdir s-ui/bin
           cp sing-box/sing-box s-ui/bin/
-          cp runSingbox.sh s-ui/bin/
+          cp core/runSingbox.sh s-ui/bin/
 
       - name: Package
         run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui

@@ -1,9 +1,9 @@
-FROM node:alpine as front-builder
+FROM --platform=$BUILDPLATFORM node:alpine as front-builder
 WORKDIR /app
 COPY frontend/ ./
 RUN npm install && npm run build
 
-FROM golang:1.22-alpine AS backend-builder
+FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS backend-builder
 WORKDIR /app
 ARG TARGETARCH
 ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
@@ -13,7 +13,7 @@ COPY backend/ ./
 COPY --from=front-builder  /app/dist/ /app/web/html/
 RUN go build -o sui main.go
 
-FROM alpine
+FROM --platform=$BUILDPLATFORM alpine
 LABEL org.opencontainers.image.authors="alireza7@gmail.com"
 ENV TZ=Asia/Tehran
 WORKDIR /app
