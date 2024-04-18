@@ -2,7 +2,8 @@
 **An Advanced Web Panel • Built on SagerNet/Sing-Box**
 
 ![](https://img.shields.io/github/v/release/alireza0/s-ui.svg)
-![](https://img.shields.io/docker/pulls/alireza7/s-ui.svg)
+![S-UI Docker pull](https://img.shields.io/docker/pulls/alireza7/s-ui.svg)
+![S-UI-Singbox Docker pull](https://img.shields.io/docker/pulls/alireza7/s-ui-singbox.svg)
 [![Downloads](https://img.shields.io/github/downloads/alireza0/s-ui/total.svg)](https://img.shields.io/github/downloads/alireza0/s-ui/total.svg)
 [![License](https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -75,10 +76,20 @@ curl -fsSL https://get.docker.com | sh
 
 **Step 2:** Install S-UI
 
+> Docker compose method
+
+```shell
+mkdir s-ui && cd s-ui
+wget -q https://raw.githubusercontent.com/alireza0/s-ui/main/docker-compose.yml
+docker compose up -d
+```
+
+> Use docker for s-ui only
+
 ```shell
 mkdir s-ui && cd s-ui
 docker run -itd \
-    -p 2095:2095 -p 443:443 -p 80:80 \
+    -p 2095:2095 -p 2096:2096 -p 443:443 -p 80:80 \
     -v $PWD/db/:/usr/local/s-ui/db/ \
     -v $PWD/cert/:/root/cert/ \
     --name s-ui --restart=unless-stopped \
@@ -97,6 +108,7 @@ docker build -t s-ui .
 
 - English
 - Farsi
+- Vietnamese
 - Chinese (Simplified)
 - Chinese (Traditional)
 
