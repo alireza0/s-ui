@@ -89,12 +89,12 @@ func (s *ServerService) GetNetInfo() map[string]interface{} {
 
 func (s *ServerService) GetSingboxInfo() map[string]interface{} {
 	info := make(map[string]interface{}, 0)
-	if s.SingBoxService.IsRunning() {
+	sysStats, err := s.SingBoxService.GetSysStats()
+	if err == nil {
 		info["running"] = true
-		sysStats, _ := s.SingBoxService.GetSysStats()
 		info["stats"] = sysStats
 	} else {
-		info["running"] = false
+		info["running"] = s.SingBoxService.IsRunning()
 	}
 	return info
 }

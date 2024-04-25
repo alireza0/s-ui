@@ -69,6 +69,10 @@ func GetDBPath() string {
 }
 
 func GetDefaultConfig() string {
+	apiEnv := GetEnvApi()
+	if len(apiEnv) > 0 {
+		return strings.Replace(defaultConfig, "127.0.0.1:1080", apiEnv, 1)
+	}
 	return defaultConfig
 }
 

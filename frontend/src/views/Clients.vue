@@ -45,10 +45,10 @@
           <v-row>
             <v-col>{{ $t('pages.inbounds') }}</v-col>
             <v-col dir="ltr">
-              <v-tooltip activator="parent" dir="ltr" location="bottom">
+              <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="item.inbounds != ''">
                 <span v-for="i in item.inbounds.split(',')">{{ i }}<br /></span>
               </v-tooltip>
-              {{ item.inbounds.split(',').length }}
+              {{ item.inbounds != '' ? item.inbounds.split(',').length : 0 }}
             </v-col>
           </v-row>
           <v-row>

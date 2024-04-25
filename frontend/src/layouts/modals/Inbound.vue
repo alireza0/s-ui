@@ -48,6 +48,7 @@
         <v-btn
           color="blue-darken-1"
           variant="text"
+          :loading="loading"
           @click="saveChanges"
         >
           {{ $t('actions.save') }}
@@ -81,6 +82,7 @@ export default {
         return {
             inbound: createInbound("direct",{ "tag": "" }),
             title: "add",
+            loading: false,
             inTypes: InTypes,
             inboundStats: false,
             HasOptionalUser: [InTypes.Mixed,InTypes.SOCKS,InTypes.HTTP,InTypes.Shadowsocks],
@@ -109,7 +111,9 @@ export default {
         this.$emit('close')
       },
       saveChanges() {
+        this.loading = true
         this.$emit('save', this.inbound, this.inboundStats)
+        this.loading = false
       },
     },
     watch: {
