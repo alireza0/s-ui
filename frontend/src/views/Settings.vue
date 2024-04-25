@@ -52,6 +52,16 @@
               type="number"
               v-model.number="sessionMaxAge"
               :label="$t('setting.sessionAge')"
+              :suffix="$t('date.h')"
+              hide-details
+              ></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field
+              type="number"
+              v-model.number="trafficAge"
+              :label="$t('setting.trafficAge')"
+              :suffix="$t('date.d')"
               hide-details
               ></v-text-field>
           </v-col>
@@ -152,6 +162,7 @@ const settings = ref({
   webPath: "/app/",
   webURI: "",
 	sessionMaxAge: "0",
+  trafficAge: "30",
 	timeLocation: "Asia/Tehran",
   subListen: "",
 	subPort: "2096",
@@ -244,6 +255,11 @@ const webPort = computed({
 const sessionMaxAge = computed({
   get: () => { return parseInt(settings.value.sessionMaxAge) },
   set: (v:number) => { settings.value.sessionMaxAge = v.toString() }
+})
+
+const trafficAge = computed({
+  get: () => { return parseInt(settings.value.trafficAge) },
+  set: (v:number) => { settings.value.trafficAge = v.toString() }
 })
 
 const subPort = computed({

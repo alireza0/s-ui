@@ -102,6 +102,7 @@ export default {
     sslCert: "SSL Certificate Path",
     webUri: "Panel URI",
     sessionAge: "Session Maximum Age",
+    trafficAge: "Traffic Maximum Age",
     timeLoc: "Timezone Location",
     subEncode: "Enable Encoding",
     subInfo: "Enable Client Info",

@@ -102,6 +102,7 @@ export default {
     sslCert: "SSL 证书 (cert) 路径",
     webUri: "面板 URI",
     sessionAge: "会话最大连接数",
+    trafficAge: "流量最大年龄",
     timeLoc: "时区",
     subEncode: "启用编码",
     subInfo: "启用用户信息",

@@ -102,6 +102,7 @@ export default {
     sslCert: "Đường dẫn chứng chỉ SSL",
     webUri: "URI bảng điều khiển",
     sessionAge: "Tuổi tối đa của phiên",
+    trafficAge: "Tuổi lưu thông tối đa",
     timeLoc: "Vị trí múi giờ",
     subEncode: "Kích hoạt mã hóa",
     subInfo: "Kích hoạt thông tin khách hàng",

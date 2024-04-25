@@ -24,6 +24,7 @@ var defaultValueMap = map[string]string{
 	"webPath":       "/app/",
 	"webURI":        "",
 	"sessionMaxAge": "0",
+	"trafficAge":    "30",
 	"timeLocation":  "Asia/Tehran",
 	"subListen":     "",
 	"subPort":       "2096",
@@ -202,6 +203,10 @@ func (s *SettingService) GetSecret() ([]byte, error) {
 
 func (s *SettingService) GetSessionMaxAge() (int, error) {
 	return s.getInt("sessionMaxAge")
+}
+
+func (s *SettingService) GetTrafficAge() (int, error) {
+	return s.getInt("trafficAge")
 }
 
 func (s *SettingService) GetTimeLocation() (*time.Location, error) {

@@ -14,7 +14,7 @@ func NewCronJob() *CronJob {
 	return &CronJob{}
 }
 
-func (c *CronJob) Start(loc *time.Location) error {
+func (c *CronJob) Start(loc *time.Location, trafficAge int) error {
 	c.cron = cron.New(cron.WithLocation(loc), cron.WithSeconds())
 	c.cron.Start()
 
@@ -24,7 +24,7 @@ func (c *CronJob) Start(loc *time.Location) error {
 		// Start expiry job
 		c.cron.AddJob("@every 1m", NewDepleteJob())
 		// Start deleting old stats
-		c.cron.AddJob("@daily", NewDelStatsJob())
+		c.cron.AddJob("@daily", NewDelStatsJob(trafficAge))
 	}()
 
 	return nil

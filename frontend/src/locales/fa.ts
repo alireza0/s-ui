@@ -102,6 +102,7 @@ export default {
     sslCert: "مسیر فایل گواهی",
     webUri: "آدرس نهایی پنل",
     sessionAge: "بیشینه زمان لاگین ماندن",
+    trafficAge: "بیشینه زمان ذخیره ترافیک",
     timeLoc: "منطقه زمانی",
     subEncode: "رمزگذاری",
     subInfo: "نمایش اطلاعات کاربر",
