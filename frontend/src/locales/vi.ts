@@ -111,6 +111,7 @@ export default {
   },
   client: {
     name: "Tên",
+    desc: "Mô tả",
     inboundTags: "Thẻ đầu vào",
     basics: "Cơ bản",
     config: "Cấu hình",

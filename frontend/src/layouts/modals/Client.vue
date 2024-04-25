@@ -26,6 +26,9 @@
                 <v-col cols="12" sm="6" md="4">
                   <v-text-field v-model="client.name" :label="$t('client.name')" hide-details></v-text-field>
                 </v-col>
+                <v-col cols="12" sm="6" md="4">
+                  <v-text-field v-model="client.desc" :label="$t('client.desc')" hide-details></v-text-field>
+                </v-col>
               </v-row>
               <v-row>
                 <v-col cols="12" sm="6" md="4">

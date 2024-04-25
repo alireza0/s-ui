@@ -111,6 +111,7 @@ export default {
   },
   client: {
     name: "Name",
+    desc: "Description",
     inboundTags: "Inbound Tags",
     basics: "Basics",
     config: "Config",

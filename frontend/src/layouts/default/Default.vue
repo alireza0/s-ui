@@ -30,5 +30,7 @@ const isMobile = computed( ():boolean =>{
 .v-card-subtitle {
   text-align: center;
   border-bottom: 1px solid gray;
+  min-height: 20px;
+  margin-top: -20px;
 }
 </style>

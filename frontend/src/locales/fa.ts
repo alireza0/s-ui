@@ -111,6 +111,7 @@ export default {
   },
   client: {
     name: "نام",
+    desc: "شرح",
     inboundTags: "برچسب‌های ورودی",
     basics: "پایه",
     config: "تنظیم",

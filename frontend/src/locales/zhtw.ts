@@ -111,6 +111,7 @@ export default {
   },
   client: {
     name: "名稱",
+    desc: "描述",
     inboundTags: "入站標簽",
     basics: "基礎",
     config: "配置",
