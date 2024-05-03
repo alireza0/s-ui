@@ -11,6 +11,7 @@ export interface Client {
 	expiry: number
   up: number
   down: number
+  desc: string
 }
 
 const defaultClient: Client = {
@@ -23,6 +24,7 @@ const defaultClient: Client = {
   expiry: 0,
   up: 0,
   down: 0,
+  desc: "",
 }
 
 type Config = {

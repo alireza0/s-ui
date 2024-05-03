@@ -7,14 +7,17 @@ import (
 
 type DelStatsJob struct {
 	service.StatsService
+	trafficAge int
 }
 
-func NewDelStatsJob() *DelStatsJob {
-	return &DelStatsJob{}
+func NewDelStatsJob(ta int) *DelStatsJob {
+	return &DelStatsJob{
+		trafficAge: ta,
+	}
 }
 
 func (s *DelStatsJob) Run() {
-	err := s.StatsService.DelOldStats(30)
+	err := s.StatsService.DelOldStats(s.trafficAge)
 	if err != nil {
 		logger.Warning("Deleting old statistics failed: ", err)
 		return

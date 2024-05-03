@@ -126,10 +126,3 @@ export default {
     components: { Listen, InTls, Hysteria2, Naive, Direct, Shadowsocks, Users, Hysteria, ShadowTls, TProxy, InMulitiplex, Tuic, Transport }
 }
 </script>
-
-<style>
-.v-card-subtitle {
-  text-align: center;
-  border-bottom: 1px solid gray;
-}
-</style>

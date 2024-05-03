@@ -102,6 +102,7 @@ export default {
     sslCert: "SSL Certificate Path",
     webUri: "Panel URI",
     sessionAge: "Session Maximum Age",
+    trafficAge: "Traffic Maximum Age",
     timeLoc: "Timezone Location",
     subEncode: "Enable Encoding",
     subInfo: "Enable Client Info",
@@ -111,6 +112,7 @@ export default {
   },
   client: {
     name: "Name",
+    desc: "Description",
     inboundTags: "Inbound Tags",
     basics: "Basics",
     config: "Config",

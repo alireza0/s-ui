@@ -40,7 +40,11 @@
             </v-col>
           </v-row>
         </v-card-title>
-        <v-divider></v-divider>
+        <v-card-subtitle>
+          <v-row>
+            <v-col>{{ item.desc }}</v-col>
+          </v-row>
+        </v-card-subtitle>
         <v-card-text>
           <v-row>
             <v-col>{{ $t('pages.inbounds') }}</v-col>

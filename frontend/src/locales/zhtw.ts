@@ -102,6 +102,7 @@ export default {
     sslCert: "SSL 證書 (cert) 路徑",
     webUri: "面板 URI",
     sessionAge: "會話最大連接數",
+    trafficAge: "流量最大年齡",
     timeLoc: "時區",
     subEncode: "啟用編碼",
     subInfo: "啟用用戶信息",
@@ -111,6 +112,7 @@ export default {
   },
   client: {
     name: "名稱",
+    desc: "描述",
     inboundTags: "入站標簽",
     basics: "基礎",
     config: "配置",
