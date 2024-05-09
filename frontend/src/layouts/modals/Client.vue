@@ -226,8 +226,9 @@ export default {
     }
   },
   watch: {
-      visible(newValue) { if (newValue) {
-          this.updateData()
+    visible(newValue) {
+      if (newValue) {
+        this.updateData()
       }
     },
   },

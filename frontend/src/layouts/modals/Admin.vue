@@ -87,7 +87,8 @@ export default {
     },
   },
   watch: {
-      visible(newValue) { if (newValue) {
+    visible(newValue) {
+      if (newValue) {
         this.resetData()
       }
     },

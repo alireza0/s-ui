@@ -43,7 +43,6 @@ export default {
   },
   methods: {
     copyToClipboard(txt:string) {
-
       const clipboard = new Clipboard('.clipboard-btn', {
         text: () => txt
       });
