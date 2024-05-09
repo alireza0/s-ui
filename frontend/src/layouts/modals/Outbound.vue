@@ -35,7 +35,7 @@
             type="number"
             min="0"
             hide-details
-            v-model="outbound.server_port">
+            v-model.number="outbound.server_port">
             </v-text-field>
           </v-col>
         </v-row>
@@ -61,6 +61,7 @@
         <Multiplex v-if="Object.hasOwn(outbound,'multiplex')" direction="out" :data="outbound" />
         <Dial v-if="!NoDial.includes(outbound.type)" :dial="outbound" />
         <v-switch v-model="outboundStats" color="primary" :label="$t('stats.enable')" hide-details></v-switch>
+        <pre>{{ outbound }}</pre>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
