@@ -28,7 +28,7 @@ import WebSocket from './transports/WebSocket.vue'
 import GRPC from './transports/gRPC.vue'
 import HttpUpgrade from './transports/HttpUpgrade.vue'
 export default {
-  props: ['inbound'],
+  props: ['data'],
   data() {
     return {
       trspTypes: TrspTypes
@@ -36,15 +36,15 @@ export default {
   },
   computed: {
     Transport() {
-      return <Transport>this.$props.inbound.transport
+      return <Transport>this.$props.data.transport
     },
     tpEnable: {
-      get() { return Object.hasOwn(this.$props.inbound.transport, 'type') },
-      set(newValue: boolean) { this.$props.inbound.transport = newValue ? { type: 'http' } : {} }
+      get() { return Object.hasOwn(this.$props.data.transport, 'type') },
+      set(newValue: boolean) { this.$props.data.transport = newValue ? { type: 'http' } : {} }
     },
     transportType: {
       get() { return this.Transport.type },
-      set(newValue: string) { this.$props.inbound.transport = { type: newValue } }
+      set(newValue: string) { this.$props.data.transport = { type: newValue } }
     }
   },
   components: { Http, WebSocket, GRPC, HttpUpgrade }

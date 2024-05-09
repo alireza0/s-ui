@@ -40,7 +40,7 @@
             </v-col>
           </v-row>
         </v-card-title>
-        <v-card-subtitle>
+        <v-card-subtitle style="margin-top: -20px;">
           <v-row>
             <v-col>{{ item.desc }}</v-col>
           </v-row>

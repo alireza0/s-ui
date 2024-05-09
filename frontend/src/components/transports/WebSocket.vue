@@ -33,10 +33,12 @@
       </v-text-field>
     </v-col>
   </v-row>
+  <Headers :data="transport" />
 </template>
 
 <script lang="ts">
 import { WebSocket } from '../../types/transport'
+import Headers from '../Headers.vue'
 export default {
   props: ['transport'],
   data() {
@@ -61,6 +63,7 @@ export default {
   mounted() {
     this.WS.early_data_header_name ??= 'Sec-WebSocket-Protocol'
     this.WS.path ??= '/'
-  }
+  },
+  components: { Headers }
 }
 </script>

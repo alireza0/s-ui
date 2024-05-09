@@ -1,8 +1,11 @@
 <template>
-  <v-card subtitle="Naive">
+  <v-card subtitle="Trojan">
     <v-row>
       <v-col cols="12" sm="6" md="4">
-        <Network :data="inbound" />
+        <v-text-field v-model="data.password" label="Password" hide-details></v-text-field>
+      </v-col>
+      <v-col cols="12" sm="6" md="4">
+        <Network :data="data" />
       </v-col>
     </v-row>
   </v-card>
@@ -12,10 +15,9 @@
 import Network from '@/components/Network.vue'
 
 export default {
-  props: ['inbound'],
+  props: ['data'],
   data() {
-    return {
-    }
+    return {}
   },
   components: { Network }
 }

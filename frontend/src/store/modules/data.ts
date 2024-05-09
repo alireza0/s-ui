@@ -51,6 +51,15 @@ const Data = defineStore('Data', {
         this.loadData()
       }
     },
+    async delOutbound(index: number) {
+      const diff = {
+        config: JSON.stringify([{key: "outbounds", action: "del", index: index, obj: null}]),
+      }
+      const msg = await HttpUtils.post('api/save',diff)
+      if(msg.success) {
+        this.loadData()
+      }
+    },
     async delClient(id: number) {
       const diff = {
         config: JSON.stringify(FindDiff.Config(this.config,this.oldData.config)),

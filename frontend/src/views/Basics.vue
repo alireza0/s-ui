@@ -117,7 +117,7 @@
               hide-details
               type="number"
               clearable
-              @click:clear="delete appConfig.ntp.server_port"
+              @click:clear="delete appConfig.ntp?.server_port"
               label="Server Port"
             ></v-text-field>
           </v-col>

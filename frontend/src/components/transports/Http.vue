@@ -44,10 +44,12 @@
       </v-text-field>
     </v-col>
   </v-row>
+  <Headers :data="transport" />
 </template>
 
 <script lang="ts">
 import { HTTP } from '../../types/transport'
+import Headers from '../Headers.vue'
 export default {
   props: ['transport'],
   data() {
@@ -70,6 +72,7 @@ export default {
       get() { return this.Http.ping_timeout ? parseInt(this.Http.ping_timeout.replace('s','')) : '' },
       set(newValue:number) { this.$props.transport.ping_timeout = newValue ? newValue + 's' : '' }
     }
-  }
+  },
+  components: { Headers }
 }
 </script>

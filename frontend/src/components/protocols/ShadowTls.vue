@@ -92,62 +92,62 @@ import { ShadowTLS } from '@/types/inbounds'
 import Dial from '../Dial.vue'
 
 export default {
-    props: ['inbound'],
-    data() {
-        return {
-          handshake_server: ''
+  props: ['inbound'],
+  data() {
+    return {
+      handshake_server: ''
+    }
+  },
+  methods: {
+    addHandshakeServer() {
+      this.inbound.handshake_for_server_name[this.handshake_server] = {}
+      // Clear the input field after adding the server
+      this.handshake_server = ''
+    }
+  },
+  mounted() {
+    this.version = this.Inbound.version
+  },
+  computed: {
+    version: {
+      get() { this.version = this.Inbound.version; return this.Inbound.version; },
+      set(newValue: any) {
+        switch (newValue) {
+        case 1:
+          this.Inbound.password = undefined
+          this.Inbound.users = undefined
+          this.Inbound.handshake_for_server_name = undefined
+          break;
+        case 2:
+          if (!this.Inbound.password) {
+            this.Inbound.password = ""
+          }
+          this.Inbound.users = undefined
+          if (!this.Inbound.handshake_for_server_name) {
+            this.Inbound.handshake_for_server_name = {}
+          }
+          break;
+        case 3:
+          this.Inbound.password = undefined
+          if (Object.hasOwn(this.Inbound, 'users')) {
+            this.Inbound.users = []
+          }
+          if (!this.Inbound.handshake_for_server_name) {
+            this.Inbound.handshake_for_server_name = {}
+          }
+          break;
         }
-    },
-    methods: {
-      addHandshakeServer() {
-        this.inbound.handshake_for_server_name[this.handshake_server] = {}
-        // Clear the input field after adding the server
-        this.handshake_server = ''
+        this.Inbound.version = newValue;
       }
     },
-    mounted() {
-      this.version = this.Inbound.version
+    Inbound(): ShadowTLS {
+      return <ShadowTLS>this.$props.inbound;
     },
-    computed: {
-        version: {
-            get() { this.version = this.Inbound.version; return this.Inbound.version; },
-            set(newValue: any) {
-                switch (newValue) {
-                    case 1:
-                        this.Inbound.password = undefined
-                        this.Inbound.users = undefined
-                        this.Inbound.handshake_for_server_name = undefined
-                        break;
-                    case 2:
-                        if (!this.Inbound.password) {
-                            this.Inbound.password = ""
-                        }
-                        this.Inbound.users = undefined
-                        if (!this.Inbound.handshake_for_server_name) {
-                          this.Inbound.handshake_for_server_name = {}
-                        }
-                        break;
-                    case 3:
-                        this.Inbound.password = undefined
-                        if (Object.hasOwn(this.Inbound, 'users')) {
-                            this.Inbound.users = []
-                        }
-                        if (!this.Inbound.handshake_for_server_name) {
-                          this.Inbound.handshake_for_server_name = {}
-                        }
-                        break;
-                }
-                this.Inbound.version = newValue;
-            }
-        },
-        Inbound(): ShadowTLS {
-            return <ShadowTLS>this.$props.inbound;
-        },
-        server_port: {
-            get() { return this.Inbound.handshake.server_port ? this.Inbound.handshake.server_port : 443; },
-            set(newValue: any) { this.Inbound.handshake.server_port = newValue.length == 0 || newValue == 0 ? 443 : parseInt(newValue); }
-        },
+    server_port: {
+      get() { return this.Inbound.handshake.server_port ? this.Inbound.handshake.server_port : 443; },
+      set(newValue: any) { this.Inbound.handshake.server_port = newValue.length == 0 || newValue == 0 ? 443 : parseInt(newValue); }
     },
-    components: { Dial }
+  },
+  components: { Dial }
 }
 </script>

@@ -146,6 +146,8 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 			case "outbounds":
 				if change.Action == "edit" {
 					newConfig.Outbounds[change.Index] = rawObject
+				} else if change.Action == "del" {
+					newConfig.Outbounds = append(newConfig.Outbounds[:change.Index], newConfig.Outbounds[change.Index+1:]...)
 				} else {
 					newConfig.Outbounds = append(newConfig.Outbounds, rawObject)
 				}

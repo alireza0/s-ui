@@ -9,7 +9,7 @@
 
 <script lang="ts">
 export default {
-  props: ['inbound'],
+  props: ['data'],
   data() {
     return {
       networks: [
@@ -21,8 +21,8 @@ export default {
   },
   computed: {
     Network: {
-      get():string { return this.$props.inbound.network?? '' },
-      set(v:string) { this.$props.inbound.network = v != '' ? v : undefined }
+      get():string { return this.$props.data.network?? '' },
+      set(v:string) { this.$props.data.network = v != '' ? v : undefined }
     }
   }
 }

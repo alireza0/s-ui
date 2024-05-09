@@ -9,7 +9,7 @@
   <v-row>
     <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>users" :key="item.id">
       <v-card rounded="xl" elevation="5" min-width="200" :title="item.username">
-        <v-card-subtitle>
+        <v-card-subtitle style="margin-top: -20px;">
           Last Login
         </v-card-subtitle>
         <v-card-text>
