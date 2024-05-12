@@ -2,10 +2,24 @@
   <v-card subtitle="Selector">
     <v-row>
       <v-col cols="12" sm="6">
-        <v-text-field v-model="outbounds" label="Outbounds(comma separated)" hide-details></v-text-field>
+        <v-combobox
+          v-model="data.outbounds"
+          :items="tags"
+          :label="$t('pages.outbounds')"
+          multiple
+          @update:model-value="updateDefault"
+          chips
+          hide-details
+        ></v-combobox>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-text-field v-model="data.default" label="Default" hide-details></v-text-field>
+        <v-combobox
+          v-model="data.default"
+          :items="data.outbounds"
+          label="Default"
+          clearable
+          hide-details
+        ></v-combobox>
       </v-col>
       <v-col cols="12" sm="6">
         <v-switch v-model="data.interrupt_exist_connections" color="primary" label="Interrupt exist connections" hide-details></v-switch>
@@ -17,15 +31,16 @@
 <script lang="ts">
 
 export default {
-  props: ['data'],
+  props: ['data','tags'],
   data() {
     return {}
   },
-  computed: {
-    outbounds: {
-      get() { return this.$props.data.outbounds ? this.$props.data.outbounds.join(',') : '' },
-      set(v:string) { this.$props.data.outbounds = v.length > 0 ? v.split(',') : undefined }
-    },
+  methods: {
+    updateDefault() {
+      if (!this.$props.data.outbounds?.includes(this.$props.data.default)) {
+        delete this.$props.data.default
+      }
+    }
   },
 }
 </script>

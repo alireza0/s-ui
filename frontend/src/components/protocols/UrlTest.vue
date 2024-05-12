@@ -2,12 +2,19 @@
   <v-card subtitle="URL Test">
     <v-row>
       <v-col cols="12" sm="6">
-        <v-text-field v-model="outbounds" label="Outbounds(comma separated)" hide-details></v-text-field>
+        <v-combobox
+          v-model="data.outbounds"
+          :items="tags"
+          :label="$t('pages.outbounds')"
+          multiple
+          chips
+          hide-details
+        ></v-combobox>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" v-if="optionUrl">
-        <v-text-field v-model="data.url" label="URL" hide-details></v-text-field>
+        <v-select v-model="data.url" label="URL" hide-details></v-select>
       </v-col>
     </v-row>
     <v-row>
@@ -74,7 +81,7 @@
 <script lang="ts">
 
 export default {
-  props: ['data'],
+  props: ['data', 'tags'],
   data() {
     return {
       menu: false,
@@ -108,11 +115,7 @@ export default {
     idle_timeout: {
       get() { return this.$props.data.idle_timeout ? parseInt(this.$props.data.idle_timeout.replace('m','')) : 30 },
       set(v:number) { this.$props.data.idle_timeout = v > 0 ? v + 'm' : '0m' }
-    },
-    outbounds: {
-      get() { return this.$props.data.outbounds ? this.$props.data.outbounds.join(',') : '' },
-      set(v:string) { this.$props.data.outbounds = v.length > 0 ? v.split(',') : undefined }
-    },
+    }
   },
 }
 </script>

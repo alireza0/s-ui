@@ -5,6 +5,7 @@
     :id="modal.id"
     :stats="modal.stats"
     :data="modal.data"
+    :tags="outboundTags"
     @close="closeModal"
     @save="saveModal"
   />
@@ -30,9 +31,30 @@
         </v-card-subtitle>
         <v-card-text>
           <v-row>
-            <v-col>Server</v-col>
+            <v-col>{{ $t('in.addr') }}</v-col>
             <v-col dir="ltr">
-              {{ (item.server ?? '') + ' ' + (item.server_port ?? '') }}
+              {{ item.server?? '-' }}
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>{{ $t('in.port') }}</v-col>
+            <v-col dir="ltr">
+              {{ item.server_port?? '-' }}
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>{{ $t('in.tls') }}</v-col>
+            <v-col dir="ltr">
+              {{ Object.hasOwn(item,'tls') ? $t(item.tls?.enabled ? 'enable' : 'disable') : '-'  }}
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>{{ $t('online') }}</v-col>
+            <v-col dir="ltr">
+              <template v-if="onlines[index]">
+                <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
+              </template>
+              <template v-else>-</template>
             </v-col>
           </v-row>
         </v-card-text>
@@ -81,6 +103,14 @@ const appConfig = computed((): Config => {
 
 const outbounds = computed((): Outbound[] => {
   return <Outbound[]> appConfig.value.outbounds
+})
+
+const outboundTags = computed((): string[] => {
+  return outbounds.value.map((o:Outbound) => o.tag)
+})
+
+const onlines = computed(() => {
+  return Data().onlines.outbound ? outbounds.value.map(i => Data().onlines.outbound.includes(i.tag)) : []
 })
 
 const v2rayStats = computed((): V2rayApiStats => {
