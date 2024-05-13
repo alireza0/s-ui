@@ -5,6 +5,8 @@
     :id="modal.id"
     :stats="modal.stats"
     :data="modal.data"
+    :inTags="inTags"
+    :outTags="outTags"
     @close="closeModal"
     @save="saveModal"
   />
@@ -113,6 +115,14 @@ const appConfig = computed((): Config => {
 
 const inbounds = computed((): Inbound[] => {
   return <Inbound[]> appConfig.value.inbounds
+})
+
+const inTags = computed((): string[] => {
+  return appConfig.value.inbounds.map(i => i.tag)
+})
+
+const outTags = computed((): string[] => {
+  return appConfig.value.outbounds.map(i => i.tag)
 })
 
 const clients = computed((): Client[] => {

@@ -20,10 +20,12 @@
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="optionDetour">
-        <v-text-field
-        label="Forward to Inbound tag"
+        <v-select
+        label="Detour"
         hide-details
-        v-model="inbound.detour"></v-text-field>
+        :items="inTags"
+        v-model="inbound.detour">
+        </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-switch v-model="inbound.sniff" color="primary" :label="$t('in.sniffing')" hide-details></v-switch>
@@ -106,7 +108,7 @@
 
 <script lang="ts">
 export default {
-  props: ['inbound'],
+  props: ['inbound', 'inTags'],
   data() {
     return {
       menu: false
@@ -143,7 +145,7 @@ export default {
     },
     optionDetour: {
       get(): boolean { return this.$props.inbound.detour != undefined },
-      set(v:boolean) { this.$props.inbound.detour = v ? '' : undefined }
+      set(v:boolean) { this.$props.inbound.detour = v ? this.inTags[0]?? '' : undefined }
     },
     optionDS: {
       get(): boolean { return this.$props.inbound.domain_strategy != undefined },

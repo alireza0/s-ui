@@ -132,7 +132,7 @@
             ></v-text-field>
           </v-col>
         </v-row>
-        <Dial :dial="appConfig.ntp" v-if="appConfig.ntp?.enabled" />
+        <Dial :dial="appConfig.ntp" :outTags="outboundTags" v-if="appConfig.ntp?.enabled" />
       </v-expansion-panel-text>
     </v-expansion-panel>
     <v-expansion-panel title="Routing">
@@ -349,13 +349,7 @@ const addDnsServer = () => {
 
 const routeMark = computed({
   get() { return appConfig.value.route.default_mark?? 0 },
-  set(v:number) {
-    if (v) {
-      appConfig.value.route.default_mark = v
-    } else {
-      delete appConfig.value.route.default_mark
-    }
-  }
+  set(v:number) { v>0 ? appConfig.value.route.default_mark = v : delete appConfig.value.route.default_mark }
 })
 
 const enableNtp = computed({
@@ -383,10 +377,6 @@ const enableCacheFile = computed({
 
 const enableClashApi = computed({
   get() { return appConfig.value.experimental.clash_api != undefined },
-  set(v:boolean) { 
-    if (v){
-      appConfig.value.experimental.clash_api = {}
-    } else { delete appConfig.value.experimental.clash_api  }
-  }
+  set(v:boolean) { v ? appConfig.value.experimental.clash_api = {} : delete appConfig.value.experimental.clash_api }
 })
 </script>

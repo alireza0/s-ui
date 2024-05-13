@@ -21,13 +21,13 @@
             <v-text-field v-model="inbound.tag" :label="$t('in.tag')" hide-details></v-text-field>
           </v-col>
         </v-row>
-        <Listen :inbound="inbound" />
+        <Listen :inbound="inbound" :inTags="inTags" />
         <Direct v-if="inbound.type == inTypes.Direct" direction="in" :data="inbound" />
         <Shadowsocks v-if="inbound.type == inTypes.Shadowsocks" direction="in" :data="inbound" />
         <Hysteria v-if="inbound.type == inTypes.Hysteria" direction="in" :data="inbound" />
         <Hysteria2 v-if="inbound.type == inTypes.Hysteria2" direction="in" :data="inbound" />
         <Naive v-if="inbound.type == inTypes.Naive" :inbound="inbound" />
-        <ShadowTls v-if="inbound.type == inTypes.ShadowTLS" direction="in" :data="inbound" />
+        <ShadowTls v-if="inbound.type == inTypes.ShadowTLS" direction="in" :data="inbound" :outTags="outTags" />
         <Tuic v-if="inbound.type == inTypes.TUIC" direction="in" :data="inbound" />
         <TProxy v-if="inbound.type == inTypes.TProxy" :inbound="inbound" />
         <Transport v-if="Object.hasOwn(inbound,'transport')" :data="inbound" />
@@ -76,7 +76,7 @@ import RandomUtil from '@/plugins/randomUtil'
 import Multiplex from '@/components/Multiplex.vue'
 import Transport from '@/components/Transport.vue'
 export default {
-  props: ['visible', 'data', 'id', 'stats'],
+  props: ['visible', 'data', 'id', 'stats', 'inTags', 'outTags'],
   emits: ['close', 'save'],
   data() {
     return {

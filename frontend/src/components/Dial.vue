@@ -2,10 +2,12 @@
   <v-card subtitle="Dial" style="background-color: inherit;">
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="optionDetour">
-        <v-text-field
-        label="Forward to Outbound tag"
-        hide-details
-        v-model="dial.detour"></v-text-field>
+        <v-select
+          hide-details
+          label="Forward to Outbound tag"
+          :items="outTags"
+          v-model="dial.detour">
+        </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="optionBind">
         <v-text-field
@@ -133,7 +135,7 @@
 
 <script lang="ts">
 export default {
-  props: ['dial'],
+  props: ['dial', 'outTags'],
   data() {
     return {
       menu: false
@@ -154,7 +156,7 @@ export default {
     },
     optionDetour: {
       get(): boolean { return this.$props.dial.detour != undefined },
-      set(v:boolean) { v ? this.$props.dial.detour = '' : delete this.$props.dial.detour }
+      set(v:boolean) { v ? this.$props.dial.detour = this.outTags[0]?? '' : delete this.$props.dial.detour }
     },
     optionBind: {
       get(): boolean { return this.$props.dial.bind_interface != undefined },

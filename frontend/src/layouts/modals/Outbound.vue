@@ -59,7 +59,7 @@
         <Transport v-if="Object.hasOwn(outbound,'transport')" :data="outbound" />
         <OutTLS v-if="Object.hasOwn(outbound,'tls')" :outbound="outbound" />
         <Multiplex v-if="Object.hasOwn(outbound,'multiplex')" direction="out" :data="outbound" />
-        <Dial v-if="!NoDial.includes(outbound.type)" :dial="outbound" />
+        <Dial v-if="!NoDial.includes(outbound.type)" :dial="outbound" :outTags="tags" />
         <v-switch v-model="outboundStats" color="primary" :label="$t('stats.enable')" hide-details></v-switch>
       </v-card-text>
       <v-card-actions>

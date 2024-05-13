@@ -9,11 +9,11 @@
           v-model="version">
         </v-select>
       </v-col>
-      <v-col cols="12" sm="6" md="4" v-if="inbound.password != undefined">
+      <v-col cols="12" sm="6" md="4" v-if="data.password != undefined">
         <v-text-field
         label="Password"
         hide-details
-        v-model="inbound.password">
+        v-model="data.password">
         </v-text-field>
       </v-col>
     </v-row>
@@ -35,7 +35,7 @@
         </v-text-field>
       </v-col>
     </v-row>
-    <Dial :dial="Inbound.handshake" />
+    <Dial :dial="Inbound.handshake" :outTags="outTags" />
     <v-row v-if="Inbound.handshake_for_server_name != undefined">
       <v-col cols="12" sm="6" md="4">
         <v-text-field
@@ -82,7 +82,7 @@
           </v-text-field>
         </v-col>
       </v-row>
-      <Dial :dial="value" />
+      <Dial :dial="value" :outTags="outTags" />
     </v-card>
   </v-card>
 </template>
@@ -92,7 +92,7 @@ import { ShadowTLS } from '@/types/inbounds'
 import Dial from '../Dial.vue'
 
 export default {
-  props: ['inbound'],
+  props: ['data', 'outTags'],
   data() {
     return {
       handshake_server: ''
@@ -100,7 +100,7 @@ export default {
   },
   methods: {
     addHandshakeServer() {
-      this.inbound.handshake_for_server_name[this.handshake_server] = {}
+      this.data.handshake_for_server_name[this.handshake_server] = {}
       // Clear the input field after adding the server
       this.handshake_server = ''
     }
@@ -141,7 +141,7 @@ export default {
       }
     },
     Inbound(): ShadowTLS {
-      return <ShadowTLS>this.$props.inbound;
+      return <ShadowTLS>this.$props.data;
     },
     server_port: {
       get() { return this.Inbound.handshake.server_port ? this.Inbound.handshake.server_port : 443; },
