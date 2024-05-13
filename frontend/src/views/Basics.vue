@@ -135,6 +135,48 @@
         <Dial :dial="appConfig.ntp" v-if="appConfig.ntp?.enabled" />
       </v-expansion-panel-text>
     </v-expansion-panel>
+    <v-expansion-panel title="Routing">
+      <v-expansion-panel-text>
+        <v-row>
+          <v-col cols="12" sm="6" md="3">
+            <v-select
+              hide-details
+              label="Default outbound"
+              clearable
+              @click:clear="delete appConfig.route.final"
+              :items="outboundTags"
+              v-model="appConfig.route.final">
+            </v-select>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-text-field
+              v-model="appConfig.route.default_interface"
+              hide-details
+              clearable
+              @click:clear="delete appConfig.route.default_interface"
+              label="Default NIC"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-text-field
+              v-model.number="routeMark"
+              hide-details
+              type="number"
+              min="0"
+              label="Default routing mark"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-switch
+              v-model="appConfig.route.auto_detect_interface"
+              color="primary"
+              label="Auto bind NIC"
+              hide-details>
+            </v-switch>
+          </v-col>
+        </v-row>
+      </v-expansion-panel-text>
+    </v-expansion-panel>
     <v-expansion-panel title="Experimental">
       <v-expansion-panel-text>
         Cache File
@@ -304,6 +346,17 @@ const addDnsServer = () => {
   if (!appConfig.value.dns.servers) appConfig.value.dns.servers = []
   appConfig.value.dns.servers.push({address: 'local'})
 }
+
+const routeMark = computed({
+  get() { return appConfig.value.route.default_mark?? 0 },
+  set(v:number) {
+    if (v) {
+      appConfig.value.route.default_mark = v
+    } else {
+      delete appConfig.value.route.default_mark
+    }
+  }
+})
 
 const enableNtp = computed({
   get() { return appConfig.value.ntp?.enabled?? false },
