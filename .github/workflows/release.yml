@@ -69,7 +69,7 @@ jobs:
           fi
 
           #### Build Sing-Box
-          git clone -b v1.8.7 https://github.com/SagerNet/sing-box
+          git clone -b v1.8.13 https://github.com/SagerNet/sing-box
           cd sing-box
           go build -v -gcflags=all="-l -B -C" -mod=mod -trimpath \
           -ldflags "-s -w -buildid= -extldflags '-static'" -a \
