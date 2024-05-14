@@ -10,7 +10,6 @@
           <v-col cols="12" sm="6" md="4">
             <v-select
             hide-details
-            width="100"
             :label="$t('type')"
             :items="Object.keys(outTypes).map((key,index) => ({title: key, value: Object.values(outTypes)[index]}))"
             v-model="outbound.type"

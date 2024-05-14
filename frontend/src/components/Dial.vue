@@ -4,7 +4,7 @@
       <v-col cols="12" sm="6" md="4" v-if="optionDetour">
         <v-select
           hide-details
-          :label="$t('listen.detourText')"
+          :label="$t('dial.detourText')"
           :items="outTags"
           v-model="dial.detour">
         </v-select>
@@ -69,9 +69,6 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
             hide-details
-            clearable
-            @click:clear="delete dial.domain_strategy"
-            width="100"
             :label="$t('listen.domainStrategy')"
             :items="['prefer_ipv4','prefer_ipv6','ipv4_only','ipv6_only']"
             v-model="dial.domain_strategy">

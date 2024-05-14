@@ -234,6 +234,7 @@ export default {
     connTimeout: "连接超时",
     fbTimeout: "回退超时",
     options: "拨号选项",
+    detourText: "转发至出站",
   },
   transport: {
     enable: "启用传输",

@@ -232,6 +232,7 @@ export default {
     connTimeout: "مهلت ارتباط",
     fbTimeout: "مهلت فالبک",
     options: "گزینه‌های تماس",
+    detourText: "ارسال به خروجی دیگر",
   },
   transport: {
     enable: "فعال‌سازی انتقال",

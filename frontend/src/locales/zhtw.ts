@@ -235,6 +235,7 @@ export default {
     connTimeout: "連接超時",
     fbTimeout: "回退超時",
     options: "撥號選項",
+    detourText: "轉寄至出站",
   },
   transport: {
     enable: "啟用傳輸",

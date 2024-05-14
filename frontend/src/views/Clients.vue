@@ -152,12 +152,12 @@ const v2rayStats = computed((): V2rayApiStats => {
 })
 
 const inbounds = computed((): Inbound[] => {
-  return <Inbound[]> appConfig.value.inbounds
+  return <Inbound[]> appConfig.value?.inbounds
 })
 
 const inboundTags = computed((): string[] => {
   if (!inbounds.value) return []
-  return inbounds.value.filter(i => i.tag != "" && Object.hasOwn(i,'users')).map(i => i.tag)
+  return inbounds.value?.filter(i => i.tag != "" && Object.hasOwn(i,'users')).map(i => i.tag)
 })
 
 const modal = ref({

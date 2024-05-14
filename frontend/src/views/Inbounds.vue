@@ -120,7 +120,7 @@ const inbounds = computed((): Inbound[] => {
 })
 
 const inTags = computed((): string[] => {
-  return inbounds.value.map(i => i.tag)
+  return inbounds.value?.map(i => i.tag)
 })
 
 const outTags = computed((): string[] => {
@@ -136,7 +136,7 @@ const onlines = computed(() => {
 })
 
 const v2rayStats = computed((): V2rayApiStats => {
-  return <V2rayApiStats> appConfig.value.experimental.v2ray_api.stats
+  return <V2rayApiStats> appConfig.value.experimental?.v2ray_api.stats
 })
 
 const modal = ref({

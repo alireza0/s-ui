@@ -108,7 +108,7 @@ const outbounds = computed((): Outbound[] => {
 })
 
 const outboundTags = computed((): string[] => {
-  return outbounds.value.map((o:Outbound) => o.tag)
+  return outbounds.value?.map((o:Outbound) => o.tag)
 })
 
 const onlines = computed(() => {
@@ -116,7 +116,7 @@ const onlines = computed(() => {
 })
 
 const v2rayStats = computed((): V2rayApiStats => {
-  return <V2rayApiStats> appConfig.value.experimental.v2ray_api.stats
+  return <V2rayApiStats> appConfig.value.experimental?.v2ray_api.stats
 })
 
 const modal = ref({

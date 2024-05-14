@@ -7,7 +7,6 @@
       <v-col cols="12" sm="6" md="4" v-if="tpEnable">
         <v-select
           hide-details
-          width="100"
           :label="$t('type')"
           :items="Object.keys(trspTypes).map((key,index) => ({title: key, value: Object.values(trspTypes)[index]}))"
           v-model="transportType">

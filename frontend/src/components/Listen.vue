@@ -72,7 +72,6 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
             hide-details
-            width="100"
             :label="$t('listen.domainStrategy')"
             :items="['prefer_ipv4','prefer_ipv6','ipv4_only','ipv6_only']"
             v-model="inbound.domain_strategy">

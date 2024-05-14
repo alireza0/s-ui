@@ -233,6 +233,7 @@ export default {
     connTimeout: "Connection Timeout",
     fbTimeout: "Fallback Timeout",
     options: "Dial Options",
+    detourText: "Forward to outbound",
   },
   transport: {
     enable: "Enable Transport",

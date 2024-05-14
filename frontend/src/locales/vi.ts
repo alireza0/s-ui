@@ -234,6 +234,7 @@ export default {
     connTimeout: "Thời gian Chờ Kết nối",
     fbTimeout: "Thời gian Chờ Fallback",
     options: "Tùy chọn Gọi",
+    detourText: "Chuyển tiếp tới thư đi",
   },
   transport: {
     enable: "Kích hoạt vận chuyển",

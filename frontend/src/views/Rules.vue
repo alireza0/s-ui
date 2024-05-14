@@ -164,7 +164,7 @@ const route = computed((): any => {
 
 const rules = computed((): any[] => {
   const data = route.value
-  if (!route || !('rules' in data) || !Array.isArray(data.rules)){
+  if (!data || !('rules' in data) || !Array.isArray(data.rules)){
     return []
   }
   return data.rules
@@ -172,7 +172,7 @@ const rules = computed((): any[] => {
 
 const rulesets = computed((): any[] => {
   const data = route.value
-  if (!route || !('rule_set' in data) || !Array.isArray(data.rule_set)){
+  if (!data || !('rule_set' in data) || !Array.isArray(data.rule_set)){
     return []
   }
   return data.rule_set
@@ -183,11 +183,11 @@ const rulesetTags = computed((): any[] => {
 })
 
 const outboundTags = computed((): string[] => {
-  return appConfig.value.outbounds.map((o:any) => o.tag)
+  return appConfig.value.outbounds?.map((o:any) => o.tag)
 })
 
 const inboundTags = computed((): string[] => {
-  return appConfig.value.inbounds.map((i:any) => i.tag)
+  return appConfig.value.inbounds?.map((i:any) => i.tag)
 })
 
 let delRuleOverlay = ref(new Array<boolean>)
