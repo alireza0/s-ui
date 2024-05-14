@@ -103,7 +103,7 @@
         </v-col>
       </v-row>
     </template>
-    <v-card-actions>
+    <v-card-actions v-if="tls.enabled">
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start" v-if="tls.enabled">
           <template v-slot:activator="{ props }">
