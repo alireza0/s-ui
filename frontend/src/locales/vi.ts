@@ -22,6 +22,9 @@ export default {
   online: "Trực tuyến",
   version: "Phiên bản",
   commaSeparated: "(được phân tách bằng dấu phẩy)",
+  error: {
+    dplData: "Dữ liệu trùng lặp",
+  },
   pages: {
     login: "Đăng nhập",
     home: "Trang chủ",

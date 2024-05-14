@@ -96,6 +96,8 @@ import Stats from '@/layouts/modals/Stats.vue'
 import { Config, V2rayApiStats } from '@/types/config';
 import { Outbound } from '@/types/outbounds';
 import { computed, ref } from 'vue'
+import Message from '@/store/modules/message';
+import { i18n } from '@/locales';
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
@@ -137,6 +139,11 @@ const closeModal = () => {
   modal.value.visible = false
 }
 const saveModal = (data:Outbound, stats: boolean) => {
+  if (outbounds.value.findIndex(c => c.tag == data.tag) != modal.value.id) {
+    const sb = Message()
+    sb.showMessage(i18n.global.t('error.dplData') + ': ' + i18n.global.t('objects.tag') ,'error', 5000)
+    return
+  }
   // New or Edit
   if (modal.value.id == -1) {
     outbounds.value.push(data)

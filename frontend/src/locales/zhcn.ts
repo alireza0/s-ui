@@ -22,6 +22,9 @@ export default {
   online: "在线",
   version: "版本",
   commaSeparated: "（逗号分隔）",
+  error: {
+    dplData: "重复数据",
+  },
   pages: {
     login: "登录",
     home: "主页",

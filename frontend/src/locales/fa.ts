@@ -22,6 +22,9 @@ export default {
   online: "آنلاین",
   version: "نسخه",
   commaSeparated: "(جداشده با کاما)",
+  error: {
+    dplData: "داده تکراری",
+  },
   pages: {
     login: "ورود",
     home: "خانه",

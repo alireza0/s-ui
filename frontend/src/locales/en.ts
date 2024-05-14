@@ -22,6 +22,9 @@ export default {
   online: "Online",
   version: "Version",
   commaSeparated: "(comma separated)",
+  error: {
+    dplData: "Duplicate Data",
+  },
   pages: {
     login: "Login",
     home: "Home",

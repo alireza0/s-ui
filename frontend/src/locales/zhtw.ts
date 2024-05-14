@@ -23,6 +23,9 @@ export default {
   online: "在線",
   version: "版本",
   commaSeparated: "（逗號分隔）",
+  error: {
+    dplData: "重複數據",
+  },
   pages: {
     login: "登錄",
     home: "主頁",

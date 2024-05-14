@@ -132,6 +132,8 @@ import { Config, V2rayApiStats } from '@/types/config'
 import { InTypes, Inbound,InboundWithUser, ShadowTLS, VLESS } from '@/types/inbounds'
 import { Link, LinkUtil } from '@/plugins/link'
 import { HumanReadable } from '@/plugins/utils'
+import Message from '@/store/modules/message'
+import { i18n } from '@/locales'
 
 const clients = computed((): any[] => {
   return Data().clients
@@ -177,6 +179,11 @@ const closeModal = () => {
   modal.value.visible = false
 }
 const saveModal = (data:any, stats:boolean) => {
+  if (clients.value.findIndex(c => c.name == data.name) != modal.value.index) {
+    const sb = Message()
+    sb.showMessage(i18n.global.t('error.dplData') + ': ' + i18n.global.t('client.name') ,'error', 5000)
+    return
+  }
   const inboundTags: string[] = data.inbounds.split(',')?? []
   let oldName:string = ""
   if(modal.value.index == -1) {
