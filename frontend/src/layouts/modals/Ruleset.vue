@@ -10,19 +10,19 @@
           <v-col cols="12" sm="6" md="4">
             <v-select
               hide-details
-              label="Type"
-              :items="['local', 'remote']"
+              :label="$t('type')"
+              :items="[{title: $t('ruleset.local'), value: 'local'},{ title: $t('ruleset.remote'), value: 'remote'}]"
               @update:model-value="updateType($event)"
               v-model="rule_set.type">
             </v-select>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field v-model="rule_set.tag" :label="$t('in.tag')" hide-details></v-text-field>
+            <v-text-field v-model="rule_set.tag" :label="$t('objects.tag')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-select
               hide-details
-              label="Format"
+              :label="$t('ruleset.format')"
               :items="['source', 'binary']"
               v-model="rule_set.format">
             </v-select>
@@ -30,7 +30,7 @@
         </v-row>
         <v-row v-if="rule_set.type == 'local'">
           <v-col cols="12">
-            <v-text-field v-model="rule_set.path" label="Path" hide-details></v-text-field>
+            <v-text-field v-model="rule_set.path" :label="$t('transport.path')" hide-details></v-text-field>
           </v-col>
         </v-row>
         <v-row v-else>
@@ -48,7 +48,7 @@
             </v-select>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field v-model.number="update_intervals" :suffix="$t('date.d')" type="number" min="0" label="Update Intervals" hide-details></v-text-field>
+            <v-text-field v-model.number="update_intervals" :suffix="$t('date.d')" type="number" min="0" :label="$t('ruleset.interval')" hide-details></v-text-field>
           </v-col>
         </v-row>
       </v-card-text>

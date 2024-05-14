@@ -44,7 +44,7 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col>{{ $t('in.tls') }}</v-col>
+            <v-col>{{ $t('objects.tls') }}</v-col>
             <v-col dir="ltr">
               {{ Object.hasOwn(item,'tls') ? $t(item.tls?.enabled ? 'enable' : 'disable') : '-'  }}
             </v-col>
@@ -118,11 +118,11 @@ const inbounds = computed((): Inbound[] => {
 })
 
 const inTags = computed((): string[] => {
-  return appConfig.value.inbounds.map(i => i.tag)
+  return inbounds.value.map(i => i.tag)
 })
 
 const outTags = computed((): string[] => {
-  return appConfig.value.outbounds.map(i => i.tag)
+  return appConfig.value.outbounds?.map(i => i.tag)
 })
 
 const clients = computed((): Client[] => {

@@ -1,5 +1,5 @@
 <template>
-    <v-card :subtitle="$t('in.transport')">
+    <v-card :subtitle="$t('objects.transport')">
     <v-row>
       <v-col cols="12" sm="6" md="4">
         <v-switch color="primary" :label="$t('transport.enable')" v-model="tpEnable" hide-details></v-switch>

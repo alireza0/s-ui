@@ -5,13 +5,13 @@
         <v-select
           hide-details
           :items="[1,2,3]"
-          label="Version"
+          :label="$t('version')"
           v-model="version">
         </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="data.password != undefined">
         <v-text-field
-        label="Password"
+        :label="$t('types.pw')"
         hide-details
         v-model="data.password">
         </v-text-field>
@@ -20,14 +20,14 @@
     <v-row>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Handshake Server"
+        :label="$t('types.shdwTls.hs')"
         hide-details
         v-model="Inbound.handshake.server">
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Server Port"
+        :label="$t('out.port')"
         type="number"
         min="0"
         hide-details
@@ -39,7 +39,7 @@
     <v-row v-if="Inbound.handshake_for_server_name != undefined">
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Add Hanshake Server"
+        :label="$t('types.shdwTls.adHS')"
         hide-details
         append-icon="mdi-plus"
         @click:append="addHandshakeServer()"
@@ -67,14 +67,14 @@
       <v-row>
         <v-col cols="12" sm="6" md="4">
           <v-text-field
-          label="Handshake Server"
+          :label="$t('types.shdwTls.hs')"
           hide-details
           v-model="value.server">
           </v-text-field>
         </v-col>
         <v-col cols="12" sm="6" md="4">
           <v-text-field
-          label="Server Port"
+          :label="$t('out.port')"
           type="number"
           min="0"
           hide-details

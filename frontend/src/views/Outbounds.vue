@@ -43,7 +43,7 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col>{{ $t('in.tls') }}</v-col>
+            <v-col>{{ $t('objects.tls') }}</v-col>
             <v-col dir="ltr">
               {{ Object.hasOwn(item,'tls') ? $t(item.tls?.enabled ? 'enable' : 'disable') : '-'  }}
             </v-col>

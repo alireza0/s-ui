@@ -10,17 +10,17 @@
     <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>users" :key="item.id">
       <v-card rounded="xl" elevation="5" min-width="200" :title="item.username">
         <v-card-subtitle style="margin-top: -20px;">
-          Last Login
+          {{ $t('admin.lastLogin') }}
         </v-card-subtitle>
         <v-card-text>
           <v-row>
-            <v-col>Date</v-col>
+            <v-col>{{ $t('admin.date') }}</v-col>
             <v-col dir="ltr">
               {{ item.lastLogin.split(" ")[0]?? '-' }}
             </v-col>
           </v-row>
           <v-row>
-            <v-col>Time</v-col>
+            <v-col>{{ $t('admin.time') }}</v-col>
             <v-col dir="ltr">
               {{ item.lastLogin.split(" ")[1]?? '-' }}
             </v-col>

@@ -2,15 +2,15 @@
   <v-card subtitle="Tor">
     <v-row>
       <v-col cols="12" sm="6" md="4">
-        <v-text-field v-model="data.executable_path" label="Executable Path" hide-details></v-text-field>
+        <v-text-field v-model="data.executable_path" :label="$t('types.tor.execPath')" hide-details></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-text-field v-model="data.data_directory" label="Data Directory" hide-details></v-text-field>
+        <v-text-field v-model="data.data_directory" :label="$t('types.tor.dataDir')" hide-details></v-text-field>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" md="4">
-        <v-text-field v-model="extra_args" label="Extra Args (comma separated)" hide-details></v-text-field>
+        <v-text-field v-model="extra_args" :label="$t('types.tor.extArgs') + ' ' + $t('commaSeparated')" hide-details></v-text-field>
       </v-col>
     </v-row>
   </v-card>

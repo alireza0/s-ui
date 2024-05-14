@@ -3,19 +3,19 @@
     <v-row>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Uplink Limit"
+        :label="$t('stats.upload')"
         hide-details
         type="number"
-        suffix="Mbps"
+        :suffix="$t('stats.Mbps')"
         v-model.number="up_mbps">
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Downlink Limit"
+        :label="$t('stats.download')"
         hide-details
         type="number"
-        suffix="Mbps"
+        :suffix="$t('stats.Mbps')"
         min="0"
         v-model.number="down_mbps">
         </v-text-field>
@@ -24,14 +24,14 @@
     <v-row>
       <v-col cols="12" sm="6" md="4">
        <v-text-field
-        label="obfs Password"
+       :label="$t('types.hy.obfs')"
         hide-details
         v-model="data.obfs">
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="direction=='out'">
         <v-text-field
-        label="Authentication String"
+        :label="$t('types.hy.auth')"
         hide-details
         v-model="data.auth_str">
         </v-text-field>
@@ -87,7 +87,7 @@
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details>Hysteria Options</v-btn>
+          <v-btn v-bind="props" hide-details>{{ $t('types.hy.hyOptions') }}</v-btn>
         </template>
         <v-card>
           <v-list>
@@ -101,7 +101,7 @@
               <v-switch v-model="optionRsvClnt" color="primary" label="Recv window client" hide-details></v-switch>
             </v-list-item>
             <v-list-item v-if="direction=='in'">
-              <v-switch v-model="optionMaxConn" color="primary" label="Max connection" hide-details></v-switch>
+              <v-switch v-model="optionMaxConn" color="primary" label="Max conn client" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>

@@ -1,5 +1,5 @@
 <template>
-  <v-card subtitle="Listen">
+  <v-card :subtitle="$t('objects.listen')">
     <v-row>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
@@ -21,28 +21,28 @@
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="optionDetour">
         <v-select
-        label="Detour"
+        :label="$t('listen.detourText')"
         hide-details
         :items="inTags"
         v-model="inbound.detour">
         </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="inbound.sniff" color="primary" :label="$t('in.sniffing')" hide-details></v-switch>
+        <v-switch v-model="inbound.sniff" color="primary" :label="$t('listen.sniffing')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-row v-if="inbound.sniff">
       <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="inbound.sniff_override_destination" color="primary" label="Override Sniffed Domain" hide-details></v-switch>
+        <v-switch v-model="inbound.sniff_override_destination" color="primary" :label="$t('listen.sniffingOverride')" hide-details></v-switch>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Sniffing Timeout"
+        :label="$t('listen.sniffingTimeout')"
         hide-details
         type="number"
         min="50"
         step="50"
-        suffix="ms"
+        :suffix="$t('date.ms')"
         v-model.number="sniffTimeout"></v-text-field>
       </v-col>
     </v-row>
@@ -64,7 +64,7 @@
         hide-details
         type="number"
         min="1"
-        suffix="Min"
+        :suffix="$t('date.m')"
         v-model.number="udpTimeout"></v-text-field>
       </v-col>
     </v-row>
@@ -73,7 +73,7 @@
         <v-select
             hide-details
             width="100"
-            label="Domain to IP Strategy"
+            :label="$t('listen.domainStrategy')"
             :items="['prefer_ipv4','prefer_ipv6','ipv4_only','ipv6_only']"
             v-model="inbound.domain_strategy">
           </v-select>
@@ -83,21 +83,21 @@
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details>Listen Options</v-btn>
+          <v-btn v-bind="props" hide-details>{{ $t('listen.options') }}</v-btn>
         </template>
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionTCP" color="primary" label="TCP Options" hide-details></v-switch>
+              <v-switch v-model="optionDetour" color="primary" :label="$t('listen.detour')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionUDP" color="primary" label="UDP Options" hide-details></v-switch>
+              <v-switch v-model="optionTCP" color="primary" :label="$t('listen.tcpOptions')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionDetour" color="primary" label="Detour" hide-details></v-switch>
+              <v-switch v-model="optionUDP" color="primary" :label="$t('listen.udpOptions')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionDS" color="primary" label="Domain Strategy" hide-details></v-switch>
+              <v-switch v-model="optionDS" color="primary" :label="$t('listen.domainStrategy')" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>

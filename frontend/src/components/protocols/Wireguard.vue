@@ -2,25 +2,25 @@
   <v-card subtitle="Wireguard">
     <v-row>
       <v-col cols="12" sm="8">
-        <v-text-field v-model="data.private_key" label="Private Key" hide-details></v-text-field>
+        <v-text-field v-model="data.private_key" :label="$t('types.wg.privKey')" hide-details></v-text-field>
       </v-col>
       <v-col cols="12" sm="8">
-        <v-text-field v-model="data.peer_public_key" label="Peer Public Key" hide-details></v-text-field>
+        <v-text-field v-model="data.peer_public_key" :label="$t('types.wg.pubKey')" hide-details></v-text-field>
       </v-col>
       <v-col cols="12" sm="8" v-if="data.pre_shared_key != undefined">
-        <v-text-field v-model="data.pre_shared_key" label="Pre-Shared Key" hide-details></v-text-field>
+        <v-text-field v-model="data.pre_shared_key" :label="$t('types.wg.psk')" hide-details></v-text-field>
       </v-col>
       <v-col cols="12" sm="8">
-        <v-text-field v-model="local_ips" label="Local IPs (comma separated)" hide-details></v-text-field>
+        <v-text-field v-model="local_ips" :label="$t('types.wg.localIp') + ' ' + $t('commaSeparated')" hide-details></v-text-field>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="data.reserved != undefined">
-        <v-text-field v-model="reserved" label="Reserved (comma separated)" hide-details></v-text-field>
+        <v-text-field v-model="reserved" :label="'Reserved ' + $t('commaSeparated')" hide-details></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="data.workers != undefined">
         <v-text-field
-          label="Workers"
+        :label="$t('types.wg.worker')"
           hide-details
           type="number"
           min=1
@@ -43,7 +43,7 @@
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="data.interface_name != undefined">
         <v-text-field
-          label="Interface Name"
+          :label="$t('types.wg.ifName')"
           hide-details
           v-model.number="data.interface_name">
         </v-text-field>
@@ -51,55 +51,55 @@
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="data.system_interface" color="primary" label="System Interface" hide-details></v-switch>
+        <v-switch v-model="data.system_interface" color="primary" :label="$t('types.wg.sysIf')" hide-details></v-switch>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="data.gso" color="primary" label="Segmentation Offload" hide-details></v-switch>
+        <v-switch v-model="data.gso" color="primary" :label="$t('types.wg.gso')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details>Wireguard Options</v-btn>
+          <v-btn v-bind="props" hide-details>{{ $t('types.wg.options') }}</v-btn>
         </template>
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionPsk" color="primary" label="Pre-shared Key" hide-details></v-switch>
+              <v-switch v-model="optionPsk" color="primary" :label="$t('types.wg.psk')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionRsrv" color="primary" label="Reserved" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionWorker" color="primary" label="Worker" hide-details></v-switch>
+              <v-switch v-model="optionWorker" color="primary" :label="$t('types.wg.worker')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionMtu" color="primary" label="MTU" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionInterface" color="primary" label="Interface Name" hide-details></v-switch>
+              <v-switch v-model="optionInterface" color="primary" :label="$t('types.wg.ifName')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionPeers" color="primary" label="Multi Peer" hide-details></v-switch>
+              <v-switch v-model="optionPeers" color="primary" :label="$t('types.wg.multiPeer')" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>
       </v-menu>
     </v-card-actions>
   </v-card>
-  <v-card subtitle="Peers" v-if="data.peers != undefined">
+  <v-card v-if="data.peers != undefined">
+    <v-card-subtitle>
+      {{ $t('types.wg.peers') }} <v-icon @click="addPeer" icon="mdi-plus" />
+    </v-card-subtitle>
     <template v-for="(p, index) in data.peers">
-      Peer {{ index+1 }} <v-icon icon="mdi-delete" @click="data.peers.splice(index,1)" />
-      <v-divider></v-divider>
-      <Peer :data="p" />
+      <v-card style="margin-top: 1rem;">
+        <v-card-subtitle>
+          {{ $t('types.wg.peer') + ' ' + (index+1) }} <v-icon icon="mdi-delete" @click="data.peers.splice(index,1)" />
+        </v-card-subtitle>
+        <Peer :data="p" />
+      </v-card>
     </template>
-    <v-card-actions class="pt-0">
-      <v-spacer></v-spacer>
-      <v-btn @click="addPeer" rounded>
-        <v-icon icon="mdi-plus" />Peer
-      </v-btn>
-    </v-card-actions>
   </v-card>
 </template>
 

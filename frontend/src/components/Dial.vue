@@ -1,17 +1,17 @@
 <template>
-  <v-card subtitle="Dial" style="background-color: inherit;">
+  <v-card :subtitle="$t('objects.dial')" style="background-color: inherit;">
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="optionDetour">
         <v-select
           hide-details
-          label="Forward to Outbound tag"
+          :label="$t('listen.detourText')"
           :items="outTags"
           v-model="dial.detour">
         </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="optionBind">
         <v-text-field
-        label="Bind to Network Interface"
+        :label="$t('dial.bindIf')"
         hide-details
         v-model="dial.bind_interface"></v-text-field>
       </v-col>
@@ -19,13 +19,13 @@
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="optionIPV4">
         <v-text-field
-        label="Bind to IPv4"
+        :label="$t('dial.bindIp4')"
         hide-details
         v-model="dial.inet4_bind_address"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="optionIPV6">
         <v-text-field
-        label="Bind to IPv6"
+        :label="$t('dial.bindIp6')"
         hide-details
         v-model="dial.inet6_bind_address"></v-text-field>
       </v-col>
@@ -40,7 +40,7 @@
         v-model.number="routingMark"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="optionRA">
-        <v-switch v-model="dial.reuse_addr" color="primary" label="Reuse listener address" hide-details></v-switch>
+        <v-switch v-model="dial.reuse_addr" color="primary" :label="$t('dial.reuseAddr')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-row v-if="optionTCP">
@@ -57,11 +57,11 @@
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="optionCT">
         <v-text-field
-        label="Connection Timeout"
+        :label="$t('dial.connTimeout')"
         hide-details
         type="number"
         min="1"
-        suffix="s"
+        :suffix="$t('date.s')"
         v-model.number="connectTimeout"></v-text-field>
       </v-col>
     </v-row>
@@ -72,19 +72,19 @@
             clearable
             @click:clear="delete dial.domain_strategy"
             width="100"
-            label="Domain to IP Strategy"
+            :label="$t('listen.domainStrategy')"
             :items="['prefer_ipv4','prefer_ipv6','ipv4_only','ipv6_only']"
             v-model="dial.domain_strategy">
           </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Fallback Timeout"
+        :label="$t('dial.fbTimeout')"
         hide-details
         type="number"
         min="50"
         step="50"
-        suffix="ms"
+        :suffix="$t('date.ms')"
         v-model.number="fallbackDelay"></v-text-field>
       </v-col>
     </v-row>
@@ -92,39 +92,39 @@
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details>Dial Options</v-btn>
+          <v-btn v-bind="props" hide-details>{{ $t('dial.options') }}</v-btn>
         </template>
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionDetour" color="primary" label="Detour" hide-details></v-switch>
+              <v-switch v-model="optionDetour" color="primary" :label="$t('listen.detour')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionBind" color="primary" label="Bind Interface" hide-details></v-switch>
+              <v-switch v-model="optionBind" color="primary" :label="$t('dial.bindIf')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionIPV4" color="primary" label="Bind to IPv4" hide-details></v-switch>
+              <v-switch v-model="optionIPV4" color="primary" :label="$t('dial.bindIp4')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionIPV6" color="primary" label="Bind to IPv6" hide-details></v-switch>
+              <v-switch v-model="optionIPV6" color="primary" :label="$t('dial.bindIp6')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionRM" color="primary" label="Routing Mark" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionRA" color="primary" label="Reuse Address" hide-details></v-switch>
+              <v-switch v-model="optionRA" color="primary" :label="$t('dial.reuseAddr')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionTCP" color="primary" label="TCP Options" hide-details></v-switch>
+              <v-switch v-model="optionTCP" color="primary" :label="$t('listen.tcpOptions')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionUDP" color="primary" label="UDP Options" hide-details></v-switch>
+              <v-switch v-model="optionUDP" color="primary" :label="$t('listen.udpOptions')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionCT" color="primary" label="Connection Timeout" hide-details></v-switch>
+              <v-switch v-model="optionCT" color="primary" :label="$t('dial.connTimeout')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionDS" color="primary" label="Domain Strategy" hide-details></v-switch>
+              <v-switch v-model="optionDS" color="primary" :label="$t('listen.domainStrategy')" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>

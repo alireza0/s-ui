@@ -10,11 +10,11 @@ export const i18n = createI18n({
   locale: localStorage.getItem("locale") ?? 'en',
   fallbackLocale: 'en',
   messages: {
-    en,
-    fa,
-    vi,
-    zhcn,
-    zhtw
+    en: en,
+    fa: fa,
+    vi: vi,
+    zhcn: zhcn,
+    zhtw: zhtw
   },
 })
 

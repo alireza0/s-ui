@@ -18,20 +18,20 @@
             </v-select>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field v-model="outbound.tag" :label="$t('in.tag')" hide-details></v-text-field>
+            <v-text-field v-model="outbound.tag" :label="$t('objects.tag')" hide-details></v-text-field>
           </v-col>
         </v-row>
         <v-row v-if="!NoServer.includes(outbound.type)">
           <v-col cols="12" sm="6" md="4">
             <v-text-field
-            label="Server Address"
+            :label="$t('out.addr')"
             hide-details
             v-model="outbound.server">
             </v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-text-field
-            label="Server Port"
+            :label="$t('out.addr')"
             type="number"
             min="0"
             hide-details

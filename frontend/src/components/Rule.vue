@@ -24,7 +24,7 @@
       <v-col cols="12" sm="6" md="4" v-if="optionIPver">
         <v-select
           hide-details
-          label="IP Version"
+          :label="$t('rule.ipVer')"
           :items="[4,6]"
           v-model.number="rule.ip_version">
         </v-select>
@@ -33,7 +33,7 @@
         <v-combobox
           v-model="rule.protocol"
           :items="['http','tls', 'quic', 'stun', 'dns']"
-          label="Protocols"
+          :label="$t('protocol')"
           multiple
           chips
           hide-details
@@ -51,36 +51,36 @@
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.domain != undefined">
         <v-text-field
-        label="Domains (comma separated)"
+        :label="$t('rule.domain') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="domain"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.domain_suffix != undefined">
         <v-text-field
-        label="Domain Suffixes (comma separated)"
+        :label="$t('rule.domainSufix') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="domain_suffix"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.domain_keyword != undefined">
         <v-text-field
-        label="Domain Keywords (comma separated)"
+        :label="$t('rule.domainKw') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="domain_keyword"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.domain_regex != undefined">
         <v-text-field
-        label="Domain Regexes (comma separated)"
+        :label="$t('rule.domainRgx') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="domain_regex"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.ip_cidr != undefined">
         <v-text-field
-        label="IP CIDRs (comma separated)"
+        :label="$t('rule.ip') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="ip_cidr"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.ip_is_private != undefined">
-        <v-switch v-model="rule.ip_is_private" color="primary" label="Private IP" hide-details></v-switch>
+        <v-switch v-model="rule.ip_is_private" color="primary" :label="$t('rule.privateIp')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-row v-if="optionPort">
@@ -94,13 +94,13 @@
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.port != undefined">
         <v-text-field
-        label="Ports (comma separated)"
+        :label="$t('rule.port') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="port"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.port_range != undefined">
         <v-text-field
-        label="Port Ranges (comma separated)"
+        :label="$t('rule.portRange') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="port_range"></v-text-field>
       </v-col>
@@ -116,12 +116,12 @@
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.source_ip_cidr != undefined">
         <v-text-field
-        label="Source IP CIDRs (comma separated)"
+        :label="$t('rule.srcIp') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="source_ip_cidr"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.source_ip_is_private != undefined">
-        <v-switch v-model="rule.source_ip_is_private" color="primary" label="Private Source IP" hide-details></v-switch>
+        <v-switch v-model="rule.source_ip_is_private" color="primary" :label="$t('rule.srcPrivateIp')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-row v-if="optionSrcPort">
@@ -135,13 +135,13 @@
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.source_port != undefined">
         <v-text-field
-        label="Source Ports (comma separated)"
+        :label="$t('rule.srcPort') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="source_port"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.source_port_range != undefined">
         <v-text-field
-        label="Source Port Ranges (comma separated)"
+        :label="$t('rule.srcPortRange') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="source_port_range"></v-text-field>
       </v-col>
@@ -151,21 +151,21 @@
         <v-combobox
           v-model="rule.rule_set"
           :items="rsTags"
-          label="Rulesets"
+          :label="$t('rule.ruleset')"
           multiple
           chips
           hide-details
         ></v-combobox>
       </v-col>
       <v-col cols="12" sm="6">
-        <v-switch v-model="rule.rule_set_ipcidr_match_source" color="primary" label="Ruleset IPcidr Match Source" hide-details></v-switch>
+        <v-switch v-model="rule.rule_set_ipcidr_match_source" color="primary" :label="$t('rule.rulesetMatchSrc')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details variant="tonal">Rule Options</v-btn>
+          <v-btn v-bind="props" hide-details variant="tonal">{{ $t('rule.options') }}</v-btn>
         </template>
         <v-card>
           <v-list>
@@ -176,25 +176,25 @@
               <v-switch v-model="optionClient" color="primary" :label="$t('pages.clients')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionIPver" color="primary" label="IP Version" hide-details></v-switch>
+              <v-switch v-model="optionIPver" color="primary" :label="$t('rule.ipVer')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionProtocol" color="primary" label="Protocol" hide-details></v-switch>
+              <v-switch v-model="optionProtocol" color="primary" :label="$t('protocol')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionDomain" color="primary" label="Domain/IP" hide-details></v-switch>
+              <v-switch v-model="optionDomain" color="primary" :label="$t('rule.domainRules')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionPort" color="primary" label="Port" hide-details></v-switch>
+              <v-switch v-model="optionPort" color="primary" :label="$t('in.port')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionSrcIP" color="primary" label="Source IP" hide-details></v-switch>
+              <v-switch v-model="optionSrcIP" color="primary" :label="$t('rule.srcIpRules')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionSrcPort" color="primary" label="Source Port" hide-details></v-switch>
+              <v-switch v-model="optionSrcPort" color="primary" :label="$t('rule.srcPortRules')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
-              <v-switch v-model="optionRuleSet" color="primary" label="Rule Set" hide-details></v-switch>
+              <v-switch v-model="optionRuleSet" color="primary" :label="$t('rule.ruleset')" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>

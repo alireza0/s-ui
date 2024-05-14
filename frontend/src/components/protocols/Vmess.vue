@@ -18,7 +18,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           hide-details
-          label="Security"
+          :label="$t('types.vmess.security')"
           :items="securities"
           v-model="data.security">
         </v-select>
@@ -26,7 +26,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           hide-details
-          label="UDP Packet Encoding"
+          :label="$t('types.vless.udpEnc')"
           :items="['none','packetaddr','xudp']"
           v-model="packet_encoding">
         </v-select>
@@ -35,10 +35,10 @@
         <Network :data="data" />
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="data.global_padding" color="primary" label="Global Padding" hide-details></v-switch>
+        <v-switch v-model="data.global_padding" color="primary" :label="$t('types.vmess.globalPadding')" hide-details></v-switch>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="data.authenticated_length" color="primary" label="Encryptrd Length" hide-details></v-switch>
+        <v-switch v-model="data.authenticated_length" color="primary" :label="$t('types.vmess.authLen')" hide-details></v-switch>
       </v-col>
     </v-row>
   </v-card>

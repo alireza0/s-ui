@@ -22,34 +22,34 @@
   />
   <v-row>
     <v-col cols="12" justify="center" align="center">
-      <v-btn color="primary" @click="showRuleModal(-1)" style="margin: 0 5px;">{{ $t('actions.add') + " " + $t('objects.rule') }}</v-btn>
-      <v-btn color="primary" @click="showRulesetModal(-1)" style="margin: 0 5px;">{{ $t('actions.add') + " Ruleset" }}</v-btn>
+      <v-btn color="primary" @click="showRuleModal(-1)" style="margin: 0 5px;">{{ $t('rule.add') }}</v-btn>
+      <v-btn color="primary" @click="showRulesetModal(-1)" style="margin: 0 5px;">{{ $t('ruleset.add') }}</v-btn>
     </v-col>
   </v-row>
   <v-row>
-    <v-col cols="12">Rulesets</v-col>
+    <v-col cols="12">{{ $t('rule.ruleset') }}</v-col>
     <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>rulesets" :key="item.tag">
       <v-card rounded="xl" elevation="5" min-width="200" :title="index">
         <v-card-subtitle style="margin-top: -20px;">
           <v-row>
-            <v-col>{{ item.type }}</v-col>
+            <v-col>{{ $t('ruleset.' + item.type) }}</v-col>
           </v-row>
         </v-card-subtitle>
         <v-card-text>
           <v-row>
-            <v-col>{{ $t('in.tag') }}</v-col>
+            <v-col>{{ $t('objects.tag') }}</v-col>
             <v-col dir="ltr">
               {{ item.tag }}
             </v-col>
           </v-row>
           <v-row>
-            <v-col>Format</v-col>
+            <v-col>{{ $t('ruleset.format') }}</v-col>
             <v-col dir="ltr">
               {{ item.format }}
             </v-col>
           </v-row>
           <v-row>
-            <v-col>Update</v-col>
+            <v-col>{{ $t('actions.update') }}</v-col>
             <v-col dir="ltr">
               {{ item.update_interval?? '-' }}
             </v-col>
@@ -89,7 +89,7 @@
       <v-card rounded="xl" elevation="5" min-width="200" :title="index">
         <v-card-subtitle style="margin-top: -20px;">
           <v-row>
-            <v-col>{{ item.type != undefined ? 'Logical (' + item.mode + ')' : 'Simple' }}</v-col>
+            <v-col>{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</v-col>
           </v-row>
         </v-card-subtitle>
         <v-card-text>
@@ -106,7 +106,7 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col>Invert</v-col>
+            <v-col>{{ $t('rule.invert') }}</v-col>
             <v-col dir="ltr">
               {{ $t( (item.invert?? false)? 'yes' : 'no') }}
             </v-col>

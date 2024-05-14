@@ -1,6 +1,6 @@
 <template>
   <v-expansion-panels>
-    <v-expansion-panel title="Log">
+    <v-expansion-panel :title="$t('basic.log.title')">
       <v-expansion-panel-text>
         <v-row>
           <v-col cols="12" sm="6" md="3">
@@ -9,7 +9,7 @@
           <v-col cols="12" sm="6" md="3">
             <v-select
               hide-details
-              label="Level"
+              :label="$t('basic.log.level')"
               :items="levels"
               v-model="appConfig.log.level">
             </v-select>
@@ -18,11 +18,11 @@
             <v-text-field
               v-model="appConfig.log.output"
               hide-details
-              label="Output"
+              :label="$t('basic.log.output')"
             ></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="3">
-            <v-switch v-model="appConfig.log.timestamp" color="primary" label="Timestamp" hide-details></v-switch>
+            <v-switch v-model="appConfig.log.timestamp" color="primary" :label="$t('basic.log.timestamp')" hide-details></v-switch>
           </v-col>
         </v-row>
       </v-expansion-panel-text>
@@ -33,15 +33,15 @@
           <v-col cols="12" sm="6" md="3">
             <v-select
               hide-details
-              label="Final"
-              :items="[ {title: 'First Server', value: ''}, ...dnsServersTags]"
+              :label="$t('basic.dns.final')"
+              :items="[ {title: $t('basic.dns.firstServer'), value: ''}, ...dnsServersTags]"
               v-model="finalDns">
             </v-select>
           </v-col>
           <v-col cols="12" sm="6" md="3">
             <v-select
               hide-details
-              label="Domain to IP Strategy"
+              :label="$t('listen.domainStrategy')"
               clearable
               @click:clear="delete appConfig.dns.strategy"
               :items="['prefer_ipv4','prefer_ipv6','ipv4_only','ipv6_only']"
@@ -50,12 +50,12 @@
           </v-col>
           <v-col cols="12" sm="6" md="3" align-self="center">
             <v-btn @click="addDnsServer" rounded>
-              <v-icon icon="mdi-plus" />Server
+              <v-icon icon="mdi-plus" />{{ $t('basic.dns.server') }}
             </v-btn>
           </v-col>
         </v-row>
         <template v-for="(s, index) in appConfig.dns.servers">
-          Server {{ index+1 }} <v-icon icon="mdi-delete" @click="appConfig.dns.servers.splice(index,1)" />
+          {{ $t('basic.dns.server') + ' ' + (index+1) }} <v-icon icon="mdi-delete" @click="appConfig.dns.servers.splice(index,1)" />
           <v-divider></v-divider>
           <v-row>
             <v-col cols="12" sm="6" md="3">
@@ -64,20 +64,20 @@
                 hide-details
                 clearable
                 @click:clear="delete s.tag"
-                label="Tag"
+                :label="$t('objects.tag')"
               ></v-text-field>
             </v-col>
             <v-col cols="12" sm="6" md="3">
               <v-text-field
                 v-model="s.address"
                 hide-details
-                label="Address"
+                :label="$t('out.addr')"
               ></v-text-field>
             </v-col>
             <v-col cols="12" sm="6" md="3">
               <v-select
                 hide-details
-                label="Outbound"
+                :label="$t('objects.outbound')"
                 clearable
                 @click:clear="delete s.detour"
                 :items="outboundTags"
@@ -87,7 +87,7 @@
             <v-col cols="12" sm="6" md="3">
               <v-select
                 hide-details
-                label="Domain Strategy"
+                :label="$t('listen.domainStrategy')"
                 clearable
                 @click:clear="delete s.strategy"
                 :items="['prefer_ipv4','prefer_ipv6','ipv4_only','ipv6_only']"
@@ -108,7 +108,7 @@
             <v-text-field
               v-model="appConfig.ntp.server"
               hide-details
-              label="Server"
+              :label="$t('out.addr')"
             ></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="3" v-if="appConfig.ntp?.enabled">
@@ -118,30 +118,30 @@
               type="number"
               clearable
               @click:clear="delete appConfig.ntp?.server_port"
-              label="Server Port"
+              :label="$t('out.port')"
             ></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="3" v-if="appConfig.ntp?.enabled">
             <v-text-field
               v-model="ntpInterval"
               hide-details
-              suffix="m"
+              :suffix="$t('date.m')"
               min="0"
               type="number"
-              label="Interval"
+              :label="$t('ruleset.interval')"
             ></v-text-field>
           </v-col>
         </v-row>
         <Dial :dial="appConfig.ntp" :outTags="outboundTags" v-if="appConfig.ntp?.enabled" />
       </v-expansion-panel-text>
     </v-expansion-panel>
-    <v-expansion-panel title="Routing">
+    <v-expansion-panel :title="$t('basic.routing.title')">
       <v-expansion-panel-text>
         <v-row>
           <v-col cols="12" sm="6" md="3">
             <v-select
               hide-details
-              label="Default outbound"
+              :label="$t('basic.routing.defaultOut')"
               clearable
               @click:clear="delete appConfig.route.final"
               :items="outboundTags"
@@ -154,7 +154,7 @@
               hide-details
               clearable
               @click:clear="delete appConfig.route.default_interface"
-              label="Default NIC"
+              :label="$t('basic.routing.defaultIf')"
             ></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="3">
@@ -163,14 +163,14 @@
               hide-details
               type="number"
               min="0"
-              label="Default routing mark"
+              :label="$t('basic.routing.defaultRm')"
             ></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="3">
             <v-switch
               v-model="appConfig.route.auto_detect_interface"
               color="primary"
-              label="Auto bind NIC"
+              :label="$t('basic.routing.autoBind')"
               hide-details>
             </v-switch>
           </v-col>
@@ -189,7 +189,7 @@
             <v-text-field
               v-model="appConfig.experimental.cache_file.path"
               hide-details
-              label="Path"
+              :label="$t('transport.path')"
             ></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.cache_file">
@@ -202,7 +202,7 @@
           <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.cache_file">
             <v-switch v-model="appConfig.experimental.cache_file.store_fakeip"
               color="primary"
-              label="Store Fake IP"
+              :label="$t('basic.exp.storeFakeIp')"
               hide-details></v-switch>
           </v-col>
         </v-row>
@@ -262,7 +262,7 @@
             <v-text-field
               v-model="appConfig.experimental.v2ray_api.listen"
               hide-details
-              label="Listen"
+              :label="$t('objects.listen')"
             ></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="3">

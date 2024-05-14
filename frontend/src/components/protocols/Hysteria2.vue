@@ -3,19 +3,19 @@
     <v-row v-if="direction == 'in'">
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Masquerade"
+        label="HTTP3 server on auth fail"
         hide-details
         v-model="data.masquerade">
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="data.ignore_client_bandwidth" color="primary" label="Ignore Client Bandwidth" hide-details></v-switch>
+        <v-switch v-model="data.ignore_client_bandwidth" color="primary" :label="$t('types.hy.ignoreBw')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-row v-else>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Password"
+        :label="$t('types.pw')"
         hide-details
         v-model="data.password">
         </v-text-field>
@@ -27,20 +27,20 @@
     <v-row v-if="!data.ignore_client_bandwidth">
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Uplink Limit"
+        :label="$t('stats.upload')"
         hide-details
         type="number"
-        suffix="Mbps"
+        :suffix="$t('stats.Mbps')"
         min="0"
         v-model.number="up_mbps">
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Downlink Limit"
+        :label="$t('stats.download')"
         hide-details
         type="number"
-        suffix="Mbps"
+        :suffix="$t('stats.Mbps')"
         min="0"
         v-model.number="down_mbps">
         </v-text-field>
@@ -49,7 +49,7 @@
     <v-row v-if="data.obfs">
       <v-col cols="12" sm="6" md="4">
        <v-text-field
-        label="obfs Password"
+        :label="$t('types.hy.obfs')"
         hide-details
         v-model="data.obfs.password">
         </v-text-field>
@@ -59,12 +59,12 @@
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details>Hysteria2 Options</v-btn>
+          <v-btn v-bind="props" hide-details>{{ $t('types.hy.hy2Options') }}</v-btn>
         </template>
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionObfs" color="primary" label="Obfs" hide-details></v-switch>
+              <v-switch v-model="optionObfs" color="primary" :label="$t('types.hy.obfs')" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>

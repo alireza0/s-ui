@@ -7,7 +7,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           hide-details
-          label="Flow"
+          :label="$t('types.vless.flow')"
           :items="['','xtls-rprx-vision']"
           v-model="data.flow">
         </v-select>
@@ -17,7 +17,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           hide-details
-          label="UDP Packet Encoding"
+          :label="$t('types.vless.udpEnc')"
           :items="['none','packetaddr','xudp']"
           v-model="packet_encoding">
         </v-select>

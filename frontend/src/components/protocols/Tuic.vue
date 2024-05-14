@@ -5,7 +5,7 @@
         <v-text-field v-model="data.uuid" label="UUID" hide-details></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-text-field v-model="data.password" label="Password" hide-details></v-text-field>
+        <v-text-field v-model="data.password" :label="$t('types.pw')" hide-details></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <Network :data="data" />
@@ -28,7 +28,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           hide-details
-          label="Congestion Control"
+          :label="$t('types.tuic.congControl')"
           :items="congestion_controls"
           v-model="data.congestion_control">
         </v-select>
@@ -40,20 +40,20 @@
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="direction == 'in'">
         <v-text-field
-        label="Authentication Timeout"
+        :label="$t('types.tuic.authTimeout')"
         hide-details
         type="number"
-        suffix="s"
+        :suffix="$t('date.s')"
         min="1"
         v-model.number="auth_timeout">
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Heartbeat"
+        :label="$t('types.tuic.hb')"
         hide-details
         type="number"
-        suffix="s"
+        :suffix="$t('date.s')"
         min="1"
         v-model.number="heartbeat">
         </v-text-field>

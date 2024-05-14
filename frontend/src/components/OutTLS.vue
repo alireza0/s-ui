@@ -1,5 +1,5 @@
 <template>
-  <v-card :subtitle="$t('in.tls')">
+  <v-card :subtitle="$t('objects.tls')">
     <v-row v-if="tlsOptional">
       <v-col cols="12" sm="6" md="4">
         <v-switch color="primary" :label="$t('tls.enable')" v-model="tlsEnable" hide-details></v-switch>
@@ -8,10 +8,10 @@
     <template v-if="tls.enabled">
       <v-row>
         <v-col cols="12" sm="6" md="4">
-          <v-switch color="primary" label="Disable SNI" v-model="disable_sni" hide-details></v-switch>
+          <v-switch color="primary" :label="$t('tls.disableSni')" v-model="disable_sni" hide-details></v-switch>
         </v-col>
         <v-col cols="12" sm="6" md="4">
-          <v-switch color="primary" label="Allow Insecure" v-model="insecure" hide-details></v-switch>
+          <v-switch color="primary" :label="$t('tls.insecure')" v-model="insecure" hide-details></v-switch>
         </v-col>
       </v-row>
       <template v-if="optionCert">
@@ -73,7 +73,7 @@
         <v-col cols="12" sm="6" md="4" v-if="tls.min_version">
           <v-select
             hide-details
-            label="Minimum Version"
+            :label="$t('tls.minVer')"
             :items="tlsVersions"
             v-model="tls.min_version">
           </v-select>
@@ -81,7 +81,7 @@
         <v-col cols="12" sm="6" md="4" v-if="tls.max_version">
           <v-select
             hide-details
-            label="Maximum Version"
+            :label="$t('tls.maxVer')"
             :items="tlsVersions"
             v-model="tls.max_version">
           </v-select>
@@ -91,7 +91,7 @@
         <v-col cols="12" md="8">
           <v-select
             hide-details
-            label="Cipher Suites"
+            :label="$t('tls.cs')"
             multiple
             :items="cipher_suites"
             v-model="tls.cipher_suites">
@@ -111,7 +111,7 @@
       <v-row v-if="tls.reality != undefined">
         <v-col cols="12" md="6">
           <v-text-field
-            label="Public Key"
+          :label="$t('tls.pubKey')"
             hide-details
             v-model="tls.reality.public_key">
           </v-text-field>
@@ -177,12 +177,12 @@
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
           <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" hide-details>TLS Options</v-btn>
+            <v-btn v-bind="props" hide-details>{{ $t('tls.options') }}</v-btn>
           </template>
           <v-card>
             <v-list>
               <v-list-item>
-                <v-switch v-model="optionCert" color="primary" label="Certificate" hide-details></v-switch>
+                <v-switch v-model="optionCert" color="primary" :label="$t('tls.cert')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
                 <v-switch v-model="optionSNI" color="primary" label="SNI" hide-details></v-switch>
@@ -191,13 +191,13 @@
                 <v-switch v-model="optionALPN" color="primary" label="ALPN" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionMinV" color="primary" label="Min Version" hide-details></v-switch>
+                <v-switch v-model="optionMinV" color="primary" :label="$t('tls.minVer')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionMaxV" color="primary" label="Max Version" hide-details></v-switch>
+                <v-switch v-model="optionMaxV" color="primary" :label="$t('tls.maxVer')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionCS" color="primary" label="Cipher Suites" hide-details></v-switch>
+                <v-switch v-model="optionCS" color="primary" :label="$t('tls.cs')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
                 <v-switch v-model="optionFP" color="primary" label="UTLS" hide-details></v-switch>

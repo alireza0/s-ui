@@ -8,7 +8,7 @@
       <v-card-text style="padding: 0 16px;">
         <v-row>
           <v-col cols="12" sm="6" md="4">
-            <v-switch color="primary" v-model="logical" label="Logical Rule" hide-details></v-switch>
+            <v-switch color="primary" v-model="logical" :label="$t('rule.logical')" hide-details></v-switch>
           </v-col>
           <v-spacer></v-spacer>
           <v-col cols="auto" v-if="logical" justify="center" align="center">
@@ -46,12 +46,12 @@
             <v-combobox
               v-model="ruleData.mode"
               :items="['and', 'or']"
-              label="Mode"
+              :label="$t('rule.mode')"
               hide-details
             ></v-combobox>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-switch color="primary" v-model="ruleData.invert" label="Invert" hide-details></v-switch>
+            <v-switch color="primary" v-model="ruleData.invert" :label="$t('rule.invert')" hide-details></v-switch>
           </v-col>
         </v-row>
       </v-card-text>

@@ -1,9 +1,13 @@
 <template>
-  <v-card subtitle="Headers">
+  <v-card>
+    <v-card-subtitle>
+      {{ $t('objects.headers') }}
+      <v-icon @click="add_header" icon="mdi-plus"></v-icon>
+    </v-card-subtitle>
     <v-row v-for="(header, index) in hdrs">
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-          label="Key"
+          :label="$t('objects.key')"
           hide-details
           @input="update_key(index,$event.target.value)"
           v-model="header.name">
@@ -11,7 +15,7 @@
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-          label="Value"
+          :label="$t('objects.value')"
           hide-details
           @input="update_value(index,$event.target.value)"
           append-icon="mdi-delete"
@@ -20,10 +24,6 @@
         </v-text-field>
       </v-col>
     </v-row>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn hide-details @click="add_header" density="compact" icon="mdi-plus"></v-btn>
-    </v-card-actions>
   </v-card>
 </template>
 

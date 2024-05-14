@@ -1,5 +1,5 @@
 <template>
-  <v-card subtitle="Clients">
+  <v-card :subtitle="$t('pages.clients')">
     <v-row>
       <v-col cols="12" sm="6" md="4">
         <v-switch 

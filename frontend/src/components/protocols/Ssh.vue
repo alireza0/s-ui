@@ -39,7 +39,7 @@
         <v-row>
           <v-col cols="12" sm="6">
             <v-text-field
-              label="Passphrase"
+              :label="$t('types.ssh.passphrase')"
               hide-details
               v-model="data.private_key_passphrase">
             </v-text-field>
@@ -49,17 +49,17 @@
       <template v-else>
         <v-row>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field v-model="data.user" label="SSH User" hide-details></v-text-field>
+            <v-text-field v-model="data.user" :label="$t('types.un')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field v-model="data.password" label="Password" hide-details></v-text-field>
+            <v-text-field v-model="data.password" :label="$t('types.pw')" hide-details></v-text-field>
           </v-col>
         </v-row>
       </template>
     <v-row v-if="optionHostKey">
       <v-col cols="12" sm="6">
         <v-textarea
-          label="Host Keys"
+          :label="$t('types.ssh.hostKey')"
           hide-details
           v-model="host_key">
         </v-textarea>
@@ -67,17 +67,17 @@
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="data.host_key_algorithms != undefined">
-        <v-text-field v-model="algorithms" label="Key Algorithms (comma separated)" hide-details></v-text-field>
+        <v-text-field v-model="algorithms" :label="$t('types.ssh.algorithm') + ' ' + $t('commaSeparated')" hide-details></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="data.client_version != undefined">
-        <v-text-field v-model="data.client_version" label="Client Version" hide-details></v-text-field>
+        <v-text-field v-model="data.client_version" :label="$t('types.ssh.clientVer')" hide-details></v-text-field>
       </v-col>
     </v-row>
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
           <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" hide-details>SSH Options</v-btn>
+            <v-btn v-bind="props" hide-details>{{ $t('types.ssh.options') }}</v-btn>
           </template>
           <v-card>
             <v-list>
@@ -85,13 +85,13 @@
                 <v-switch v-model="optionKey" color="primary" label="SSH Key" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionHostKey" color="primary" label="Host Key" hide-details></v-switch>
+                <v-switch v-model="optionHostKey" color="primary" :label="$t('types.ssh.hostKey')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionAlgorithms" color="primary" label="Key Algorithms" hide-details></v-switch>
+                <v-switch v-model="optionAlgorithms" color="primary" :label="$t('types.ssh.algorithm')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionVer" color="primary" label="Client Version" hide-details></v-switch>
+                <v-switch v-model="optionVer" color="primary" :label="$t('types.ssh.clientVer')" hide-details></v-switch>
               </v-list-item>
             </v-list>
           </v-card>

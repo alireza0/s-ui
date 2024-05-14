@@ -16,13 +16,13 @@
         <v-combobox
           v-model="data.default"
           :items="data.outbounds"
-          label="Default"
+          :label="$t('types.lb.defaultOut')"
           clearable
           hide-details
         ></v-combobox>
       </v-col>
       <v-col cols="12" sm="6">
-        <v-switch v-model="data.interrupt_exist_connections" color="primary" label="Interrupt exist connections" hide-details></v-switch>
+        <v-switch v-model="data.interrupt_exist_connections" color="primary" :label="$t('types.lb.interruptConn')" hide-details></v-switch>
       </v-col>
     </v-row>
   </v-card>

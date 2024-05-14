@@ -1,8 +1,8 @@
 <template>
-  <v-card :subtitle="$t('in.multiplex')">
+  <v-card :subtitle="$t('objects.multiplex')">
     <v-row>
       <v-col cols="12" sm="6" md="4">
-        <v-switch color="primary" label="Enable Multiplex" v-model="muxEnable" hide-details></v-switch>
+        <v-switch color="primary" :label="$t('mux.enable')" v-model="muxEnable" hide-details></v-switch>
       </v-col>
       <template v-if="mux.enabled">
         <template v-if="direction=='out'">
@@ -10,7 +10,7 @@
             <v-select
               hide-details
               :items="[ 'smux', 'yamux', 'h2mux']"
-              label="Protocol"
+              :label="$t('protocol')"
               clearable
               @click:clear="mux.protocol=undefined"
               v-model="mux.protocol">
@@ -18,7 +18,7 @@
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-text-field
-            label="Max Connections"
+            :label="$t('mux.maxConn')"
             hide-details
             type="number"
             min=0
@@ -27,7 +27,7 @@
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-text-field
-            label="Min Streams"
+            :label="$t('mux.minStr')"
             hide-details
             type="number"
             min=0
@@ -36,7 +36,7 @@
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-text-field
-            label="Max Streams"
+            :label="$t('mux.maxStr')"
             hide-details
             type="number"
             :min="min_streams"
@@ -45,29 +45,29 @@
           </v-col>
         </template>
         <v-col cols="12" sm="6" md="4">
-          <v-switch color="primary" label="Reject Non-Padded" v-model="mux.padding" hide-details></v-switch>
+          <v-switch color="primary" :label="$t('mux.padding')" v-model="mux.padding" hide-details></v-switch>
         </v-col>
         <v-col cols="12" sm="6" md="4">
-          <v-switch color="primary" label="Enable Brutal" v-model="burtalEnable" hide-details></v-switch>
+          <v-switch color="primary" :label="$t('mux.enableBrutal')" v-model="burtalEnable" hide-details></v-switch>
         </v-col>
       </template>
     </v-row>
     <v-row v-if="mux.brutal?.enabled">
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Uplink Bandwidth"
+        :label="$t('stats.upload')"
         hide-details
         type="number"
-        suffix="Mbps"
+        :suffix="$t('stats.Mbps')"
         v-model.number="up_mbps">
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        label="Downlink Bandwidth"
+        :label="$t('stats.download')"
         hide-details
         type="number"
-        suffix="Mbps"
+        :suffix="$t('stats.Mbps')"
         min="0"
         v-model.number="down_mbps">
         </v-text-field>

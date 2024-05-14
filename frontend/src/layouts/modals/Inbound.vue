@@ -18,7 +18,7 @@
             </v-select>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field v-model="inbound.tag" :label="$t('in.tag')" hide-details></v-text-field>
+            <v-text-field v-model="inbound.tag" :label="$t('objects.tag')" hide-details></v-text-field>
           </v-col>
         </v-row>
         <Listen :inbound="inbound" :inTags="inTags" />
@@ -97,13 +97,16 @@ export default {
       }
       else {
         const port = RandomUtil.randomIntRange(10000, 60000)
-        this.inbound = createInbound("mixed",{ tag: "in-"+port ,listen: "::", listen_port: port })
+        this.inbound = createInbound("direct",{ tag: "direct-"+port ,listen: "::", listen_port: port })
         this.title = "add"
       }
       this.inboundStats = this.$props.stats
     },
     changeType() {
-      const prevConfig = { tag: this.inbound.tag ,listen: this.inbound.listen, listen_port: this.inbound.listen_port }
+      // Tag change only in add outbound
+      const tag = this.$props.id != -1 ? this.inbound.tag : this.inbound.type + "-" + this.inbound.listen_port
+      // Use previous data
+      const prevConfig = { tag: tag ,listen: this.inbound.listen, listen_port: this.inbound.listen_port }
       this.inbound = createInbound(this.inbound.type, prevConfig)
     },
     closeModal() {

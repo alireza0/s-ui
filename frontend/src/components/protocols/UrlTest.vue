@@ -14,62 +14,62 @@
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" v-if="optionUrl">
-        <v-select v-model="data.url" label="URL" hide-details></v-select>
+        <v-text-field v-model="data.url" :label="$t('types.lb.testUrl')" hide-details></v-text-field>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="optionInterval">
         <v-text-field
-        label="Interval"
+        :label="$t('types.lb.interval')"
         hide-details
         type="number"
         min="3"
-        suffix="s"
+        :suffix="$t('date.s')"
         v-model.number="interval"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="optionTolerance">
         <v-text-field
-        label="Tolerance"
+        :label="$t('types.lb.tolerance')"
         hide-details
         type="number"
         min="0"
-        suffix="ms"
+        :suffix="$t('date.ms')"
         v-model.number="tolerance"></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="optionIdle">
         <v-text-field
-        label="Idle Timeout"
+        :label="$t('transport.idleTimeout')"
         hide-details
         type="number"
         min="0"
-        suffix="m"
+        :suffix="$t('date.m')"
         v-model.number="idle_timeout"></v-text-field>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12" sm="6">
-        <v-switch v-model="data.interrupt_exist_connections" color="primary" label="Interrupt exist connections" hide-details></v-switch>
+        <v-switch v-model="data.interrupt_exist_connections" color="primary" :label="$t('types.lb.interruptConn')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
           <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" hide-details>SSH Options</v-btn>
+            <v-btn v-bind="props" hide-details>{{ $t('types.lb.urlTestOptions') }}</v-btn>
           </template>
           <v-card>
             <v-list>
               <v-list-item>
-                <v-switch v-model="optionUrl" color="primary" label="Test URL" hide-details></v-switch>
+                <v-switch v-model="optionUrl" color="primary" :label="$t('types.lb.testUrl')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionInterval" color="primary" label="Interval" hide-details></v-switch>
+                <v-switch v-model="optionInterval" color="primary" :label="$t('types.lb.interval')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionTolerance" color="primary" label="Tolerance" hide-details></v-switch>
+                <v-switch v-model="optionTolerance" color="primary" :label="$t('types.lb.tolerance')" hide-details></v-switch>
               </v-list-item>
               <v-list-item>
-                <v-switch v-model="optionIdle" color="primary" label="Idle Timeout" hide-details></v-switch>
+                <v-switch v-model="optionIdle" color="primary" :label="$t('transport.idleTimeout')" hide-details></v-switch>
               </v-list-item>
             </v-list>
           </v-card>
