@@ -173,7 +173,7 @@ export namespace LinkUtil {
     const tParams = getTransportParams(transport)
 
     const params = {
-      type: transport?.type?? 'none',
+      type: transport?.type?? 'tcp',
       security: inbound.tls?.enabled? 'tls' : null,
       alpn: inbound.tls?.alpn?.join(',')?? null,
       sni: inbound.tls?.server_name?? null,
@@ -196,7 +196,7 @@ export namespace LinkUtil {
     const tParams = getTransportParams(transport)
 
     const params = {
-      type: transport?.type?? 'none',
+      type: transport?.type?? 'tcp',
       security: inbound.tls?.enabled? 'tls' : null,
       alpn: inbound.tls?.alpn?.join(',')?? null,
       sni: inbound.tls?.server_name?? null,
@@ -224,7 +224,7 @@ export namespace LinkUtil {
       aid: u?.alterId,
       host:	tParams.host,
       id: u?.uuid,
-      net:	transport.type,
+      net:	transport?.type?? 'tcp',
       path:	tParams.path,
       port:	inbound.listen_port,
       ps:	inbound.tag,
