@@ -164,16 +164,22 @@ const route = computed((): any => {
 
 const rules = computed((): any[] => {
   const data = route.value
-  if (!data || !('rules' in data) || !Array.isArray(data.rules)){
+  if (!data){
     return []
+  }
+  if (!('rules' in data) || !Array.isArray(data.rules)) {
+    data.rules = []
   }
   return data.rules
 })
 
 const rulesets = computed((): any[] => {
   const data = route.value
-  if (!data || !('rule_set' in data) || !Array.isArray(data.rule_set)){
+  if (!data){
     return []
+  }
+  if (!('rule_set' in data) || !Array.isArray(data.rule_set)) {
+    data.rule_set = []
   }
   return data.rule_set
 })
