@@ -2,7 +2,7 @@ FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS singbox-builder
 LABEL maintainer="Alireza <alireza7@gmail.com>"
 WORKDIR /app
 ARG TARGETOS TARGETARCH
-ARG SINGBOX_VER=v1.8.10
+ARG SINGBOX_VER=v1.8.13
 ARG SINGBOX_TAGS="with_quic,with_grpc,with_wireguard,with_ech,with_utls,with_reality_server,with_acme,with_v2ray_api,with_clash_api,with_gvisor"
 ARG GOPROXY=""
 ENV GOPROXY ${GOPROXY}
@@ -18,7 +18,7 @@ RUN set -ex \
         -ldflags "-X \"github.com/sagernet/sing-box/constant.Version=$SINGBOX_VER\" -s -w -buildid=" \
         ./cmd/sing-box
 
-FROM --platform=$BUILDPLATFORM alpine
+FROM --platform=$TARGETPLATFORM alpine
 LABEL maintainer="Alireza <alireza7@gmail.com>"
 ENV TZ=Asia/Tehran
 WORKDIR /app

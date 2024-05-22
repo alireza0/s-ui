@@ -1,6 +1,4 @@
 ---
-version: "3"
-
 services:
   s-ui:
     image: alireza7/s-ui
