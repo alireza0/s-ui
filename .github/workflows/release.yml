@@ -34,7 +34,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          sudo apt-get update && sudo apt-get install upx -yq
+          sudo apt-get update
           if [ "${{ matrix.platform }}" == "arm64" ]; then
             sudo apt install gcc-aarch64-linux-gnu
           elif [ "${{ matrix.platform }}" == "armv7" ]; then
@@ -71,20 +71,14 @@ jobs:
           #### Build Sing-Box
           git clone -b v1.8.13 https://github.com/SagerNet/sing-box
           cd sing-box
-          go build -v -gcflags=all="-l -B -C" -mod=mod -trimpath \
-          -ldflags "-s -w -buildid= -extldflags '-static'" -a \
-          -tags='netgo osusergo static_build with_quic with_grpc with_wireguard with_ech with_utls with_reality_server with_acme with_v2ray_api with_clash_api with_gvisor' \
+          go build -tags with_quic,with_grpc,with_wireguard,with_ech,with_utls,with_reality_server,with_acme,with_v2ray_api,with_clash_api,with_gvisor \
           -o sing-box ./cmd/sing-box
-          upx --ultra-brute -9 -v --lzma --best --force sing-box
           cd ..
 
           ### Build s-ui
           cd backend
-          go build -v -gcflags=all="-l -B -C" -mod=mod -trimpath \
-          -ldflags "-s -w -buildid= -extldflags '-static'" -a -tags='netgo osusergo static_build sqlite_omit_load_extension' \
-          -o ../sui main.go
+          go build -o ../sui main.go
           cd ..
-          upx --ultra-brute -9 -v --lzma --best --force sui
 
           mkdir s-ui
           cp sui s-ui/
