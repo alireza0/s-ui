@@ -30,7 +30,7 @@
             <v-text-field v-model="settings.webListen" :label="$t('setting.addr')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field v-model="webPort" :label="$t('setting.port')" hide-details></v-text-field>
+            <v-text-field v-model.number="webPort" min="1" type="number" :label="$t('setting.port')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-text-field v-model="settings.webPath" :label="$t('setting.webPath')" hide-details></v-text-field>
@@ -51,8 +51,9 @@
             <v-text-field
               type="number"
               v-model.number="sessionMaxAge"
+              min="0"
               :label="$t('setting.sessionAge')"
-              :suffix="$t('date.h')"
+              :suffix="$t('date.m')"
               hide-details
               ></v-text-field>
           </v-col>
@@ -60,6 +61,7 @@
             <v-text-field
               type="number"
               v-model.number="trafficAge"
+              min="0"
               :label="$t('setting.trafficAge')"
               :suffix="$t('date.d')"
               hide-details
@@ -87,7 +89,7 @@
           <v-col cols="12" sm="6" md="4">
             <v-text-field
               type="number"
-              v-model="subPort"
+              v-model.number="subPort"
               min="1"
               :label="$t('setting.port')"
               hide-details></v-text-field>
@@ -114,6 +116,7 @@
             <v-text-field
               type="number"
               v-model.number="subUpdates"
+              min="0"
               :label="$t('setting.update')"
               hide-details
               ></v-text-field>
@@ -248,27 +251,27 @@ const subShowInfo = computed({
 })
 
 const webPort = computed({
-  get: () => { return parseInt(settings.value.webPort) },
+  get: () => { return settings.value.webPort.length>0 ? parseInt(settings.value.webPort) : 2095 },
   set: (v:number) => { settings.value.webPort = v.toString() }
 })
 
 const sessionMaxAge = computed({
-  get: () => { return parseInt(settings.value.sessionMaxAge) },
+  get: () => { return settings.value.sessionMaxAge.length>0 ? parseInt(settings.value.sessionMaxAge) : 0 },
   set: (v:number) => { settings.value.sessionMaxAge = v.toString() }
 })
 
 const trafficAge = computed({
-  get: () => { return parseInt(settings.value.trafficAge) },
+  get: () => { return settings.value.trafficAge.length>0 ? parseInt(settings.value.trafficAge) : 0 },
   set: (v:number) => { settings.value.trafficAge = v.toString() }
 })
 
 const subPort = computed({
-  get: () => { return parseInt(settings.value.subPort) },
+  get: () => { return settings.value.subPort.length>0 ? parseInt(settings.value.subPort) : 2096 },
   set: (v:number) => { settings.value.subPort = v.toString() }
 })
 
 const subUpdates = computed({
-  get: () => { return parseInt(settings.value.subUpdates) },
+  get: () => { return settings.value.subUpdates.length>0 ? parseInt(settings.value.subUpdates) : 12 },
   set: (v:number) => { settings.value.subUpdates = v.toString() }
 })
 
