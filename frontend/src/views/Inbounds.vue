@@ -190,10 +190,12 @@ const saveModal = (data:Inbound, stats: boolean) => {
 
     inbounds.value[modal.value.id] = data
   }
-  // Set users
-  data = buildInboundsUsers(data)
-  // Update links
-  if (Object.hasOwn(data,'users')) updateLinks(data)
+  if (Object.hasOwn(data,'users')) {
+    // Set users
+    data = buildInboundsUsers(data)
+    // Update links
+    updateLinks(data)
+  }
   modal.value.visible = false
 }
 const updateLinks = (i: InboundWithUser) => {
