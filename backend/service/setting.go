@@ -18,7 +18,7 @@ var defaultValueMap = map[string]string{
 	"webListen":     "",
 	"webDomain":     "",
 	"webPort":       "2095",
-	"webSecret":     common.Random(32),
+	"secret":        common.Random(32),
 	"webCertFile":   "",
 	"webKeyFile":    "",
 	"webPath":       "/app/",
@@ -191,11 +191,11 @@ func (s *SettingService) SetWebPath(webPath string) error {
 }
 
 func (s *SettingService) GetSecret() ([]byte, error) {
-	secret, err := s.getString("webSecret")
-	if secret == defaultValueMap["webSecret"] {
-		err := s.saveSetting("webSecret", secret)
+	secret, err := s.getString("secret")
+	if secret == defaultValueMap["secret"] {
+		err := s.saveSetting("secret", secret)
 		if err != nil {
-			logger.Warning("save webSecret failed:", err)
+			logger.Warning("save secret failed:", err)
 		}
 	}
 	return []byte(secret), err
