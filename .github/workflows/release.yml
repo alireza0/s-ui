@@ -69,9 +69,11 @@ jobs:
           fi
 
           #### Build Sing-Box
-          git clone -b v1.8.13 https://github.com/SagerNet/sing-box
+          export VERSION=v1.8.14
+          git clone -b $VERSION https://github.com/SagerNet/sing-box
           cd sing-box
           go build -tags with_quic,with_grpc,with_wireguard,with_ech,with_utls,with_reality_server,with_acme,with_v2ray_api,with_clash_api,with_gvisor \
+          -v -trimpath -ldflags "-X 'github.com/sagernet/sing-box/constant.Version=${VERSION}' -s -w -buildid=" \
           -o sing-box ./cmd/sing-box
           cd ..
 
