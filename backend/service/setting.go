@@ -318,10 +318,10 @@ func (s *SettingService) Save(tx *gorm.DB, changes []model.Changes) error {
 		json.Unmarshal(change.Obj, &obj)
 
 		// Secure file existance check
-		if key == "webCertFile" ||
+		if obj != "" && (key == "webCertFile" ||
 			key == "webKeyFile" ||
 			key == "subCertFile" ||
-			key == "subKeyFile" {
+			key == "subKeyFile") {
 			err = s.fileExists(obj)
 			if err != nil {
 				return common.NewError(" -> ", obj, " is not exists")
