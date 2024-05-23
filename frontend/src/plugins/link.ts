@@ -140,10 +140,12 @@ export namespace LinkUtil {
       host: <string|null>'',
       path: <string|null>'',
       serviceName: <string|null>'',
+      type: <string|null>null,
     }
     switch (t.type){
       case TrspTypes.HTTP:
         const th = <HTTP>t
+        params.type = 'http'
         params.host = th.host?.join(',')?? null
         params.path = th.path?? null
         break
@@ -225,6 +227,7 @@ export namespace LinkUtil {
       host:	tParams.host,
       id: u?.uuid,
       net:	transport?.type?? 'tcp',
+      type: transport?.type == 'http' ? 'http' : undefined,
       path:	tParams.path,
       port:	inbound.listen_port,
       ps:	inbound.tag,
