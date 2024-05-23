@@ -49,8 +49,7 @@ const gaugeColor = computed(() => {
           background: `rgb(var(--v-theme-${gaugeColor}))`
           }">
       </div>
-      <span class="gauge__cover" dir="ltr" v-html="data.text">
-      </span>
+      <div class="gauge__cover"><span dir="ltr" v-html="data.text"></span></div>
     </div>
   </div>
 </template>
