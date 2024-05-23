@@ -1,7 +1,7 @@
 <template>
   <v-card subtitle="Hysteria2">
     <v-row v-if="direction == 'in'">
-      <v-col cols="12" sm="6" md="4">
+      <v-col cols="12" sm="6" md="4" v-if="data.masquerade != undefined">
         <v-text-field
         label="HTTP3 server on auth fail"
         hide-details
@@ -46,7 +46,7 @@
         </v-text-field>
       </v-col>
     </v-row>
-    <v-row v-if="data.obfs">
+    <v-row v-if="data.obfs != undefined">
       <v-col cols="12" sm="6" md="4">
        <v-text-field
         :label="$t('types.hy.obfs')"
@@ -65,6 +65,9 @@
           <v-list>
             <v-list-item>
               <v-switch v-model="optionObfs" color="primary" :label="$t('types.hy.obfs')" hide-details></v-switch>
+            </v-list-item>
+            <v-list-item>
+              <v-switch v-model="optionMasq" color="primary" label="Masquerade" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>
@@ -95,6 +98,10 @@ export default {
     optionObfs: {
       get(): boolean { return this.$props.data.obfs != undefined },
       set(v:boolean) { this.$props.data.obfs = v ? { type: "salamander", password: "" } : undefined }
+    },
+    optionMasq: {
+      get(): boolean { return this.$props.data.masquerade != undefined },
+      set(v:boolean) { this.$props.data.masquerade = v ? "" : undefined }
     }
   },
   components: { Network }
