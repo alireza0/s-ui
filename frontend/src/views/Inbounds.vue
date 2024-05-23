@@ -158,7 +158,9 @@ const closeModal = () => {
   modal.value.visible = false
 }
 const saveModal = (data:Inbound, stats: boolean) => {
-  if (inbounds.value.findIndex(c => c.tag == data.tag) != modal.value.id) {
+  // Check duplicate tag
+  const oldTag = modal.value.id != -1 ? inbounds.value[modal.value.id].tag : null
+  if (data.tag != oldTag && inTags.value.includes(data.tag)) {
     const sb = Message()
     sb.showMessage(i18n.global.t('error.dplData') + ': ' + i18n.global.t('objects.tag') ,'error', 5000)
     return
