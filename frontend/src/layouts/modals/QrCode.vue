@@ -1,6 +1,6 @@
 <template>
   <v-dialog transition="dialog-bottom-transition" width="400">
-    <v-card class="rounded-lg">
+    <v-card class="rounded-lg" id="qrcode-modal">
       <v-card-title>
         <v-row>
           <v-col>QrCode</v-col>
@@ -43,8 +43,13 @@ export default {
   },
   methods: {
     copyToClipboard(txt:string) {
+      const hiddenButton = document.createElement('button')
+      hiddenButton.className = 'clipboard-btn'
+      document.body.appendChild(hiddenButton)
+
       const clipboard = new Clipboard('.clipboard-btn', {
-        text: () => txt
+        text: () => txt,
+        container: document.getElementById('qrcode-modal')?? undefined
       });
 
       clipboard.on('success', () => {
@@ -58,11 +63,8 @@ export default {
       })
 
       // Perform click on hidden button to trigger copy
-      const hiddenButton = document.createElement('button');
-      hiddenButton.className = 'clipboard-btn';
-      document.body.appendChild(hiddenButton);
-      hiddenButton.click();
-      document.body.removeChild(hiddenButton);
+      hiddenButton.click()
+      document.body.removeChild(hiddenButton)
     }
   },
   computed: {
