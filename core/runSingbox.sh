@@ -42,4 +42,12 @@ do
                 ;;
         esac
     fi
+
+    # Check if sin-box crashed
+    if ! kill -0 $tokill > /dev/null 2>&1; then
+        if [ "$signal" != "stop" ]; then
+            echo "Sing-Box with PID $tokill crashed. Breaking the loop..."
+            break
+        fi
+    fi
 done
