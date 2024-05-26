@@ -179,18 +179,18 @@ const closeModal = () => {
   modal.value.visible = false
 }
 const saveModal = (data:any, stats:boolean) => {
-  if (clients.value.findIndex(c => c.name == data.name) != modal.value.index) {
+  // Check duplicate name
+  const oldName = modal.value.index != -1 ? clients.value[modal.value.index].name : null
+  if (data.name != oldName && clients.value.findIndex(c => c.name == data.name) != -1) {
     const sb = Message()
     sb.showMessage(i18n.global.t('error.dplData') + ': ' + i18n.global.t('client.name') ,'error', 5000)
     return
   }
   const inboundTags: string[] = data.inbounds.split(',')?? []
-  let oldName:string = ""
   if(modal.value.index == -1) {
     clients.value.push(data)
   } else {
     const oldData = createClient(clients.value[modal.value.index])
-    oldName = oldData.name
     oldData.inbounds.split(',').forEach((i:string) => {
       if (!inboundTags.includes(i)) inboundTags.push(i)
     })
