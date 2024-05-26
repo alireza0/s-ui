@@ -36,7 +36,10 @@
             <v-col>{{ item.name }}</v-col>
             <v-spacer></v-spacer>
             <v-col cols="auto">
-              <v-switch color="primary" v-model="clients[index].enable" hideDetails density="compact" />
+              <v-switch color="primary"
+              v-model="clients[index].enable"
+              @update:model-value="buildInboundsUsers(item.inbounds.split(','))"
+              hideDetails density="compact" />
             </v-col>
           </v-row>
         </v-card-title>
