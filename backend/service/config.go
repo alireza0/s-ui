@@ -7,10 +7,12 @@ import (
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/singbox"
+	"strconv"
 	"time"
 )
 
 var ApiAddr string
+var LastUpdate int64
 
 type ConfigService struct {
 	ClientService
@@ -177,17 +179,27 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 		return err
 	}
 
+	LastUpdate = dt
+
 	return nil
 }
 
-func (s *ConfigService) CheckChnages(lu string) (bool, error) {
+func (s *ConfigService) CheckChanges(lu string) (bool, error) {
 	if lu == "" {
 		return true, nil
 	}
-	db := database.GetDB()
-	var count int64
-	err := db.Model(model.Changes{}).Where("date_time > " + lu).Count(&count).Error
-	return count > 0, err
+	if LastUpdate == 0 {
+		db := database.GetDB()
+		var count int64
+		err := db.Model(model.Changes{}).Where("date_time > " + lu).Count(&count).Error
+		if err == nil {
+			LastUpdate = time.Now().Unix()
+		}
+		return count > 0, err
+	} else {
+		intLu, err := strconv.ParseInt(lu, 10, 64)
+		return LastUpdate > intLu, err
+	}
 }
 
 func (s *ConfigService) Save(data *[]byte) error {
