@@ -140,12 +140,10 @@ export namespace LinkUtil {
       host: <string|null>'',
       path: <string|null>'',
       serviceName: <string|null>'',
-      type: <string|null>null,
     }
     switch (t.type){
       case TrspTypes.HTTP:
         const th = <HTTP>t
-        params.type = 'http'
         params.host = th.host?.join(',')?? null
         params.path = th.path?? null
         break
@@ -224,16 +222,16 @@ export namespace LinkUtil {
       v: 2,
       add: addr,
       aid: u?.alterId,
-      host:	tParams.host,
+      host:	tParams.host?? undefined,
       id: u?.uuid,
-      net:	transport?.type?? 'tcp',
+      net:	transport?.type == undefined || transport?.type == 'http' ? 'tcp' : transport.type,
       type: transport?.type == 'http' ? 'http' : undefined,
-      path:	tParams.path,
+      path:	tParams.path?? undefined,
       port:	inbound.listen_port,
       ps:	inbound.tag,
-      sni: inbound.tls.server_name?? '',
+      sni: inbound.tls.server_name?? undefined,
       tls: Object.keys(inbound.tls).length>0? 'tls' : 'none'
     }
-    return 'vmess://' + utf8ToBase64(JSON.stringify(params))
+    return 'vmess://' + utf8ToBase64(JSON.stringify(params, null, 2))
   }
 }
