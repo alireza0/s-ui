@@ -8,6 +8,14 @@ type Setting struct {
 	Value string `json:"value" form:"value"`
 }
 
+type Tls struct {
+	Id       uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Name     string          `json:"name" form:"name"`
+	Inbounds json.RawMessage `json:"inbounds" form:"inbounds"`
+	Server   json.RawMessage `json:"server" form:"server"`
+	Client   json.RawMessage `json:"client" form:"client"`
+}
+
 type User struct {
 	Id         uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
 	Username   string `json:"username" form:"username"`

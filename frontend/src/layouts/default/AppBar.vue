@@ -32,11 +32,11 @@ const saveChanges = () => {
 }
 
 const oldData = computed((): any => {
-  return {config: store.oldData.config, clients: store.oldData.clients}
+  return {config: store.oldData.config, clients: store.oldData.clients, tls: store.oldData.tlsConfigs}
 })
 
 const newData = computed((): any => {
-  return {config: store.config, clients: store.clients}
+  return {config: store.config, clients: store.clients, tls: store.tlsConfigs}
 })
 
 const stateChange = computed((): any => {

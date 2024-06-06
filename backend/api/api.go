@@ -15,6 +15,7 @@ type APIHandler struct {
 	service.UserService
 	service.ConfigService
 	service.ClientService
+	service.TlsService
 	service.PanelService
 	service.StatsService
 	service.ServerService
@@ -159,7 +160,7 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 func (a *APIHandler) loadData(c *gin.Context) (string, error) {
 	var data string
 	lu := c.Query("lu")
-	isUpdated, err := a.ConfigService.CheckChnages(lu)
+	isUpdated, err := a.ConfigService.CheckChanges(lu)
 	if err != nil {
 		return "", err
 	}
@@ -176,11 +177,15 @@ func (a *APIHandler) loadData(c *gin.Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		tlsConfigs, err := a.TlsService.GetAll()
+		if err != nil {
+			return "", err
+		}
 		subURI, err := a.SettingService.GetFinalSubURI(strings.Split(c.Request.Host, ":")[0])
 		if err != nil {
 			return "", err
 		}
-		data = fmt.Sprintf(`{"config": %s,"clients": %s,"subURI": "%s", "onlines": %s}`, string(*config), clients, subURI, onlines)
+		data = fmt.Sprintf(`{"config": %s, "clients": %s, "tls": %s, "subURI": "%s", "onlines": %s}`, string(*config), clients, tlsConfigs, subURI, onlines)
 	} else {
 		data = fmt.Sprintf(`{"onlines": %s}`, onlines)
 	}

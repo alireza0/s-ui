@@ -18,7 +18,7 @@
         </v-row>
         <v-row v-for="l in clientLinks">
           <v-col style="text-align: center;" @click="copyToClipboard(l.uri)">
-            <v-chip>{{ l.remark }}</v-chip><br />
+            <v-chip>{{ l.remark?? "-" }}</v-chip><br />
             <QrcodeVue :value="l.uri" :size="300" :margin="1" style="border-radius: 1rem;" />
           </v-col>
         </v-row>

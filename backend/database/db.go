@@ -54,6 +54,7 @@ func InitDB(dbPath string) error {
 
 	err = db.AutoMigrate(
 		&model.Setting{},
+		&model.Tls{},
 		&model.User{},
 		&model.Stats{},
 		&model.Client{},

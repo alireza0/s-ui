@@ -261,7 +261,8 @@ const updateLinks = (c:Client):string => {
   const clientInbounds = <Inbound[]>inbounds.value.filter(i => c.inbounds.split(',').includes(i.tag))
   const newLinks = <Link[]>[]
   clientInbounds.forEach(i =>{
-    const uri = LinkUtil.linkGenerator(c.name,i)
+    const tlsConfig = <any>Data().tlsConfigs?.findLast((t:any) => t.inbounds.includes(i.tag))
+    const uri = LinkUtil.linkGenerator(c.name,i,tlsConfig?.client)
     if (uri.length>0){
       newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
     }

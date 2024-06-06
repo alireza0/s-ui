@@ -39,7 +39,7 @@
     <v-row v-if="Inbound.handshake_for_server_name != undefined">
       <v-col cols="12" sm="6" md="4">
         <v-text-field
-        :label="$t('types.shdwTls.adHS')"
+        :label="$t('types.shdwTls.addHS')"
         hide-details
         append-icon="mdi-plus"
         @click:append="addHandshakeServer()"

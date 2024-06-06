@@ -31,7 +31,7 @@
         <TProxy v-if="inbound.type == inTypes.TProxy" :inbound="inbound" />
         <Transport v-if="Object.hasOwn(inbound,'transport')" :data="inbound" />
         <Users v-if="HasOptionalUser.includes(inbound.type)" :inbound="inbound" :id="id" />
-        <InTls v-if="Object.hasOwn(inbound,'tls')"  :inbound="inbound" />
+        <InTls v-if="Object.hasOwn(inbound,'tls')"  :inbound="inbound" :tlsConfigs="tlsConfigs" :tls_id="tls_id" />
         <Multiplex v-if="Object.hasOwn(inbound,'multiplex')" direction="in" :data="inbound" />
         <v-switch v-model="inboundStats" color="primary" :label="$t('stats.enable')" hide-details></v-switch>
       </v-card-text>
@@ -57,7 +57,6 @@
   </v-dialog>
 </template>
 
-
 <script lang="ts">
 import { InTypes, createInbound } from '@/types/inbounds'
 import Listen from '@/components/Listen.vue'
@@ -75,7 +74,7 @@ import RandomUtil from '@/plugins/randomUtil'
 import Multiplex from '@/components/Multiplex.vue'
 import Transport from '@/components/Transport.vue'
 export default {
-  props: ['visible', 'data', 'id', 'stats', 'inTags', 'outTags'],
+  props: ['visible', 'data', 'id', 'stats', 'inTags', 'outTags', 'tlsConfigs'],
   emits: ['close', 'save'],
   data() {
     return {
@@ -84,6 +83,7 @@ export default {
       loading: false,
       inTypes: InTypes,
       inboundStats: false,
+      tls_id: { value: 0 },
       HasOptionalUser: [InTypes.Mixed,InTypes.SOCKS,InTypes.HTTP,InTypes.Shadowsocks],
     }
   },
@@ -92,6 +92,7 @@ export default {
       if (this.$props.id != -1) {
         const newData = JSON.parse(this.$props.data)
         this.inbound = createInbound(newData.type, newData)
+        this.tls_id.value = this.$props.tlsConfigs?.findLast((t:any) => t.inbounds?.includes(this.inbound.tag))?.id?? 0
         this.title = "edit"
       }
       else {
@@ -114,7 +115,7 @@ export default {
     },
     saveChanges() {
       this.loading = true
-      this.$emit('save', this.inbound, this.inboundStats)
+      this.$emit('save', this.inbound, this.inboundStats, this.tls_id.value)
       this.loading = false
     },
   },

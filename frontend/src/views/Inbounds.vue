@@ -7,6 +7,7 @@
     :data="modal.data"
     :inTags="inTags"
     :outTags="outTags"
+    :tlsConfigs="tlsConfigs"
     @close="closeModal"
     @save="saveModal"
   />
@@ -119,6 +120,10 @@ const inbounds = computed((): Inbound[] => {
   return <Inbound[]> appConfig.value.inbounds
 })
 
+const tlsConfigs = computed((): any[] => {
+  return <any[]> Data().tlsConfigs
+})
+
 const inTags = computed((): string[] => {
   return inbounds.value?.map(i => i.tag)
 })
@@ -157,7 +162,7 @@ const showModal = (id: number) => {
 const closeModal = () => {
   modal.value.visible = false
 }
-const saveModal = (data:Inbound, stats: boolean) => {
+const saveModal = (data:Inbound, stats: boolean, tls_id: number) => {
   // Check duplicate tag
   const oldTag = modal.value.id != -1 ? inbounds.value[modal.value.id].tag : null
   if (data.tag != oldTag && inTags.value.includes(data.tag)) {
@@ -165,15 +170,29 @@ const saveModal = (data:Inbound, stats: boolean) => {
     sb.showMessage(i18n.global.t('error.dplData') + ': ' + i18n.global.t('objects.tag') ,'error', 5000)
     return
   }
+
   // New or Edit
   if (modal.value.id == -1) {
     inbounds.value.push(data)
     if (stats && data.tag.length>0) {
       v2rayStats.value.inbounds.push(data.tag)
     }
+    // Update tls preset
+    if (tls_id>0) {
+      tlsConfigs.value.findLast(t => t.id == tls_id).inbounds.push(data.tag)
+    }
   } else {
     const oldTag = inbounds.value[modal.value.id].tag
     const sIndex = v2rayStats.value.inbounds.findIndex(i => i == data.tag) // Find if new tag exists
+
+    // Update tls preset
+    const oldTlsConfigIndex = tlsConfigs?.value.findIndex(t => t.inbounds?.includes(oldTag))
+    if (oldTlsConfigIndex != -1){
+      tlsConfigs.value[oldTlsConfigIndex].inbounds = tlsConfigs?.value[oldTlsConfigIndex].inbounds.filter((i:string) => i != oldTag)
+    }
+    if (tls_id>0) {
+      tlsConfigs.value.findLast(t => t.id == tls_id).inbounds.push(data.tag)
+    }
 
     if (oldTag != data.tag) {
       v2rayStats.value.inbounds = v2rayStats.value.inbounds.filter(item => item != oldTag)
@@ -206,7 +225,8 @@ const updateLinks = (i: InboundWithUser) => {
         const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.split(',').includes(inb.tag))
         const newLinks = <Link[]>[]
         clientInbounds.forEach(i =>{
-          const uri = LinkUtil.linkGenerator(client.name,i)
+          const tlsClient = tlsConfigs?.value.findLast((t:any) => t.inbounds.includes(i.tag))?.client?? null
+          const uri = LinkUtil.linkGenerator(client.name,i, tlsClient)
           if (uri.length>0){
             newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
           }
@@ -224,7 +244,7 @@ const delInbound = (index: number) => {
   inbounds.value.splice(index,1)
   const tag = inb.tag
 
-  if (Object.hasOwn(inb,'users')){
+  if (Object.hasOwn(inb,'users')) {
     const inbU = <InboundWithUser>inb
     if (inbU.users && inbU.users.length>0){
       inbU.users.forEach((u:any) => {
@@ -237,6 +257,13 @@ const delInbound = (index: number) => {
     }
   }
 
+  // Delete binded tls if exists
+  if (Object.hasOwn(inb,'tls')) {
+    const oldTlsConfigIndex = tlsConfigs?.value.findIndex(t => t.inbounds?.includes(inb.tag))
+    if (oldTlsConfigIndex != -1){
+      tlsConfigs.value[oldTlsConfigIndex].inbounds = tlsConfigs?.value[oldTlsConfigIndex].inbounds.filter((i:string) => i != inb.tag)
+    }
+  }
 
   // Delete stats if exists and will be orphaned
   const tagCounts = inbounds.value.filter(i => i.tag == inb.tag).length
