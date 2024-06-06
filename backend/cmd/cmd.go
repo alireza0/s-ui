@@ -40,6 +40,7 @@ func ParseCmd() {
 		fmt.Println()
 		fmt.Println("Commands:")
 		fmt.Println("    admin          set/reset/show first admin credentials")
+		fmt.Println("    migrate        migrate form older version")
 		fmt.Println("    setting        set/reset/show settings")
 		fmt.Println()
 		adminCmd.Usage()
@@ -69,6 +70,9 @@ func ParseCmd() {
 			updateAdmin(username, password)
 			showAdmin()
 		}
+
+	case "migrate":
+		migrateDb()
 
 	case "setting":
 		err := settingCmd.Parse(os.Args[2:])
