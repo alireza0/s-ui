@@ -327,6 +327,7 @@ export default {
       }
       else {
         this.tls = { id: 0, name: '', inbounds: [], server: {enabled: true}, client: {} }
+        this.tlsType = 0
         this.usePath = 0
         this.title = "add"
       }
