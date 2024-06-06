@@ -54,16 +54,27 @@ func (s *ConfigService) InitConfig() error {
 			return err
 		}
 	}
-	return s.RefreshApiAddr(&data)
+	var singboxConfig SingBoxConfig
+	err = json.Unmarshal(data, &singboxConfig)
+	if err != nil {
+		return err
+	}
+
+	return s.RefreshApiAddr(&singboxConfig)
 }
 
-func (s *ConfigService) GetConfig() (*[]byte, error) {
+func (s *ConfigService) GetConfig() (*SingBoxConfig, error) {
 	configPath := config.GetBinFolderPath()
 	data, err := os.ReadFile(configPath + "/config.json")
 	if err != nil {
 		return nil, err
 	}
-	return &data, nil
+	singboxConfig := SingBoxConfig{}
+	err = json.Unmarshal(data, &singboxConfig)
+	if err != nil {
+		return nil, err
+	}
+	return &singboxConfig, nil
 }
 
 func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string) error {
@@ -127,11 +138,7 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 		if err != nil {
 			return err
 		}
-		newConfig := SingBoxConfig{}
-		err = json.Unmarshal(*singboxConfig, &newConfig)
-		if err != nil {
-			return err
-		}
+		newConfig := *singboxConfig
 		for _, change := range configChanges {
 			rawObject := change.Obj
 			switch change.Key {
@@ -169,12 +176,7 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 			}
 		}
 
-		// Save to config.json
-		data, err := json.MarshalIndent(newConfig, "", "  ")
-		if err != nil {
-			return err
-		}
-		err = s.Save(&data)
+		err = s.Save(&newConfig)
 		if err != nil {
 			return err
 		}
@@ -215,7 +217,7 @@ func (s *ConfigService) CheckChanges(lu string) (bool, error) {
 	}
 }
 
-func (s *ConfigService) Save(data *[]byte) error {
+func (s *ConfigService) Save(singboxConfig *SingBoxConfig) error {
 	configPath := config.GetBinFolderPath()
 	_, err := os.Stat(configPath + "/config.json")
 	if os.IsNotExist(err) {
@@ -227,35 +229,36 @@ func (s *ConfigService) Save(data *[]byte) error {
 		return err
 	}
 
-	err = os.WriteFile(configPath+"/config.json", *data, 0764)
+	data, err := json.MarshalIndent(singboxConfig, " ", "  ")
 	if err != nil {
 		return err
 	}
 
-	s.RefreshApiAddr(data)
+	err = os.WriteFile(configPath+"/config.json", data, 0764)
+	if err != nil {
+		return err
+	}
+
+	s.RefreshApiAddr(singboxConfig)
 	s.Controller.Restart()
 
 	return nil
 }
 
-func (s *ConfigService) RefreshApiAddr(data *[]byte) error {
+func (s *ConfigService) RefreshApiAddr(singboxConfig *SingBoxConfig) error {
 	Env_API := config.GetEnvApi()
 	if len(Env_API) > 0 {
 		ApiAddr = Env_API
 	} else {
 		var err error
-		if data == nil {
-			data, err = s.GetConfig()
+		if singboxConfig == nil {
+			singboxConfig, err = s.GetConfig()
 			if err != nil {
 				return err
 			}
+
 		}
 
-		singboxConfig := SingBoxConfig{}
-		err = json.Unmarshal(*data, &singboxConfig)
-		if err != nil {
-			return err
-		}
 		var experimental struct {
 			V2rayApi struct {
 				Listen string      `json:"listen"`
@@ -282,12 +285,7 @@ func (s *ConfigService) DepleteClients() error {
 	if err != nil {
 		return err
 	}
-	newConfig := SingBoxConfig{}
-	err = json.Unmarshal(*singboxConfig, &newConfig)
-	if err != nil {
-		return err
-	}
-	for inbound_index, inbound := range newConfig.Inbounds {
+	for inbound_index, inbound := range singboxConfig.Inbounds {
 		var inboundJson map[string]interface{}
 		json.Unmarshal(inbound, &inboundJson)
 		if s.contains(inbounds, inboundJson["tag"].(string)) {
@@ -326,13 +324,10 @@ func (s *ConfigService) DepleteClients() error {
 		if err != nil {
 			return err
 		}
-		newConfig.Inbounds[inbound_index] = modifiedInbound
+		singboxConfig.Inbounds[inbound_index] = modifiedInbound
 	}
-	modifiedConfig, err := json.MarshalIndent(newConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-	err = s.Save(&modifiedConfig)
+
+	err = s.Save(singboxConfig)
 	if err != nil {
 		return err
 	}

@@ -222,7 +222,7 @@ const updateLinks = (i: InboundWithUser) => {
     i.users.forEach((u:any) => {
       const client = clients.value.find(c => u.username? c.name == u.username : c.name == u.name)
       if (client){
-        const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.split(',').includes(inb.tag))
+        const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.includes(inb.tag))
         const newLinks = <Link[]>[]
         clientInbounds.forEach(i =>{
           const tlsClient = tlsConfigs?.value.findLast((t:any) => t.inbounds.includes(i.tag))?.client?? null
@@ -231,10 +231,10 @@ const updateLinks = (i: InboundWithUser) => {
             newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
           }
         })
-        let links = client.links && client.links.length>0? <Link[]>JSON.parse(client.links) : <Link[]>[]
+        let links = client.links && client.links.length>0? client.links : <Link[]>[]
         links = [...newLinks, ...links.filter(l => l.type != 'local')]
 
-        client.links = JSON.stringify(links)
+        client.links = links
       }
     })
   }
@@ -250,8 +250,8 @@ const delInbound = (index: number) => {
       inbU.users.forEach((u:any) => {
         const c_index = clients.value.findIndex(c => u.username? u.username == c.name : u.user == c.name)
         if (c_index != -1) {
-          const clientInbounds = clients.value[c_index].inbounds.split(',').filter((x:string) => x!=tag)
-          clients.value[c_index].inbounds = clientInbounds.join(',')
+          const clientInbounds = clients.value[c_index].inbounds.filter((x:string) => x!=tag)
+          clients.value[c_index].inbounds = clientInbounds
         }
       })
     }
@@ -278,15 +278,14 @@ const delInbound = (index: number) => {
 }
 const buildInboundsUsers = (inbound:InboundWithUser):Inbound => {
     const users = <any>[]
-    const inboundClients = clients.value.filter(c => c.enable && c.inbounds.split(',').includes(inbound.tag))
+    const inboundClients = clients.value.filter(c => c.enable && c.inbounds.includes(inbound.tag))
     inboundClients.forEach(c => {
-      const clientConfig = JSON.parse(c.config)
       // Remove flow in non tls VLESS
       if (inbound.type == InTypes.VLESS) {
         const vlessInbound = <VLESS>inbound
-        if (!vlessInbound.tls?.enabled || vlessInbound.transport?.type) delete(clientConfig["vless"].flow)
+        if (!vlessInbound.tls?.enabled || vlessInbound.transport?.type) delete(c.config?.vless?.flow)
       }
-      users.push(clientConfig[inbound.type])
+      users.push(c.config[inbound.type])
     })
     inbound.users = users
 
@@ -306,11 +305,10 @@ const buildInboundsUsers = (inbound:InboundWithUser):Inbound => {
 }
 const changeClientInboundsTag = (oldtag: string, newTag:string) => {
   clients.value.forEach((c, c_index) => {
-    const inboundsArray = c.inbounds.split(',')
-    const inbound_index = inboundsArray.findIndex(i => i == oldtag)
+    const inbound_index = c.inbounds.findIndex(i => i == oldtag)
     if (inbound_index != -1) {
-      inboundsArray[inbound_index] = newTag
-      clients.value[c_index].inbounds = inboundsArray.join(',')
+      c.inbounds[inbound_index] = newTag
+      clients.value[c_index].inbounds = c.inbounds
     }
   })
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"s-ui/logger"
 	"s-ui/service"
 	"strconv"
@@ -157,8 +156,8 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 	}
 }
 
-func (a *APIHandler) loadData(c *gin.Context) (string, error) {
-	var data string
+func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
+	data := make(map[string]interface{}, 0)
 	lu := c.Query("lu")
 	isUpdated, err := a.ConfigService.CheckChanges(lu)
 	if err != nil {
@@ -185,9 +184,13 @@ func (a *APIHandler) loadData(c *gin.Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		data = fmt.Sprintf(`{"config": %s, "clients": %s, "tls": %s, "subURI": "%s", "onlines": %s}`, string(*config), clients, tlsConfigs, subURI, onlines)
+		data["config"] = *config
+		data["clients"] = clients
+		data["tls"] = tlsConfigs
+		data["subURI"] = subURI
+		data["onlines"] = onlines
 	} else {
-		data = fmt.Sprintf(`{"onlines": %s}`, onlines)
+		data["onlines"] = onlines
 	}
 
 	return data, nil

@@ -5,7 +5,6 @@ import (
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/logger"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -14,18 +13,14 @@ import (
 type ClientService struct {
 }
 
-func (s *ClientService) GetAll() (string, error) {
+func (s *ClientService) GetAll() ([]model.Client, error) {
 	db := database.GetDB()
 	clients := []model.Client{}
 	err := db.Model(model.Client{}).Scan(&clients).Error
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	data, err := json.Marshal(clients)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
+	return clients, nil
 }
 
 func (s *ClientService) Save(tx *gorm.DB, changes []model.Changes) error {
@@ -62,14 +57,16 @@ func (s *ClientService) DepleteClients() ([]string, []string, error) {
 		return nil, nil, err
 	}
 
+	dt := time.Now().Unix()
 	var users, inbounds []string
 	for _, client := range clients {
 		logger.Debug("Client ", client.Name, " is going to be disabled")
 		users = append(users, client.Name)
-		userInbounds := strings.Split(client.Inbounds, ",")
+		var userInbounds []string
+		json.Unmarshal(client.Inbounds, &userInbounds)
 		inbounds = append(inbounds, userInbounds...)
 		changes = append(changes, model.Changes{
-			DateTime: time.Now().Unix(),
+			DateTime: dt,
 			Actor:    "DepleteJob",
 			Key:      "clients",
 			Action:   "disable",
@@ -87,6 +84,7 @@ func (s *ClientService) DepleteClients() ([]string, []string, error) {
 		if err != nil {
 			return nil, nil, err
 		}
+		LastUpdate = dt
 	}
 
 	return users, inbounds, nil

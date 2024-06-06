@@ -141,7 +141,7 @@ const updateLinks = (i:any,tlsClient:any) => {
     i.users.forEach((u:any) => {
       const client = clients.value.find(c => u.username? c.name == u.username : c.name == u.name)
       if (client){
-        const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.split(',').includes(inb.tag))
+        const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.includes(inb.tag))
         const newLinks = <Link[]>[]
         clientInbounds.forEach(i =>{
           const uri = LinkUtil.linkGenerator(client.name,i,tlsClient)
@@ -149,10 +149,10 @@ const updateLinks = (i:any,tlsClient:any) => {
             newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
           }
         })
-        let links = client.links && client.links.length>0? <Link[]>JSON.parse(client.links) : <Link[]>[]
-        links = [...newLinks, ...links.filter(l => l.type != 'local')]
+        let links = client.links && client.links.length>0? client.links : <Link[]>[]
+        links = [...newLinks, ...links.filter((l:Link) => l.type != 'local')]
 
-        client.links = JSON.stringify(links)
+        client.links = links
       }
     })
   }

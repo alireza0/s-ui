@@ -11,18 +11,15 @@ import (
 type TlsService struct {
 }
 
-func (s *TlsService) GetAll() (string, error) {
+func (s *TlsService) GetAll() ([]model.Tls, error) {
 	db := database.GetDB()
 	tlsConfig := []model.Tls{}
 	err := db.Model(model.Tls{}).Scan(&tlsConfig).Error
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	data, err := json.Marshal(tlsConfig)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
+
+	return tlsConfig, nil
 }
 
 func (s *TlsService) Save(tx *gorm.DB, changes []model.Changes) error {

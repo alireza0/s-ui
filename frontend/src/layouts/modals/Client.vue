@@ -179,7 +179,7 @@ export default {
         const newData = JSON.parse(this.$props.data)
         this.client = createClient(newData)
         this.title = "edit"
-        this.clientConfig = JSON.parse(this.client.config)
+        this.clientConfig = this.client.config
       }
       else {
         this.client = createClient()
@@ -187,10 +187,9 @@ export default {
         this.clientConfig = randomConfigs('client')
       }
       this.clientStats = this.$props.stats
-      const allLinks = <Link[]>JSON.parse(this.client.links)
-      this.links = allLinks.filter(l => l.type == 'local')
-      this.extLinks = allLinks.filter(l => l.type == 'external')
-      this.subLinks = allLinks.filter(l => l.type == 'sub')
+      this.links = this.client.links.filter(l => l.type == 'local')
+      this.extLinks = this.client.links.filter(l => l.type == 'external')
+      this.subLinks = this.client.links.filter(l => l.type == 'sub')
       this.tab = "t1"
     },
     closeModal() {
@@ -199,11 +198,11 @@ export default {
     },
     saveChanges() {
       this.loading = true
-      this.client.config = updateConfigs(JSON.stringify(this.clientConfig), this.client.name)
-      this.client.links = JSON.stringify([
-                            ...this.links,
-                            ...this.extLinks.filter(l => l.uri != ''),
-                            ...this.subLinks.filter(l => l.uri != '')])
+      this.client.config = updateConfigs(this.clientConfig, this.client.name)
+      this.client.links = [
+                        ...this.links,
+                        ...this.extLinks.filter(l => l.uri != ''),
+                        ...this.subLinks.filter(l => l.uri != '')]
       this.$emit('save', this.client, this.clientStats)
       this.loading = false
     },
@@ -213,8 +212,8 @@ export default {
   },
   computed: {
     clientInbounds: {
-      get() { return this.client.inbounds == "" ? [] : this.client.inbounds.split(',').filter(i => this.inboundTags.includes(i)) },
-      set(newValue:string[]) { this.client.inbounds = newValue.length == 0 ?  "" : newValue.join(',') }
+      get() { return this.client.inbounds.length>0 ? this.client.inbounds.filter(i => this.inboundTags.includes(i)) : [] },
+      set(newValue:string[]) { this.client.inbounds = newValue.length == 0 ?  [] : newValue }
     },
     expDate: {
       get() { return this.client.expiry},

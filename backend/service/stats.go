@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"s-ui/database"
 	"s-ui/database/model"
 	"time"
@@ -86,12 +85,8 @@ func (s *StatsService) GetStats(resorce string, tag string, limit int) ([]model.
 	return result, nil
 }
 
-func (s *StatsService) GetOnlines() (string, error) {
-	onlines, err := json.Marshal(onlineResources)
-	if err != nil {
-		return "", err
-	}
-	return string(onlines), nil
+func (s *StatsService) GetOnlines() (onlines, error) {
+	return *onlineResources, nil
 }
 func (s *StatsService) DelOldStats(days int) error {
 	oldTime := time.Now().AddDate(0, 0, -(days)).Unix()

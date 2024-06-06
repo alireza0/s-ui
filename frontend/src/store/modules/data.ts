@@ -20,7 +20,7 @@ const Data = defineStore('Data', {
         this.lastLoad = Math.floor((new Date()).getTime()/1000)
 
         // Set new data
-        const data = JSON.parse(msg.obj)
+        const data = JSON.parse(JSON.stringify(msg.obj))
         if (data.subURI) this.subURI = data.subURI
         if (data.config) this.config = data.config
         if (data.clients) this.clients = data.clients
@@ -28,9 +28,9 @@ const Data = defineStore('Data', {
         this.onlines = data.onlines
 
         // To avoid ref copy
-        if (data.config) this.oldData.config = { ...JSON.parse(msg.obj).config }
-        if (data.clients) this.oldData.clients = [ ...JSON.parse(msg.obj).clients ]
-        if (data.tls) this.oldData.tlsConfigs = [ ...JSON.parse(msg.obj).tls ]
+        if (data.config) this.oldData.config = { ...msg.obj }.config
+        if (data.clients) this.oldData.clients = { ...msg.obj }.clients
+        if (data.tls) this.oldData.tlsConfigs = { ...msg.obj }.tls
       }
     },
     async pushData() {
