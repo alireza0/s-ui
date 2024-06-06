@@ -151,6 +151,12 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 	case "onlines":
 		onlines, err := a.StatsService.GetOnlines()
 		jsonObj(c, onlines, err)
+	case "logs":
+		service := c.Query("s")
+		count := c.Query("c")
+		level := c.Query("l")
+		logs := a.ServerService.GetLogs(service, count, level)
+		jsonObj(c, logs, nil)
 	default:
 		jsonMsg(c, "API call", nil)
 	}

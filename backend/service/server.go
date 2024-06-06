@@ -1,10 +1,13 @@
 package service
 
 import (
+	"bytes"
 	"os"
+	"os/exec"
 	"runtime"
 	"s-ui/config"
 	"s-ui/logger"
+	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -134,4 +137,25 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 	info["ipv6"] = ipv6
 
 	return info
+}
+
+func (s *ServerService) GetLogs(service string, count string, level string) []string {
+	c, _ := strconv.Atoi(count)
+	var lines []string
+	if service == "sing-box" {
+		cmdArgs := []string{"journalctl", "-u", service, "--no-pager", "-n", count, "-p", level}
+		// Run the command
+		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		err := cmd.Run()
+		if err != nil {
+			return []string{"Failed to run journalctl command!"}
+		}
+		lines = strings.Split(out.String(), "\n")
+	} else {
+		lines = logger.GetLogs(c, level)
+	}
+
+	return lines
 }

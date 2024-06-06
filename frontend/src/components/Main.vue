@@ -1,4 +1,10 @@
 <template>
+  <LogVue
+  v-model="logModal.visible"
+  :visible="logModal.visible"
+  :logType="logModal.logType"
+  @close="closeLogs"
+  />
   <v-container class="fill-height">
     <v-responsive :class="reloadItems.length>0 ? 'fill-height text-center' : 'align-center'" >
       <v-row class="d-flex align-center justify-center">
@@ -45,7 +51,7 @@
       </v-row>
       <v-row>
         <v-col cols="12" sm="6" md="3" v-for="i in reloadItems" :key="i">
-          <v-card class="rounded-lg" variant="outlined" height="200px"
+          <v-card class="rounded-lg" variant="outlined" height="210px"
                   :title="menuItems.flatMap(cat => cat.value).find(m => m.value == i)?.title">
             <v-card-text style="padding: 0 16px;" align="center" justify="center">
               <Gauge :tilesData="tilesData" :type="i" v-if="i.charAt(0) == 'g'" />
@@ -80,12 +86,18 @@
                   </v-col>
                   <v-col cols="3">S-UI</v-col>
                   <v-col cols="9">
-                    <v-chip density="compact" color="primary" variant="flat">
+                    <v-chip density="compact" color="blue">
                       <v-tooltip activator="parent" location="top">
                         {{ $t('main.info.threads') }}: {{ tilesData.sys?.appThreads }}<br />
                         {{ $t('main.info.memory') }}: {{ HumanReadable.sizeFormat(tilesData.sys?.appMem) }}
                       </v-tooltip>
                       v{{ tilesData.sys?.appVersion }}
+                    </v-chip>
+                    <v-chip density="compact" color="transparent" style="cursor: pointer;" @click="openLogs('s-ui')">
+                      <v-tooltip activator="parent" location="top">
+                        S-UI Logs
+                      </v-tooltip>
+                      <v-icon icon="mdi-list-box-outline" color="blue" />
                     </v-chip>
                   </v-col>
                   <v-col cols="3">{{ $t('main.info.uptime') }}</v-col>
@@ -97,7 +109,13 @@
                   <v-col cols="4">{{ $t('main.info.running') }}</v-col>
                   <v-col cols="8">
                     <v-chip density="compact" color="success" variant="flat" v-if="tilesData.sbd?.running">{{ $t('yes') }}</v-chip> 
-                    <v-chip density="compact" color="error" variant="flat" v-else>{{ $t('no') }}</v-chip> 
+                    <v-chip density="compact" color="error" variant="flat" v-else>{{ $t('no') }}</v-chip>
+                    <v-chip density="compact" color="transparent" style="cursor: pointer;" @click="openLogs('sing-box')">
+                      <v-tooltip activator="parent" location="top">
+                        Sing-Box Logs
+                      </v-tooltip>
+                      <v-icon icon="mdi-list-box-outline" :color="tilesData.sbd?.running ? 'success': 'error'" />
+                    </v-chip>
                   </v-col>
                   <v-col cols="4">{{ $t('main.info.memory') }}</v-col>
                   <v-col cols="8">
@@ -148,6 +166,7 @@ import Gauge from '@/components/tiles/Gauge.vue'
 import History from '@/components/tiles/History.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { i18n } from '@/locales'
+import LogVue from '@/layouts/modals/Logs.vue'
 
 const menu = ref(false)
 const menuItems = [
@@ -215,4 +234,19 @@ onMounted(() => {
 onBeforeUnmount(() => {
   stopTimer()
 })
+
+const logModal = ref({
+  visible: false,
+  logType: "s-ui"
+})
+
+const openLogs = (logType: string) => {
+  logModal.value.logType = logType
+  logModal.value.visible = true
+}
+
+const closeLogs = () => {
+  logModal.value.logType = "s-ui"
+  logModal.value.visible = false
+}
 </script>
