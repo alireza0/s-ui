@@ -1,6 +1,7 @@
 import { FindDiff } from '@/plugins/utils'
 import HttpUtils from '@/plugins/httputil'
 import { defineStore } from 'pinia'
+import Message from './message'
 
 const Data = defineStore('Data', {
   state: () => ({ 
@@ -20,17 +21,10 @@ const Data = defineStore('Data', {
         this.lastLoad = Math.floor((new Date()).getTime()/1000)
 
         // Set new data
-        const data = JSON.parse(JSON.stringify(msg.obj))
-        if (data.subURI) this.subURI = data.subURI
-        if (data.config) this.config = data.config
-        if (data.clients) this.clients = data.clients
-        if (data.tls) this.tlsConfigs = data.tls
-        this.onlines = data.onlines
-
-        // To avoid ref copy
-        if (data.config) this.oldData.config = { ...msg.obj }.config
-        if (data.clients) this.oldData.clients = { ...msg.obj }.clients
-        if (data.tls) this.oldData.tlsConfigs = { ...msg.obj }.tls
+        if (msg.obj.lastLog) {
+          const sb = Message()
+          sb.showMessage('Core error: \n' + msg.obj.lastLog,'error', 5000)
+        }
       }
     },
     async pushData() {
