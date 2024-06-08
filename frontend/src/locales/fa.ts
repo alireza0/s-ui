@@ -154,7 +154,6 @@ export default {
     direct: {
       overrideAddr: "جایگزین آدرس",
       overridePort: "جایگزین پورت",
-      proxyProtocol: "پروتکل پراکسی",
     },
     hy: {
       obfs: "رمز مبهم کننده",

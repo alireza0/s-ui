@@ -155,7 +155,6 @@ export default {
     direct: {
       overrideAddr: "Ghi đè Địa chỉ",
       overridePort: "Ghi đè Cổng",
-      proxyProtocol: "Giao thức Proxy",
     },
     hy: {
       obfs: "Mật khẩu đã được Ẩn",

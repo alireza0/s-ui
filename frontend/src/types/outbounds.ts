@@ -57,7 +57,6 @@ export interface WgPeer {
 export interface Direct extends OutboundBasics, Dial {
   override_address?: string
   override_port?: number
-  proxy_protocol?: 0 | 1 | 2
 }
 
 export interface Block extends OutboundBasics {}

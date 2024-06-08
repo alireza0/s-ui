@@ -155,7 +155,6 @@ export default {
     direct: {
       overrideAddr: "Override Address",
       overridePort: "Override Port",
-      proxyProtocol: "Proxy Protocol",
     },
     hy: {
       obfs: "Obfuscated Password",

@@ -20,16 +20,6 @@
         v-model.number="override_port">
         </v-text-field>
       </v-col>
-      <v-col cols="12" sm="6" md="4" v-if="direction == 'out'">
-        <v-select
-        :label="$t('types.direct.proxyProtocol')"
-        :items="[1,2]"
-        hide-details
-        clearable
-        @click:clear="delete data.proxy_protocol"
-        v-model.number="data.proxy_protocol">
-        </v-select>
-      </v-col>
     </v-row>
   </v-card>
 </template>

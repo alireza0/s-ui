@@ -156,7 +156,6 @@ export default {
     direct: {
       overrideAddr: "覆蓋地址",
       overridePort: "覆蓋端口",
-      proxyProtocol: "代理協議",
     },
     hy: {
       obfs: "混淆密碼",
