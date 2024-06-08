@@ -23,6 +23,7 @@ export default {
   version: "版本",
   email: "电子邮件",
   commaSeparated: "（逗号分隔）",
+  count: "计数",
   error: {
     dplData: "重复数据",
   },
@@ -85,11 +86,14 @@ export default {
   actions: {
     action: "操作",
     add: "添加",
+    new: "添加",
     edit: "编辑",
     del: "删除",
     save: "保存",
     update: "更新",
     submit: "提交",
+    set: "设置",
+    disable: "禁用",
     close: "关闭",
     restartApp: "重启面板",
   },
@@ -111,6 +115,10 @@ export default {
     lastLogin: "上次登录",
     date: "日期",
     time: "时间",
+    changes: "更改",
+    actor: "执行者",
+    key: "键",
+    action: "操作",
   },
   setting: {
     interface: "界面",

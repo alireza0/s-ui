@@ -28,6 +28,13 @@ func migrateDb() {
 	}()
 	fmt.Println("Start migrating database...")
 	err = migrateClientSchema(tx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = changesObj(tx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Migration done!")
 }
 
@@ -81,5 +88,10 @@ func migrateClientSchema(db *gorm.DB) error {
 			}
 		}
 	}
+	db.AutoMigrate(model.Client{})
 	return nil
+}
+
+func changesObj(db *gorm.DB) error {
+	return db.Exec("UPDATE changes SET obj = CAST('\"' || CAST(obj AS TEXT) || '\"' AS BLOB) WHERE actor = ? and obj not like ?", "DepleteJob", "\"%\"").Error
 }

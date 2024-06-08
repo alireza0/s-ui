@@ -23,6 +23,7 @@ export default {
   version: "Phiên bản",
   email: "Email",
   commaSeparated: "(được phân tách bằng dấu phẩy)",
+  count: "Đếm",
   error: {
     dplData: "Dữ liệu trùng lặp",
   },
@@ -85,11 +86,14 @@ export default {
   actions: {
     action: "Hành động",
     add: "Thêm",
+    new: "Thêm",
     edit: "Chỉnh sửa",
     del: "Xóa",
     save: "Lưu",
     update: "Cập nhật",
     submit: "Gửi",
+    set: "Đặt",
+    disable: "Vô hiệu hóa",
     close: "Đóng",
     restartApp: "Khởi động lại ứng dụng",
   },
@@ -111,6 +115,10 @@ export default {
     lastLogin: "Lân đăng nhập cuôi",
     date: "Ngày",
     time: "Thời gian",
+    changes: "Thay đổi",
+    actor: "Diễn viên",
+    key: "Khóa",
+    action: "Hành động",
   },
   setting: {
     interface: "Giao diện",

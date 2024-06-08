@@ -157,6 +157,12 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		level := c.Query("l")
 		logs := a.ServerService.GetLogs(service, count, level)
 		jsonObj(c, logs, nil)
+	case "changes":
+		actor := c.Query("a")
+		chngKey := c.Query("k")
+		count := c.Query("c")
+		changes := a.ConfigService.GetChanges(actor, chngKey, count)
+		jsonObj(c, changes, nil)
 	default:
 		jsonMsg(c, "API call", nil)
 	}

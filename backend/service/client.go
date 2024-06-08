@@ -70,7 +70,7 @@ func (s *ClientService) DepleteClients() ([]string, []string, error) {
 			Actor:    "DepleteJob",
 			Key:      "clients",
 			Action:   "disable",
-			Obj:      json.RawMessage(client.Name),
+			Obj:      json.RawMessage("\"" + client.Name + "\""),
 		})
 	}
 

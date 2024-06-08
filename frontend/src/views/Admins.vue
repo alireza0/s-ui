@@ -6,6 +6,18 @@
     @close="closeEditModal"
     @save="saveEditModal"
   />
+  <ChngModal
+    v-model="changesModal.visible"
+    :visible="changesModal.visible"
+    :admins="users.map((u:any) => u.username)"
+    :actor="changesModal.actor"
+    @close="closeChangesModal"
+  />
+  <v-row>
+    <v-col cols="12" justify="center" align="center">
+      <v-btn color="primary" @click="showChangesModal('')">{{ $t('admin.changes') }}</v-btn>
+    </v-col>
+  </v-row>
   <v-row>
     <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>users" :key="item.id">
       <v-card rounded="xl" elevation="5" min-width="200" :title="item.username">
@@ -38,6 +50,10 @@
             <v-icon />
             <v-tooltip activator="parent" location="top" :text="$t('actions.edit')"></v-tooltip>
           </v-btn>
+          <v-btn icon="mdi-list-box-outline" @click="showChangesModal(item.username)">
+            <v-icon />
+            <v-tooltip activator="parent" location="top" :text="$t('admin.changes')"></v-tooltip>
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-col>
@@ -45,9 +61,10 @@
 </template>
 
 <script lang="ts" setup>
-import AdminModal from '@/layouts/modals/Admin.vue';
-import HttpUtils from '@/plugins/httputil';
-import { Ref, ref, inject, onMounted } from 'vue';
+import AdminModal from '@/layouts/modals/Admin.vue'
+import ChngModal from '@/layouts/modals/Changes.vue'
+import HttpUtils from '@/plugins/httputil'
+import { Ref, ref, inject, onMounted } from 'vue'
 
 const loading:Ref = inject('loading')?? ref(false)
 
@@ -75,6 +92,7 @@ const showEditModal = (user: any) => {
 }
 const closeEditModal = () => {
   editModal.value.visible = false
+  editModal.value.user = {}
 }
 const saveEditModal = async (data:any) => {
   loading.value=true
@@ -87,5 +105,18 @@ const saveEditModal = async (data:any) => {
   } else {
     loading.value=false
   }
+}
+
+const changesModal = ref({
+  visible: false,
+  actor: '',
+})
+const showChangesModal = (actor: string) => {
+  changesModal.value.actor = actor
+  changesModal.value.visible = true
+}
+const closeChangesModal = () => {
+  changesModal.value.visible = false
+  changesModal.value.actor = ''
 }
 </script>

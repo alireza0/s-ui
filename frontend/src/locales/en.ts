@@ -23,6 +23,7 @@ export default {
   version: "Version",
   email: "Email",
   commaSeparated: "(comma separated)",
+  count: "Count",
   error: {
     dplData: "Duplicate Data",
   },
@@ -85,11 +86,14 @@ export default {
   actions: {
     action: "Action",
     add: "Add",
+    new: "Add",
     edit: "Edit",
     del: "Delete",
     save: "Save",
     update: "Update",
     submit: "Submit",
+    set: "Set",
+    disable: "Disable",
     close: "Close",
     restartApp: "Restart App",
   },
@@ -111,6 +115,10 @@ export default {
     lastLogin: "Last login",
     date: "Date",
     time: "Time",
+    changes: "Changes",
+    actor: "Actor",
+    key: "Key",
+    action: "Action",
   },
   setting: {
     interface: "Interface",

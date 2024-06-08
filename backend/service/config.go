@@ -6,6 +6,7 @@ import (
 	"s-ui/config"
 	"s-ui/database"
 	"s-ui/database/model"
+	"s-ui/logger"
 	"s-ui/singbox"
 	"strconv"
 	"time"
@@ -341,4 +342,22 @@ func (s *ConfigService) contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+func (s *ConfigService) GetChanges(actor string, chngKey string, count string) []model.Changes {
+	c, _ := strconv.Atoi(count)
+	whereString := "`id`>0"
+	if len(actor) > 0 {
+		whereString += " and `actor`='" + actor + "'"
+	}
+	if len(chngKey) > 0 {
+		whereString += " and `key`='" + chngKey + "'"
+	}
+	db := database.GetDB()
+	var chngs []model.Changes
+	err := db.Model(model.Changes{}).Where(whereString).Order("`id` desc").Limit(c).Scan(&chngs).Error
+	if err != nil {
+		logger.Warning(err)
+	}
+	return chngs
 }

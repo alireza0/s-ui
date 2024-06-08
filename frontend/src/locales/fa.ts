@@ -23,6 +23,7 @@ export default {
   version: "نسخه",
   email: "ایمیل",
   commaSeparated: "(جداشده با کاما)",
+  count: "تعداد",
   error: {
     dplData: "داده تکراری",
   },
@@ -84,11 +85,14 @@ export default {
   actions: {
     action: "فرمان",
     add: "ایجاد",
+    new: "ایجاد",
     edit: "ویرایش",
     del: "حذف",
     save: "ذخیره",
     update: "بروزرسانی",
     submit: "ارسال",
+    set: "تنظیم",
+    disable: "غیرفعال",
     close: "بستن",
     restartApp: "ریستارت پنل",
   },
@@ -110,6 +114,10 @@ export default {
     lastLogin: "آخرین ورود",
     date: "تاریخ",
     time: "ساعت",
+    changes: "تغییرات",
+    actor: "مجری",
+    key: "کلید",
+    action: "عمل",
   },
   setting: {
     interface: "نما",
