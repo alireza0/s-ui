@@ -2,7 +2,13 @@
   <v-dialog transition="dialog-bottom-transition" width="90%" max-width="1200" :loading="loading">
     <v-card class="rounded-lg">
       <v-card-title>
-        {{ (logType == 's-ui'? "S-UI" : "Sing-Box") + " logs" }}
+        <v-row>
+          <v-col>{{ $t('basic.log.title') + " - " + (logType == 's-ui'? "S-UI" : "Sing-Box") }}</v-col>
+          <v-spacer></v-spacer>
+          <v-col cols="auto">
+            <v-icon icon="mdi-close" @click="$emit('close')" />
+          </v-col>
+        </v-row>
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text>
@@ -10,7 +16,7 @@
           <v-col cols="12" sm="6" md="4">
             <v-select
             hide-details
-            label="Level"
+            :label="$t('basic.log.level')"
             :items="logLevels"
             v-model="logLevel"
             @update:model-value="loadData">
@@ -19,7 +25,7 @@
           <v-col cols="12" sm="6" md="4">
             <v-select
             hide-details
-            label="Count"
+            :label="$t('count')"
             :items="[10,20,30,50,100]"
             v-model.number="logCount"
             @update:model-value="loadData">
@@ -37,16 +43,6 @@
         </v-row>
         <v-card style="background-color: background" dir="ltr" v-html="lines.join('<br />')"></v-card>
       </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="blue-darken-1"
-          variant="outlined"
-          @click="$emit('close')"
-        >
-          {{ $t('actions.close') }}
-        </v-btn>
-      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>

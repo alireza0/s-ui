@@ -95,7 +95,7 @@
                     </v-chip>
                     <v-chip density="compact" color="transparent" style="cursor: pointer;" @click="openLogs('s-ui')">
                       <v-tooltip activator="parent" location="top">
-                        S-UI Logs
+                        {{ $t('basic.log.title') + " - S-UI" }}
                       </v-tooltip>
                       <v-icon icon="mdi-list-box-outline" color="blue" />
                     </v-chip>
@@ -112,7 +112,7 @@
                     <v-chip density="compact" color="error" variant="flat" v-else>{{ $t('no') }}</v-chip>
                     <v-chip density="compact" color="transparent" style="cursor: pointer;" @click="openLogs('sing-box')">
                       <v-tooltip activator="parent" location="top">
-                        Sing-Box Logs
+                        {{ $t('basic.log.title') + " - Sing-Box" }}
                       </v-tooltip>
                       <v-icon icon="mdi-list-box-outline" :color="tilesData.sbd?.running ? 'success': 'error'" />
                     </v-chip>
