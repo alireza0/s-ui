@@ -60,8 +60,8 @@ export default {
       logLevels: [
         { title: 'DEBUG', value: 'debug' },
         { title: 'INFO', value: 'info' },
-        { title: 'WARNING', value: 'warn' },
-        { title: 'ERROR', value: 'error' },
+        { title: 'WARNING', value: 'warning' },
+        { title: 'ERROR', value: 'err' },
       ],
       logCount: 10,
     }

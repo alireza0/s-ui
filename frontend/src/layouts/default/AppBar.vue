@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref,watch } from "vue"
+import { computed, ref } from "vue"
 import { useTheme } from "vuetify"
 import { FindDiff } from "@/plugins/utils"
 import Data from "@/store/modules/data"

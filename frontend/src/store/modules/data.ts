@@ -21,9 +21,22 @@ const Data = defineStore('Data', {
         this.lastLoad = Math.floor((new Date()).getTime()/1000)
 
         // Set new data
+        if (msg.obj.config) this.oldData.config = msg.obj.config
+        if (msg.obj.clients) this.oldData.clients = msg.obj.clients
+        if (msg.obj.tls) this.oldData.tlsConfigs = msg.obj.tls
+        this.onlines = msg.obj.onlines
         if (msg.obj.lastLog) {
           const sb = Message()
           sb.showMessage('Core error: \n' + msg.obj.lastLog,'error', 5000)
+        }
+        
+        if (msg.obj.config) {
+          // To avoid ref copy
+          const data = JSON.parse(JSON.stringify(msg.obj))
+          if (data.subURI) this.subURI = data.subURI
+          if (data.config) this.config = data.config
+          if (data.clients) this.clients = data.clients
+          if (data.tls) this.tlsConfigs = data.tls
         }
       }
     },
