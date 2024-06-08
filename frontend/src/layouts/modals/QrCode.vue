@@ -77,7 +77,7 @@ export default {
       return Data().subURI + this.client.name
     },
     clientLinks() {
-      return JSON.parse(this.client.links?? "[]")
+      return this.client.links?? []
     }
   },
   components: { QrcodeVue }
