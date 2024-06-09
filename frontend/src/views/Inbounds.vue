@@ -109,8 +109,8 @@ import { computed, ref } from 'vue'
 import { InTypes, Inbound, InboundWithUser, ShadowTLS, VLESS } from '@/types/inbounds'
 import { Client } from '@/types/clients'
 import { Link, LinkUtil } from '@/plugins/link'
-import Message from '@/store/modules/message'
 import { i18n } from '@/locales'
+import { push } from 'notivue'
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
@@ -166,8 +166,9 @@ const saveModal = (data:Inbound, stats: boolean, tls_id: number) => {
   // Check duplicate tag
   const oldTag = modal.value.id != -1 ? inbounds.value[modal.value.id].tag : null
   if (data.tag != oldTag && inTags.value.includes(data.tag)) {
-    const sb = Message()
-    sb.showMessage(i18n.global.t('error.dplData') + ': ' + i18n.global.t('objects.tag') ,'error', 5000)
+    push.error({
+      message: i18n.global.t('error.dplData') + ": " + i18n.global.t('objects.tag')
+    })
     return
   }
 

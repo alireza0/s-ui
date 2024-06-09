@@ -27,6 +27,7 @@ export default {
   count: "計數",
   error: {
     dplData: "重複數據",
+    core: "Sing-Box 錯誤",
   },
   pages: {
     login: "登錄",

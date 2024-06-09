@@ -96,8 +96,8 @@ import Stats from '@/layouts/modals/Stats.vue'
 import { Config, V2rayApiStats } from '@/types/config';
 import { Outbound } from '@/types/outbounds';
 import { computed, ref } from 'vue'
-import Message from '@/store/modules/message';
 import { i18n } from '@/locales';
+import { push } from 'notivue';
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
@@ -142,8 +142,9 @@ const saveModal = (data:Outbound, stats: boolean) => {
   // Check duplicate tag
   const oldTag = modal.value.id != -1 ? outbounds.value[modal.value.id].tag : null
   if (data.tag != oldTag && outboundTags.value.includes(data.tag)) {
-    const sb = Message()
-    sb.showMessage(i18n.global.t('error.dplData') + ': ' + i18n.global.t('objects.tag') ,'error', 5000)
+    push.error({
+      message: i18n.global.t('error.dplData') + ": " + i18n.global.t('objects.tag')
+    })
     return
   }
   // New or Edit

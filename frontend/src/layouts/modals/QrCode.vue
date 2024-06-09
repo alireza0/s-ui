@@ -5,7 +5,7 @@
         <v-row>
           <v-col>QrCode</v-col>
           <v-spacer></v-spacer>
-          <v-col cols="1"><v-icon icon="mdi-close-box" @click="$emit('close')" ></v-icon></v-col>
+          <v-col cols="auto"><v-icon icon="mdi-close-box" @click="$emit('close')" /></v-col>
         </v-row>
       </v-card-title>
       <v-divider></v-divider>
@@ -31,14 +31,13 @@
 import QrcodeVue from 'qrcode.vue'
 import Data from '@/store/modules/data'
 import Clipboard from 'clipboard'
-import Message from '@/store/modules/message'
 import { i18n } from '@/locales'
+import { push } from 'notivue'
 
 export default {
   props: ['index'],
   data() {
     return {
-      msg: Message(),
     }
   },
   methods: {
@@ -54,12 +53,18 @@ export default {
 
       clipboard.on('success', () => {
         clipboard.destroy()
-        this.msg.showMessage(i18n.global.t('copyToClipboard') + " : " + i18n.global.t('success'),'success',5000)
+        push.success({
+          message: i18n.global.t('success') + ": " + i18n.global.t('copyToClipboard'),
+          duration: 5000,
+        })
       })
 
       clipboard.on('error', () => {
         clipboard.destroy()
-        this.msg.showMessage(i18n.global.t('copyToClipboard') + " : " + i18n.global.t('failed'),'error',5000)
+        push.error({
+          message: i18n.global.t('failed') + ": " + i18n.global.t('copyToClipboard'),
+          duration: 5000,
+        })
       })
 
       // Perform click on hidden button to trigger copy

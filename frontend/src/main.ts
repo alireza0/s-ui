@@ -23,6 +23,22 @@ import { registerPlugins } from '@/plugins'
 import { i18n } from '@/locales'
 import Vue3PersianDatetimePicker from 'vue3-persian-datetime-picker'
 
+// Notivue
+import { createNotivue } from 'notivue'
+import 'notivue/notification.css'
+import 'notivue/animations.css'
+const notivue = createNotivue({
+  position: 'top-center',
+  limit: 4,
+  enqueue: false,
+  avoidDuplicates: false,
+  notifications: {
+    global: {
+      duration: 3000
+    }
+  },
+})
+
 const loading = ref(false)
 
 const app = createApp(App)
@@ -34,5 +50,6 @@ app
   .use(router)
   .use(store)
   .use(i18n)
+  .use(notivue)
   .component('DatePicker', Vue3PersianDatetimePicker)
   .mount('#app')

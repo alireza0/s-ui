@@ -1,7 +1,8 @@
 import { FindDiff } from '@/plugins/utils'
 import HttpUtils from '@/plugins/httputil'
 import { defineStore } from 'pinia'
-import Message from './message'
+import { push } from 'notivue'
+import { i18n } from '@/locales'
 
 const Data = defineStore('Data', {
   state: () => ({ 
@@ -26,8 +27,11 @@ const Data = defineStore('Data', {
         if (msg.obj.tls) this.oldData.tlsConfigs = msg.obj.tls
         this.onlines = msg.obj.onlines
         if (msg.obj.lastLog) {
-          const sb = Message()
-          sb.showMessage('Core error: \n' + msg.obj.lastLog,'error', 5000)
+          push.error({
+            title: i18n.global.t('error.core'),
+            duration: 5000,
+            message: msg.obj.lastLog
+          })
         }
         
         if (msg.obj.config) {

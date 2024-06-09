@@ -135,8 +135,8 @@ import { Config, V2rayApiStats } from '@/types/config'
 import { InTypes, Inbound,InboundWithUser, ShadowTLS, VLESS } from '@/types/inbounds'
 import { Link, LinkUtil } from '@/plugins/link'
 import { HumanReadable } from '@/plugins/utils'
-import Message from '@/store/modules/message'
 import { i18n } from '@/locales'
+import { push } from 'notivue'
 
 const clients = computed((): any[] => {
   return Data().clients
@@ -185,8 +185,9 @@ const saveModal = (data:any, stats:boolean) => {
   // Check duplicate name
   const oldName = modal.value.index != -1 ? clients.value[modal.value.index].name : null
   if (data.name != oldName && clients.value.findIndex(c => c.name == data.name) != -1) {
-    const sb = Message()
-    sb.showMessage(i18n.global.t('error.dplData') + ': ' + i18n.global.t('client.name') ,'error', 5000)
+    push.error({
+      message: i18n.global.t('error.dplData') + ": " + i18n.global.t('client.name')
+    })
     return
   }
   if(modal.value.index == -1) {

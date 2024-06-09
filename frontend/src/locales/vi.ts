@@ -26,6 +26,7 @@ export default {
   count: "Đếm",
   error: {
     dplData: "Dữ liệu trùng lặp",
+    core: "Lỗi Sing-Box",
   },
   pages: {
     login: "Đăng nhập",

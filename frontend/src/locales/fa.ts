@@ -26,6 +26,7 @@ export default {
   count: "تعداد",
   error: {
     dplData: "داده تکراری",
+    core: "خطا در سینگ‌باکس",
   },
   pages: {
     login: "ورود",

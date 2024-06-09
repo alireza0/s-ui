@@ -26,6 +26,7 @@ export default {
   count: "Count",
   error: {
     dplData: "Duplicate Data",
+    core: "Sing-Box Error",
   },
   pages: {
     login: "Login",
