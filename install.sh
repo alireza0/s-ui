@@ -76,6 +76,9 @@ install_base() {
 }
 
 config_after_install() {
+    echo -e "${yellow}Migration... ${plain}"
+    /usr/local/s-ui/sui migrate
+    
     echo -e "${yellow}Install/update finished! For security it's recommended to modify panel settings ${plain}"
     read -p "Do you want to continue with the modification [y/n]? ": config_confirm
     if [[ "${config_confirm}" == "y" || "${config_confirm}" == "Y" ]]; then
