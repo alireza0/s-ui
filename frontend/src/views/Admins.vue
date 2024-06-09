@@ -28,19 +28,19 @@
           <v-row>
             <v-col>{{ $t('admin.date') }}</v-col>
             <v-col dir="ltr">
-              {{ item.lastLogin.split(" ")[0]?? '-' }}
+              {{ item.loginDate }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('admin.time') }}</v-col>
             <v-col dir="ltr">
-              {{ item.lastLogin.split(" ")[1]?? '-' }}
+              {{ item.loginTime }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>IP</v-col>
             <v-col dir="ltr">
-              {{ item.lastLogin.split(" ")[2]?? '-' }}
+              {{ item.ip }}
             </v-col>
           </v-row>
         </v-card-text>
@@ -63,12 +63,13 @@
 <script lang="ts" setup>
 import AdminModal from '@/layouts/modals/Admin.vue'
 import ChngModal from '@/layouts/modals/Changes.vue'
+import { i18n } from '@/locales'
 import HttpUtils from '@/plugins/httputil'
 import { Ref, ref, inject, onMounted } from 'vue'
 
 const loading:Ref = inject('loading')?? ref(false)
 
-const users = ref([])
+const users = ref(<any[]>[])
 
 onMounted(async () => {loadData()})
 
@@ -77,8 +78,26 @@ const loadData = async () => {
   const msg = await HttpUtils.get('api/users')
   loading.value = false
   if (msg.success) {
-    users.value = msg.obj
+    console.log(msg.obj)
+    msg.obj.forEach((u:any) => {
+      const lastLogin = u.lastLogin.split(" ")
+      const localLastLogin = lastLogin.length > 2 ? dateFormatted(Date.parse(lastLogin[0] + " " + lastLogin[1])) : "- -"
+      const loginDateTime = localLastLogin.split(" ")
+      users.value.push({
+        id: u.id,
+        username: u.username,
+        loginDate: loginDateTime[0],
+        loginTime: loginDateTime[1],
+        ip: lastLogin[2]?? "-",
+      })
+    })
   }
+}
+
+const dateFormatted = (dt: number): string => {
+  const locale = i18n.global.locale.value.replace('zh', 'zh-')
+  const date = new Date(dt)
+  return date.toLocaleString(locale)
 }
 
 const editModal = ref({

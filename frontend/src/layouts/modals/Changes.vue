@@ -5,9 +5,7 @@
         <v-row>
           <v-col>{{ $t('admin.changes') }}</v-col>
           <v-spacer></v-spacer>
-          <v-col cols="auto">
-            <v-icon icon="mdi-close" @click="$emit('close')" />
-          </v-col>
+          <v-col cols="auto"><v-icon icon="mdi-close-box" @click="$emit('close')" /></v-col>
         </v-row>
       </v-card-title>
       <v-divider></v-divider>
