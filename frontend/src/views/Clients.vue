@@ -193,10 +193,6 @@ const saveModal = (data:any, stats:boolean) => {
   if(modal.value.index == -1) {
     clients.value.push(data)
   } else {
-    const oldData = createClient(clients.value[modal.value.index])
-    oldData.inbounds.forEach((i:string) => {
-      if (!data.inbounds.includes(i)) data.inbounds.push(i)
-    })
     clients.value[modal.value.index] = data
   }
 

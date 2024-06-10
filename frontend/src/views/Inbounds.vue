@@ -218,7 +218,7 @@ const saveModal = (data:Inbound, stats: boolean, tls_id: number) => {
   }
   modal.value.visible = false
 }
-const updateLinks = (i: InboundWithUser) => {
+const updateLinks = (i: any) => {
   if(i.users && i.users.length>0){
     i.users.forEach((u:any) => {
       const client = clients.value.find(c => u.username? c.name == u.username : c.name == u.name)
@@ -249,7 +249,7 @@ const delInbound = (index: number) => {
     const inbU = <InboundWithUser>inb
     if (inbU.users && inbU.users.length>0){
       inbU.users.forEach((u:any) => {
-        const c_index = clients.value.findIndex(c => u.username? u.username == c.name : u.user == c.name)
+        const c_index = clients.value.findIndex(c => u.username? u.username == c.name : u.name == c.name)
         if (c_index != -1) {
           const clientInbounds = clients.value[c_index].inbounds.filter((x:string) => x!=tag)
           clients.value[c_index].inbounds = clientInbounds
@@ -277,7 +277,7 @@ const delInbound = (index: number) => {
   }
   delOverlay.value[index] = false
 }
-const buildInboundsUsers = (inbound:InboundWithUser):Inbound => {
+const buildInboundsUsers = (inbound:any):Inbound => {
     const users = <any>[]
     const inboundClients = clients.value.filter(c => c.enable && c.inbounds.includes(inbound.tag))
     inboundClients.forEach(c => {
