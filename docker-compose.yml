@@ -18,7 +18,7 @@ services:
       - "2096:2096"
     networks:
       - s-ui
-    entrypoint: "./sui"
+    entrypoint: "./sui migrate && ./sui"
 
   sing-box:
     image: alireza7/s-ui-singbox
