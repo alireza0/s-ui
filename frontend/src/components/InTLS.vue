@@ -191,7 +191,10 @@ export default {
     },
     tlsEnable: {
       get() { return this.tls.enabled?? false },
-      set(newValue: boolean) { this.$props.inbound.tls = newValue ? { enabled: true } : {} }
+      set(newValue: boolean) {
+        this.$props.inbound.tls = newValue ? { enabled: true } : {}
+        this.$props.tls_id.value = 0
+      }
     },
     tlsOptional(): boolean {
       return !['hysteria','hysteria2','tuic','naive'].includes(this.$props.inbound.type)

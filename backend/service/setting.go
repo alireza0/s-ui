@@ -127,9 +127,9 @@ func (s *SettingService) getBool(key string) (bool, error) {
 	return strconv.ParseBool(str)
 }
 
-func (s *SettingService) setBool(key string, value bool) error {
-	return s.setString(key, strconv.FormatBool(value))
-}
+// func (s *SettingService) setBool(key string, value bool) error {
+// 	return s.setString(key, strconv.FormatBool(value))
+// }
 
 func (s *SettingService) getInt(key string) (int, error) {
 	str, err := s.getString(key)

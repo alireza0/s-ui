@@ -98,6 +98,7 @@ export default {
       else {
         const port = RandomUtil.randomIntRange(10000, 60000)
         this.inbound = createInbound("direct",{ tag: "direct-"+port ,listen: "::", listen_port: port })
+        this.tls_id.value = 0
         this.title = "add"
       }
       this.inboundStats = this.$props.stats
