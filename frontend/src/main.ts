@@ -28,10 +28,10 @@ import { createNotivue } from 'notivue'
 import 'notivue/notification.css'
 import 'notivue/animations.css'
 const notivue = createNotivue({
-  position: 'top-center',
+  position: 'bottom-center',
   limit: 4,
   enqueue: false,
-  avoidDuplicates: false,
+  avoidDuplicates: true,
   notifications: {
     global: {
       duration: 3000

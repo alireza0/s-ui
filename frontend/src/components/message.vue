@@ -26,7 +26,7 @@ const theme = computed(() =>{
 })
 
 const direction = computed(() => {
-  return vuetify.locale.current.value == 'fa' ? 'rtl' : 'ltr'
+  return vuetify.locale.isRtl ? 'rtl' : 'ltr'
 })
 </script>
 
