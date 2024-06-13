@@ -163,6 +163,11 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		count := c.Query("c")
 		changes := a.ConfigService.GetChanges(actor, chngKey, count)
 		jsonObj(c, changes, nil)
+	case "keypairs":
+		kType := c.Query("k")
+		options := c.Query("o")
+		keypair := a.ServerService.GenKeypair(kType, options)
+		jsonObj(c, keypair, nil)
 	default:
 		jsonMsg(c, "API call", nil)
 	}

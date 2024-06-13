@@ -90,6 +90,20 @@
                   >{{ $t('tls.useText') }}</v-btn>
                 </v-btn-toggle>
               </v-col>
+              <v-spacer></v-spacer>
+              <v-col cols="auto">
+                <v-btn
+                  variant="tonal"
+                  density="compact"
+                  icon="mdi-key-star"
+                  @click="genSelfSigned"
+                  :loading="loading">
+                  <v-icon />
+                  <v-tooltip activator="parent" location="top">
+                    {{ $t('actions.generate') }}
+                  </v-tooltip>
+                </v-btn>
+              </v-col>
             </v-row>
             <v-row v-if="usePath == 0">
               <v-col cols="12" sm="6">
@@ -108,14 +122,14 @@
               </v-col>
             </v-row>
             <v-row v-else>
-              <v-col cols="12" sm="6">
+              <v-col cols="12">
                 <v-textarea
                   :label="$t('tls.cert')"
                   hide-details
                   v-model="certText">
                 </v-textarea>
               </v-col>
-              <v-col cols="12" sm="6">
+              <v-col cols="12">
                 <v-textarea
                   :label="$t('tls.key')"
                   hide-details
@@ -158,26 +172,42 @@
                 v-model="server_port">
                 </v-text-field>
               </v-col>
+              <v-spacer></v-spacer>
+              <v-col cols="auto">
+                <v-btn
+                  variant="tonal"
+                  density="compact"
+                  icon="mdi-key-star"
+                  @click="genRealityKey"
+                  :loading="loading">
+                  <v-icon />
+                  <v-tooltip activator="parent" location="top">
+                    {{ $t('actions.generate') }}
+                  </v-tooltip>
+                </v-btn>
+              </v-col>
             </v-row>
             <v-row>
-              <v-col cols="12" md="6">
+              <v-col cols="12">
                 <v-text-field
                   :label="$t('tls.privKey')"
                   hide-details
                   v-model="inTls.reality.private_key">
                 </v-text-field>
               </v-col>
-              <v-col cols="12" md="6">
+              <v-col cols="12">
                 <v-text-field
                   :label="$t('tls.pubKey')"
                   hide-details
                   v-model="outTls.reality.public_key">
                 </v-text-field>
               </v-col>
-              <v-col cols="12" md="4">
+              <v-col cols="12">
                 <v-text-field
                   label="Short IDs"
                   hide-details
+                  append-icon="mdi-refresh"
+                  @click:append="randomSID"
                   v-model="short_id">
                 </v-text-field>
               </v-col>
@@ -261,6 +291,10 @@ import { iTls, defaultInTls } from '@/types/inTls'
 import { oTls, defaultOutTls } from '@/types/outTls'
 import AcmeVue from '@/components/Acme.vue'
 import EchVue from '@/components/Ech.vue'
+import HttpUtils from '@/plugins/httputil'
+import { push } from 'notivue'
+import { i18n } from '@/locales'
+import RandomUtil from '@/plugins/randomUtil'
 export default {
   props: ['visible', 'data', 'index'],
   emits: ['close', 'save'],
@@ -334,7 +368,10 @@ export default {
     },
     changeTlsType(){
       if (this.tlsType) {
-        this.tls.server = <iTls>{ enabled: true, reality: { enabled: true, handshake: { server_port: 443 } }, server_name: "" }
+        this.tls.server = <iTls>{
+          enabled: true,
+          reality: { enabled: true, handshake: { server_port: 443 }, short_id: RandomUtil.randomShortId() },
+          server_name: "" }
         this.tls.client = <oTls>{ reality: { public_key: "" } }
       } else {
         this.tls.server = <iTls>{ enabled: true }
@@ -350,6 +387,71 @@ export default {
       this.$emit('save', this.tls)
       this.loading = false
     },
+    async genSelfSigned(){
+      this.loading = true
+      const msg = await HttpUtils.get('api/keypairs', { k: "tls", o: this.inTls.server_name?? "''" })
+      this.loading = false
+      if (msg.success) {
+        this.inTls.key_path=undefined
+        this.inTls.certificate_path=undefined
+        this.usePath = 1
+        if (msg.obj.length>0){
+          let privateKey = <string[]>[]
+          let publicKey = <string[]>[]
+          let isPrivateKey = false
+          let isPublicKey = false
+
+          msg.obj.forEach((line:string) => {
+              if (line === "-----BEGIN PRIVATE KEY-----") {
+                  isPrivateKey = true
+                  isPublicKey = false
+              } else if (line === "-----END PRIVATE KEY-----") {
+                  isPrivateKey = false
+              } else if (line === "-----BEGIN CERTIFICATE-----") {
+                  isPublicKey = true
+                  isPrivateKey = false
+              } else if (line === "-----END CERTIFICATE-----") {
+                  isPublicKey = false
+              } else if (isPrivateKey) {
+                  privateKey.push(line)
+              } else if (isPublicKey) {
+                  publicKey.push(line)
+              }
+          })
+          this.inTls.key = privateKey?? undefined
+          this.inTls.certificate = publicKey?? undefined
+
+        } else {
+          push.error({
+            message: i18n.global.t('error') + ": " + msg.obj
+          })
+        }
+      }
+    },
+    async genRealityKey(){
+      this.loading = true
+      const msg = await HttpUtils.get('api/keypairs', { k: "reality" })
+      this.loading = false
+      if (msg.success) {
+        msg.obj.forEach((line:string) => {
+          if (this.inTls.reality && this.outTls.reality){
+            if (line.startsWith("PrivateKey")){
+              this.inTls.reality.private_key = line.substring(12)
+            }
+            if (line.startsWith("PublicKey")){
+              this.outTls.reality.public_key = line.substring(11)
+            }
+          }
+        })
+      } else {
+        push.error({
+          message: i18n.global.t('error') + ": " + msg.obj
+        })
+      }
+    },
+    randomSID(){
+      this.short_id = RandomUtil.randomShortId().join(',')
+    }
   },
   computed: {
     inTls(): iTls {

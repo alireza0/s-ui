@@ -159,3 +159,23 @@ func (s *ServerService) GetLogs(service string, count string, level string) []st
 
 	return lines
 }
+
+func (s *ServerService) GenKeypair(keyType string, options string) []string {
+	if len(keyType) == 0 {
+		return []string{"No keypair to generate"}
+	}
+	sbExec := s.GetBinaryPath()
+	cmdArgs := []string{"generate", keyType + "-keypair"}
+	if keyType == "tls" || keyType == "ech" {
+		cmdArgs = append(cmdArgs, options)
+	}
+	// Run the command
+	cmd := exec.Command(sbExec, cmdArgs...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return []string{"Failed to generate keypair"}
+	}
+	return strings.Split(out.String(), "\n")
+}

@@ -1,5 +1,6 @@
 import { Hysteria, Hysteria2, InTypes, Inbound, Naive, Shadowsocks, TUIC, Trojan, VLESS, VMess } from "@/types/inbounds"
-import { HTTP, WebSocket, gRPC, HTTPUpgrade, Transport, TrspTypes } from "@/types/transport";
+import { HTTP, WebSocket, gRPC, HTTPUpgrade, Transport, TrspTypes } from "@/types/transport"
+import RandomUtil from "./randomUtil"
 
 export interface Link {
   type: "local" | "external" | "sub"
@@ -185,7 +186,7 @@ export namespace LinkUtil {
       allowInsecure: tlsClient?.insecure ? 1 : null,
       fp: tlsClient?.utls?.enabled ? tlsClient.utls.fingerprint : null,
       pbk: tlsClient?.reality?.public_key?? null,
-      sid: inbound.tls?.reality?.enabled ? (inbound.tls?.reality?.short_id?.length>0 ?  inbound.tls.reality.short_id[0] : null) : null
+      sid: inbound.tls?.reality?.enabled ? (inbound.tls?.reality?.short_id?.length>0 ?  inbound.tls.reality.short_id[RandomUtil.randomInt(inbound.tls.reality.short_id.length)] : null) : null
     }
     const uri = new URL(`vless://${u?.uuid}@${addr}:${inbound.listen_port}`)
     for (const [key, value] of Object.entries({...params, ...tParams})){
@@ -211,7 +212,7 @@ export namespace LinkUtil {
       allowInsecure: tlsClient?.insecure ? 1 : null,
       fp: tlsClient?.utls?.enabled ? tlsClient.utls.fingerprint : null,
       pbk: tlsClient?.reality?.public_key?? null,
-      sid: inbound.tls?.reality?.enabled ? (inbound.tls?.reality?.short_id?.length>0 ?  inbound.tls.reality.short_id[0] : null) : null
+      sid: inbound.tls?.reality?.enabled ? (inbound.tls?.reality?.short_id?.length>0 ?  inbound.tls.reality.short_id[RandomUtil.randomInt(inbound.tls.reality.short_id.length)] : null) : null
     }
     const uri = new URL(`trojan://${u?.password}@${addr}:${inbound.listen_port}`)
     for (const [key, value] of Object.entries({...params, ...tParams})){

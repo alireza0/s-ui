@@ -30,9 +30,23 @@
             >{{ $t('tls.useText') }}</v-btn>
           </v-btn-toggle>
         </v-col>
+        <v-spacer></v-spacer>
+        <v-col cols="auto">
+          <v-btn
+            variant="tonal"
+            density="compact"
+            icon="mdi-key-star"
+            @click="genECH"
+            :loading="loading">
+            <v-icon />
+            <v-tooltip activator="parent" location="top">
+              {{ $t('actions.generate') }}
+            </v-tooltip>
+          </v-btn>
+        </v-col>
       </v-row>
       <v-row v-if="useEchPath == 0">
-        <v-col cols="12" sm="6">
+        <v-col cols="12">
           <v-text-field
             :label="$t('tls.keyPath')"
             hide-details
@@ -41,19 +55,21 @@
         </v-col>
       </v-row>
       <v-row v-else>
-        <v-col cols="12" sm="6">
+        <v-col cols="12">
           <v-textarea
             :label="$t('tls.key')"
             hide-details
+            rows="3"
             v-model="echKeyText">
           </v-textarea>
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="12" sm="6">
+        <v-col cols="12">
           <v-textarea
             :label="$t('tls.cert')"
             hide-details
+            rows="3"
             v-model="echConfigText">
           </v-textarea>
         </v-col>
@@ -63,14 +79,60 @@
 </template>
 
 <script lang="ts">
+import { i18n } from '@/locales'
+import HttpUtils from '@/plugins/httputil'
 import { ech } from '@/types/inTls'
+import { push } from 'notivue'
 
 export default {
   props: ['iTls','oTls'],
   data() {
     return {
-      useEchPath: 0
+      useEchPath: 0,
+      loading: false,
     }
+  },
+  methods: {
+    async genECH(){
+      this.loading = true
+      const msg = await HttpUtils.get('api/keypairs', { k: "ech", o: this.iTls.server_name?? "''" })
+      this.loading = false
+      if (msg.success && this.iTls.ech && this.oTls.ech) {
+        this.iTls.ech.key_path=undefined
+        this.useEchPath = 1
+        if (msg.obj.length>0){
+          let config = <string[]>[]
+          let key = <string[]>[]
+          let isConfig = false
+          let isKey = false
+
+          msg.obj.forEach((line:string) => {
+            if (line === "-----BEGIN ECH CONFIGS-----") {
+              isConfig = true
+              isKey = false
+            } else if (line === "-----END ECH CONFIGS-----") {
+              isConfig = false
+            } else if (line === "-----BEGIN ECH KEYS-----") {
+              isKey = true
+              isConfig = false
+            } else if (line === "-----END ECH KEYS-----") {
+              isKey = false
+            } else if (isConfig) {
+              config.push(line)
+            } else if (isKey) {
+              key.push(line)
+            }
+          })
+          this.iTls.ech.key = key?? undefined
+          this.oTls.ech.config = config?? undefined
+
+        } else {
+          push.error({
+            message: i18n.global.t('error') + ": " + msg.obj
+          })
+        }
+      }
+    },
   },
   computed: {
     ech() {
