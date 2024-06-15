@@ -13,8 +13,8 @@ export const i18n = createI18n({
     en: en,
     fa: fa,
     vi: vi,
-    zhcn: zhcn,
-    zhtw: zhtw
+    zhHans: zhcn,
+    zhHant: zhtw
   },
 })
 
@@ -22,6 +22,6 @@ export const languages = [
   { title: 'English', value: 'en' },
   { title: 'فارسی', value: 'fa' },
   { title: 'Tiếng Việt', value: 'vi' },
-  { title: '简体中文', value: 'zhcn' },
-  { title: '繁體中文', value: 'zhtw' },
+  { title: '简体中文', value: 'zhHans' },
+  { title: '繁體中文', value: 'zhHant' },
 ]
