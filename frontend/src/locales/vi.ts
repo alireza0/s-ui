@@ -314,6 +314,7 @@ export default {
       final: "Cuối cùng",
       server: "Máy chủ",
       firstServer: "Máy chủ Đầu tiên",
+      addrResolver: "Trình phân giải địa chỉ",
     },
     routing: {
       title: "Định tuyến",

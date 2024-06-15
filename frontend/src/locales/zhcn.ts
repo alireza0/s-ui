@@ -314,6 +314,7 @@ export default {
       final: "最终",
       server: "服务器",
       firstServer: "首选服务器",
+      addrResolver: "地址解析器",
     },
     routing: {
       title: "路由",

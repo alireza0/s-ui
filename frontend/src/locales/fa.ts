@@ -312,6 +312,7 @@ export default {
       final: "سرور نهایی",
       server: "سرور",
       firstServer: "سرور نخست",
+      addrResolver: "حل کننده دامنه",
     },
     routing: {
       title: "مسیریابی",

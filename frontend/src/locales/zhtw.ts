@@ -315,6 +315,7 @@ export default {
       final: "最終",
       server: "服務器",
       firstServer: "首選服務器",
+      addrResolver: "地址解析器",
     },
     routing: {
       title: "路由",

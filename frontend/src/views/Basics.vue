@@ -3,10 +3,10 @@
     <v-expansion-panel :title="$t('basic.log.title')">
       <v-expansion-panel-text>
         <v-row>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-switch v-model="appConfig.log.disabled" color="primary" :label="$t('disable')" hide-details></v-switch>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-select
               hide-details
               :label="$t('basic.log.level')"
@@ -14,14 +14,14 @@
               v-model="appConfig.log.level">
             </v-select>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-text-field
               v-model="appConfig.log.output"
               hide-details
               :label="$t('basic.log.output')"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-switch v-model="appConfig.log.timestamp" color="primary" :label="$t('basic.log.timestamp')" hide-details></v-switch>
           </v-col>
         </v-row>
@@ -30,7 +30,7 @@
     <v-expansion-panel title="DNS">
       <v-expansion-panel-text>
         <v-row>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-select
               hide-details
               :label="$t('basic.dns.final')"
@@ -38,7 +38,7 @@
               v-model="finalDns">
             </v-select>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-select
               hide-details
               :label="$t('listen.domainStrategy')"
@@ -48,7 +48,7 @@
               v-model="appConfig.dns.strategy">
             </v-select>
           </v-col>
-          <v-col cols="12" sm="6" md="3" align-self="center">
+          <v-col cols="12" sm="6" md="3" lg="2" align-self="center">
             <v-btn @click="addDnsServer" rounded>
               <v-icon icon="mdi-plus" />{{ $t('basic.dns.server') }}
             </v-btn>
@@ -58,7 +58,7 @@
           {{ $t('basic.dns.server') + ' ' + (index+1) }} <v-icon icon="mdi-delete" @click="appConfig.dns.servers.splice(index,1)" />
           <v-divider></v-divider>
           <v-row>
-            <v-col cols="12" sm="6" md="3">
+            <v-col cols="12" sm="6" md="3" lg="2">
               <v-text-field
                 v-model="s.tag"
                 hide-details
@@ -67,14 +67,23 @@
                 :label="$t('objects.tag')"
               ></v-text-field>
             </v-col>
-            <v-col cols="12" sm="6" md="3">
+            <v-col cols="12" sm="6" md="3" lg="2">
               <v-text-field
                 v-model="s.address"
                 hide-details
                 :label="$t('out.addr')"
               ></v-text-field>
             </v-col>
-            <v-col cols="12" sm="6" md="3">
+            <v-col cols="12" sm="6" md="3" lg="2">
+              <v-text-field
+                v-model="s.address_resolver"
+                hide-details
+                clearable
+                @click:clear="delete s.address_resolver"
+                :label="$t('basic.dns.addrResolver')"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" sm="6" md="3" lg="2">
               <v-select
                 hide-details
                 :label="$t('objects.outbound')"
@@ -84,7 +93,7 @@
                 v-model="s.detour">
               </v-select>
             </v-col>
-            <v-col cols="12" sm="6" md="3">
+            <v-col cols="12" sm="6" md="3" lg="2">
               <v-select
                 hide-details
                 :label="$t('listen.domainStrategy')"
@@ -101,17 +110,17 @@
     <v-expansion-panel title="NTP">
       <v-expansion-panel-text>
         <v-row>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-switch v-model="enableNtp" color="primary" :label="$t('enable')" hide-details></v-switch>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.ntp?.enabled">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.ntp?.enabled">
             <v-text-field
               v-model="appConfig.ntp.server"
               hide-details
               :label="$t('out.addr')"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.ntp?.enabled">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.ntp?.enabled">
             <v-text-field
               v-model="appConfig.ntp.server_port"
               hide-details
@@ -121,7 +130,7 @@
               :label="$t('out.port')"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.ntp?.enabled">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.ntp?.enabled">
             <v-text-field
               v-model="ntpInterval"
               hide-details
@@ -138,7 +147,7 @@
     <v-expansion-panel :title="$t('basic.routing.title')">
       <v-expansion-panel-text>
         <v-row>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-select
               hide-details
               :label="$t('basic.routing.defaultOut')"
@@ -148,7 +157,7 @@
               v-model="appConfig.route.final">
             </v-select>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-text-field
               v-model="appConfig.route.default_interface"
               hide-details
@@ -157,7 +166,7 @@
               :label="$t('basic.routing.defaultIf')"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-text-field
               v-model.number="routeMark"
               hide-details
@@ -166,7 +175,7 @@
               :label="$t('basic.routing.defaultRm')"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-switch
               v-model="appConfig.route.auto_detect_interface"
               color="primary"
@@ -182,24 +191,24 @@
         Cache File
         <v-divider></v-divider>
         <v-row>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-switch v-model="enableCacheFile" color="primary" :label="$t('enable')" hide-details></v-switch>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.cache_file">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.cache_file">
             <v-text-field
               v-model="appConfig.experimental.cache_file.path"
               hide-details
               :label="$t('transport.path')"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.cache_file">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.cache_file">
             <v-text-field
               v-model="appConfig.experimental.cache_file.cache_id"
               hide-details
               label="Cache ID"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.cache_file">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.cache_file">
             <v-switch v-model="appConfig.experimental.cache_file.store_fakeip"
               color="primary"
               :label="$t('basic.exp.storeFakeIp')"
@@ -209,45 +218,45 @@
         Clash API
         <v-divider></v-divider>
         <v-row>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-switch v-model="enableClashApi" color="primary" :label="$t('enable')" hide-details></v-switch>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.clash_api">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
             <v-text-field
               v-model="appConfig.experimental.clash_api.external_controller"
               hide-details
               label="External Controller"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.clash_api">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
             <v-text-field
               v-model="appConfig.experimental.clash_api.external_ui"
               hide-details
               label="External UI"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.clash_api">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
             <v-text-field
               v-model="appConfig.experimental.clash_api.external_ui_download_url"
               hide-details
               label="UI Download URL"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.clash_api">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
             <v-text-field
               v-model="appConfig.experimental.clash_api.external_ui_download_detour"
               hide-details
               label="UI Download detour"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.clash_api">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
             <v-text-field
               v-model="appConfig.experimental.clash_api.secret"
               hide-details
               label="Secret"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3" v-if="appConfig.experimental.clash_api">
+          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
             <v-text-field
               v-model="appConfig.experimental.clash_api.default_mode"
               hide-details
@@ -258,14 +267,14 @@
         V2Ray API
         <v-divider></v-divider>
         <v-row>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-text-field
               v-model="appConfig.experimental.v2ray_api.listen"
               hide-details
               :label="$t('objects.listen')"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6" md="3" lg="2">
             <v-switch v-model="appConfig.experimental.v2ray_api.stats.enabled"
               color="primary"
               :label="$t('stats.enable')"

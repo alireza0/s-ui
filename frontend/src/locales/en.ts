@@ -313,6 +313,7 @@ export default {
       final: "Final",
       server: "Server",
       firstServer: "First Server",
+      addrResolver: "Address Resolver",
     },
     routing: {
       title: "Routing",
