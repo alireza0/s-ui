@@ -23,105 +23,117 @@
     :tag="stats.tag"
     @close="closeStats"
   />
-  <v-row>
-    <v-col cols="12" justify="center" align="center">
+  <v-row justify="center" align="center">
+    <v-col cols="auto">
       <v-btn color="primary" @click="showModal(-1)">{{ $t('actions.add') }}</v-btn>
+    </v-col>
+    <v-col cols="auto">
+      <v-select
+      hide-details
+      variant="underlined"
+      density="compact"
+      :label="$t('filter')"
+      :items="filterItems"
+      v-model="filter">
+      </v-select>
     </v-col>
   </v-row>
   <v-row>
-    <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in clients" :key="item.id">
-      <v-card rounded="xl" elevation="5" min-width="200">
-        <v-card-title>
-          <v-row>
-            <v-col>{{ item.name }}</v-col>
-            <v-spacer></v-spacer>
-            <v-col cols="auto">
-              <v-switch color="primary"
-              v-model="clients[index].enable"
-              @update:model-value="buildInboundsUsers(item.inbounds)"
-              hideDetails density="compact" />
-            </v-col>
-          </v-row>
-        </v-card-title>
-        <v-card-subtitle style="margin-top: -20px;">
-          <v-row>
-            <v-col>{{ item.desc }}</v-col>
-          </v-row>
-        </v-card-subtitle>
-        <v-card-text>
-          <v-row>
-            <v-col>{{ $t('pages.inbounds') }}</v-col>
-            <v-col dir="ltr">
-              <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="item.inbounds != ''">
-                <span v-for="i in item.inbounds">{{ i }}<br /></span>
-              </v-tooltip>
-              {{ item.inbounds.length }}
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>{{ $t('stats.volume') }}</v-col>
-            <v-col dir="ltr">
-              {{ item.volume == 0 ? $t('unlimited') : HumanReadable.sizeFormat(item.volume) }}
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>{{ $t('date.expiry') }}</v-col>
-            <v-col dir="ltr">
-              {{ item.expiry == 0 ? $t('unlimited') : HumanReadable.remainedDays(item.expiry)?? $t('date.expired') }}
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>{{ $t('stats.usage') }}</v-col>
-            <v-col dir="ltr">
-              <v-tooltip activator="parent" location="bottom">
-                {{ $t('stats.upload') }}:{{ HumanReadable.sizeFormat(item.up) }}<br />
-                {{ $t('stats.download') }}:{{ HumanReadable.sizeFormat(item.down) }}<br />
-                <template v-if="item.volume>0">
-                  {{ $t('remained') }}: {{ HumanReadable.sizeFormat(item.volume - (item.up + item.down)) }}
+    <template v-for="(item, index) in clients" :key="item.id">
+      <v-col cols="12" sm="4" md="3" lg="2" v-if="checkFilter(item)">
+        <v-card rounded="xl" elevation="5" min-width="200">
+          <v-card-title>
+            <v-row>
+              <v-col>{{ item.name }}</v-col>
+              <v-spacer></v-spacer>
+              <v-col cols="auto">
+                <v-switch color="primary"
+                v-model="clients[index].enable"
+                @update:model-value="buildInboundsUsers(item.inbounds)"
+                hideDetails density="compact" />
+              </v-col>
+            </v-row>
+          </v-card-title>
+          <v-card-subtitle style="margin-top: -20px;">
+            <v-row>
+              <v-col>{{ item.desc }}</v-col>
+            </v-row>
+          </v-card-subtitle>
+          <v-card-text>
+            <v-row>
+              <v-col>{{ $t('pages.inbounds') }}</v-col>
+              <v-col dir="ltr">
+                <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="item.inbounds != ''">
+                  <span v-for="i in item.inbounds">{{ i }}<br /></span>
+                </v-tooltip>
+                {{ item.inbounds.length }}
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>{{ $t('stats.volume') }}</v-col>
+              <v-col dir="ltr">
+                {{ item.volume == 0 ? $t('unlimited') : HumanReadable.sizeFormat(item.volume) }}
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>{{ $t('date.expiry') }}</v-col>
+              <v-col dir="ltr">
+                {{ item.expiry == 0 ? $t('unlimited') : HumanReadable.remainedDays(item.expiry)?? $t('date.expired') }}
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>{{ $t('stats.usage') }}</v-col>
+              <v-col dir="ltr">
+                <v-tooltip activator="parent" location="bottom">
+                  {{ $t('stats.upload') }}:{{ HumanReadable.sizeFormat(item.up) }}<br />
+                  {{ $t('stats.download') }}:{{ HumanReadable.sizeFormat(item.down) }}<br />
+                  <template v-if="item.volume>0">
+                    {{ $t('remained') }}: {{ HumanReadable.sizeFormat(item.volume - (item.up + item.down)) }}
+                  </template>
+                </v-tooltip>
+                {{ HumanReadable.sizeFormat(item.up + item.down) }}
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>{{ $t('online') }}</v-col>
+              <v-col dir="ltr">
+                <template v-if="onlines[index]">
+                  <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
                 </template>
-              </v-tooltip>
-              {{ HumanReadable.sizeFormat(item.up + item.down) }}
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>{{ $t('online') }}</v-col>
-            <v-col dir="ltr">
-              <template v-if="onlines[index]">
-                <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
-              </template>
-              <template v-else>-</template>
-            </v-col>
-          </v-row>
-        </v-card-text>
-        <v-divider></v-divider>
-        <v-card-actions style="padding: 0;">
-          <v-btn icon="mdi-account-edit" @click="showModal(index)">
-            <v-icon />
-            <v-tooltip activator="parent" location="top" :text="$t('actions.edit')"></v-tooltip>
-          </v-btn>
-          <v-btn style="margin-inline-start:0;" icon="mdi-account-minus" color="warning" @click="delOverlay[index] = true">
-            <v-icon />
-            <v-tooltip activator="parent" location="top" :text="$t('actions.del')"></v-tooltip>
-          </v-btn>
-          <v-overlay
-            v-model="delOverlay[index]"
-            contained
-            class="align-center justify-center"
-          >
-            <v-card :title="$t('actions.del')" rounded="lg">
-              <v-divider></v-divider>
-              <v-card-text>{{ $t('confirm') }}</v-card-text>
-              <v-card-actions>
-                <v-btn color="error" variant="outlined" @click="delClient(index)">{{ $t('yes') }}</v-btn>
-                <v-btn color="success" variant="outlined" @click="delOverlay[index] = false">{{ $t('no') }}</v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-overlay>
-          <v-btn icon="mdi-qrcode" @click="showQrCode(index)" />
-          <v-btn icon="mdi-chart-line" @click="showStats(item.name)" />
-        </v-card-actions>
-      </v-card>      
-    </v-col>
+                <template v-else>-</template>
+              </v-col>
+            </v-row>
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-actions style="padding: 0;">
+            <v-btn icon="mdi-account-edit" @click="showModal(index)">
+              <v-icon />
+              <v-tooltip activator="parent" location="top" :text="$t('actions.edit')"></v-tooltip>
+            </v-btn>
+            <v-btn style="margin-inline-start:0;" icon="mdi-account-minus" color="warning" @click="delOverlay[index] = true">
+              <v-icon />
+              <v-tooltip activator="parent" location="top" :text="$t('actions.del')"></v-tooltip>
+            </v-btn>
+            <v-overlay
+              v-model="delOverlay[index]"
+              contained
+              class="align-center justify-center"
+            >
+              <v-card :title="$t('actions.del')" rounded="lg">
+                <v-divider></v-divider>
+                <v-card-text>{{ $t('confirm') }}</v-card-text>
+                <v-card-actions>
+                  <v-btn color="error" variant="outlined" @click="delClient(index)">{{ $t('yes') }}</v-btn>
+                  <v-btn color="success" variant="outlined" @click="delOverlay[index] = false">{{ $t('no') }}</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-overlay>
+            <v-btn icon="mdi-qrcode" @click="showQrCode(index)" />
+            <v-btn icon="mdi-chart-line" @click="showStats(item.name)" />
+          </v-card-actions>
+        </v-card>      
+      </v-col>
+    </template>
   </v-row>
 </template>
 <script lang="ts" setup>
@@ -162,6 +174,28 @@ const inboundTags = computed((): string[] => {
   if (!inbounds.value) return []
   return inbounds.value?.filter(i => i.tag != "" && Object.hasOwn(i,'users')).map(i => i.tag)
 })
+
+const filter = ref("")
+
+const filterItems = [
+  { title: i18n.global.t('none'), value: '' },
+  { title: i18n.global.t('disable'), value: 'disable' },
+  { title: i18n.global.t('date.expired'), value: 'expired' },
+  { title: i18n.global.t('online'), value: 'online' },
+]
+
+const checkFilter = (c:any) :boolean => {
+  switch (filter.value) {
+    case "disable":
+      return !c.enable
+    case "expired":
+      return HumanReadable.remainedDays(c.expiry) == null
+    case "online":
+      return Data().onlines?.user?.includes(c.name)
+    default:
+      return true
+  }
+}
 
 const modal = ref({
   visible: false,
