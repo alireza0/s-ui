@@ -78,7 +78,6 @@ const loadData = async () => {
   const msg = await HttpUtils.get('api/users')
   loading.value = false
   if (msg.success) {
-    console.log(msg.obj)
     msg.obj.forEach((u:any) => {
       const lastLogin = u.lastLogin.split(" ")
       const localLastLogin = lastLogin.length > 2 ? dateFormatted(Date.parse(lastLogin[0] + " " + lastLogin[1])) : "- -"
