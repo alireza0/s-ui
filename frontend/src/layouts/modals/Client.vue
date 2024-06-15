@@ -38,6 +38,33 @@
                   <DatePick :expiry="expDate" @submit="setDate" />
                 </v-col>
               </v-row>
+              <v-row v-if="index != -1">
+                <v-col cols="12" sm="6" md="4" class="d-flex flex-column">
+                  <div class="d-flex justify-space-between align-center">
+                    <div>
+                      {{ $t('stats.usage') }}: {{ total }}<sup dir="ltr" v-if="percent>0">({{ percent }}%)</sup>
+                    </div>
+                    <v-btn density="compact" variant="text" icon="mdi-restore" @click="client.up=0;client.down=0">
+                      <v-tooltip activator="parent" location="top">
+                        {{ $t('reset') }}
+                      </v-tooltip>
+                      <v-icon />
+                    </v-btn>
+                  </div>
+                  <v-progress-linear
+                    v-model="percent"
+                    :color="percentColor"
+                    v-if="client.volume>0"
+                    bottom
+                  >
+                  </v-progress-linear>
+                </v-col>
+                <v-col cols="12" sm="6" md="4">
+                  <v-icon icon="mdi-upload" color="orange" /><span class="text-orange">{{ up }}</span>
+                  / 
+                  <v-icon icon="mdi-download" color="success" /><span class="text-success">{{ down }}</span>
+                </v-col>
+              </v-row>
               <v-row>
                 <v-col>
                   <v-combobox
@@ -156,6 +183,7 @@
 import { Link } from '@/plugins/link'
 import { createClient, randomConfigs, updateConfigs } from '@/types/clients'
 import DatePick from '@/components/DateTime.vue'
+import { HumanReadable } from '@/plugins/utils'
 
 export default {
   props: ['visible', 'data', 'index', 'inboundTags', 'stats'],
@@ -222,7 +250,12 @@ export default {
     Volume: {
       get() { return this.client.volume == 0 ? 0 : (this.client.volume / (1024 ** 3)) },
       set(v:number) { this.client.volume = v > 0 ? v*(1024 ** 3) : 0 }
-    }
+    },
+    up() :string { return HumanReadable.sizeFormat(this.client.up) },
+    down() :string { return HumanReadable.sizeFormat(this.client.down) },
+    total() :string { return HumanReadable.sizeFormat(this.client.down + this.client.up) },
+    percent() :number { return this.client.volume>0 ? Math.round((this.client.up + this.client.down) *100 / this.client.volume) : 0 },
+    percentColor() :string { return (this.client.up+this.client.down) >= this.client.volume ? 'error' : this.percent>90 ? 'warning' : 'success' },
   },
   watch: {
     visible(newValue) {
