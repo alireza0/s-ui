@@ -109,7 +109,9 @@ func vmess(data string, i int) (*map[string]interface{}, string, error) {
 		}
 	}
 	tag, _ := dataJson["ps"].(string)
-	tag = fmt.Sprintf("%d.%s", i, tag)
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, tag)
+	}
 	alter_id, ok := dataJson["aid"].(int)
 	if !ok {
 		alter_id = 0
@@ -141,7 +143,10 @@ func vless(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		}
 	}
 	tp_type := query.Get("type")
-	tag := fmt.Sprintf("%d.%s", i, u.Fragment)
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
 	vless := map[string]interface{}{
 		"type":        "vless",
 		"tag":         tag,
@@ -168,7 +173,10 @@ func trojan(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		}
 	}
 	tp_type := query.Get("type")
-	tag := fmt.Sprintf("%d.%s", i, u.Fragment)
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
 	trojan := map[string]interface{}{
 		"type":        "trojan",
 		"tag":         tag,
@@ -202,7 +210,10 @@ func hy(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		tls["insecure"] = true
 	}
 
-	tag := fmt.Sprintf("%d.%s", i, u.Fragment)
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
 	hy := map[string]interface{}{
 		"type":        "hysteria",
 		"tag":         tag,
@@ -252,7 +263,10 @@ func hy2(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		tls["insecure"] = true
 	}
 
-	tag := fmt.Sprintf("%d.%s", i, u.Fragment)
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
 	hy2 := map[string]interface{}{
 		"type":        "hysteria2",
 		"tag":         tag,
@@ -304,7 +318,10 @@ func tuic(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		tls["disable_sni"] = true
 	}
 
-	tag := fmt.Sprintf("%d.%s", i, u.Fragment)
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
 	password, _ := u.User.Password()
 	tuic := map[string]interface{}{
 		"type":               "tuic",
@@ -340,7 +357,10 @@ func ss(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		}
 	}
 
-	tag := fmt.Sprintf("%d.%s", i, u.Fragment)
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
 	ss := map[string]interface{}{
 		"type":        "shadowsocks",
 		"tag":         tag,

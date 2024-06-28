@@ -3,6 +3,7 @@ package api
 import (
 	"s-ui/logger"
 	"s-ui/service"
+	"s-ui/util"
 	"strconv"
 	"strings"
 
@@ -95,6 +96,10 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 	case "restartApp":
 		err = a.PanelService.RestartPanel(3)
 		jsonMsg(c, "restartApp", err)
+	case "linkConvert":
+		link := c.Request.FormValue("link")
+		result, _, err := util.GetOutbound(link, 0)
+		jsonObj(c, result, err)
 	default:
 		jsonMsg(c, "API call", nil)
 	}
