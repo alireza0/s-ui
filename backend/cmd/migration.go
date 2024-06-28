@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"s-ui/config"
 	"s-ui/database"
 	"s-ui/database/model"
@@ -13,7 +14,14 @@ import (
 )
 
 func migrateDb() {
-	err := database.OpenDB(config.GetDBPath())
+	// void running on first install
+	path := config.GetDBPath()
+	_, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+
+	err = database.OpenDB(path)
 	if err != nil {
 		log.Fatal(err)
 	}
