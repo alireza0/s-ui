@@ -138,14 +138,6 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-col cols="12" sm="6" md="4" v-if="outTls.utls != undefined">
-                <v-select
-                  hide-details
-                  label="Fingerprint"
-                  :items="fingerprints"
-                  v-model="outTls.utls.fingerprint">
-                </v-select>
-              </v-col>
               <v-col cols="12" sm="6" md="4">
                 <v-switch color="primary" :label="$t('tls.disableSni')" v-model="disableSni" hide-details></v-switch>
               </v-col>
@@ -223,6 +215,16 @@
               </v-col>
             </v-row>
           </template>
+          <v-row v-if="outTls.utls != undefined">
+            <v-col cols="12" sm="6" md="4">
+              <v-select
+                hide-details
+                label="Fingerprint"
+                :items="fingerprints"
+                v-model="outTls.utls.fingerprint">
+              </v-select>
+            </v-col>
+          </v-row>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-menu v-model="menu" :close-on-content-click="false" location="start">
@@ -247,15 +249,15 @@
                     <v-list-item>
                       <v-switch v-model="optionCS" color="primary" :label="$t('tls.cs')" hide-details></v-switch>
                     </v-list-item>
-                    <v-list-item>
-                      <v-switch v-model="optionFP" color="primary" label="UTLS" hide-details></v-switch>
-                    </v-list-item>
                   </template>
                   <template v-else>
                     <v-list-item>
                       <v-switch v-model="optionTime" color="primary" label="Max Time Difference" hide-details></v-switch>
                     </v-list-item>
                   </template>
+                  <v-list-item>
+                    <v-switch v-model="optionFP" color="primary" label="UTLS" hide-details></v-switch>
+                  </v-list-item>
                 </v-list>
               </v-card>
             </v-menu>
