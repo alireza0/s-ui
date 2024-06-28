@@ -16,7 +16,7 @@
         <v-col cols="auto">
           <v-dialog v-model="menu" :close-on-content-click="false" transition="scale-transition" max-width="800">
             <template v-slot:activator="{ props }">
-              <v-btn v-bind="props" variant="tonal">{{ $t('main.tiles') }} <v-icon icon="mdi-star-plus" /></v-btn>
+              <v-btn v-bind="props" hide-details variant="tonal">{{ $t('main.tiles') }} <v-icon icon="mdi-star-plus" /></v-btn>
             </template>
             <v-card rounded="xl">
               <v-card-title>

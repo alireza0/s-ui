@@ -77,7 +77,7 @@
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
           <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" hide-details>{{ $t('types.ssh.options') }}</v-btn>
+            <v-btn v-bind="props" hide-details variant="tonal">{{ $t('types.ssh.options') }}</v-btn>
           </template>
           <v-card>
             <v-list>
