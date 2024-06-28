@@ -144,9 +144,13 @@ const updateLinks = (i:any,tlsClient:any) => {
         const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.includes(inb.tag))
         const newLinks = <Link[]>[]
         clientInbounds.forEach(i =>{
-          const uri = LinkUtil.linkGenerator(client.name,i,tlsClient)
-          if (uri.length>0){
-            newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
+          const cData = <any>Data().inData?.findLast((d:any) => d.tag == i.tag)
+          const addrs = cData ? <any[]>cData.addrs : []
+          const uris = LinkUtil.linkGenerator(client,i, tlsClient, addrs)
+          if (uris.length>0){
+            uris.forEach(uri => {
+              newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
+            })
           }
         })
         let links = client.links && client.links.length>0? client.links : <Link[]>[]

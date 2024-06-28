@@ -36,6 +36,7 @@ var defaultValueMap = map[string]string{
 	"subEncode":     "true",
 	"subShowInfo":   "false",
 	"subURI":        "",
+	"subJsonExt":    "",
 }
 
 type SettingService struct {
@@ -65,7 +66,7 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 	}
 
 	// Due to security principles
-	delete(allSetting, "webSecret")
+	delete(allSetting, "secret")
 
 	return &allSetting, nil
 }
@@ -345,6 +346,10 @@ func (s *SettingService) Save(tx *gorm.DB, changes []model.Changes) error {
 		}
 	}
 	return err
+}
+
+func (s *SettingService) GetSubJsonExt() (string, error) {
+	return s.getString("subJsonExt")
 }
 
 func (s *SettingService) fileExists(path string) error {

@@ -289,8 +289,8 @@
 <script lang="ts">
 import { iTls, defaultInTls } from '@/types/inTls'
 import { oTls, defaultOutTls } from '@/types/outTls'
-import AcmeVue from '@/components/Acme.vue'
-import EchVue from '@/components/Ech.vue'
+import AcmeVue from '@/components/tls/Acme.vue'
+import EchVue from '@/components/tls/Ech.vue'
 import HttpUtils from '@/plugins/httputil'
 import { push } from 'notivue'
 import { i18n } from '@/locales'

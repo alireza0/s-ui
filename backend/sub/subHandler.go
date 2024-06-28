@@ -10,6 +10,7 @@ import (
 type SubHandler struct {
 	service.SettingService
 	SubService
+	JsonService
 }
 
 func NewSubHandler(g *gin.RouterGroup) {
@@ -23,17 +24,28 @@ func (s *SubHandler) initRouter(g *gin.RouterGroup) {
 
 func (s *SubHandler) subs(c *gin.Context) {
 	subId := c.Param("subid")
-	result, headers, err := s.SubService.GetSubs(subId)
-	if err != nil || result == nil {
-		logger.Error(err)
-		c.String(400, "Error!")
+	format, isFormat := c.GetQuery("format")
+	if isFormat {
+		result, err := s.JsonService.GetJson(subId, format)
+		if err != nil || result == nil {
+			logger.Error(err)
+			c.String(400, "Error!")
+		} else {
+			c.String(200, *result)
+		}
 	} else {
+		result, headers, err := s.SubService.GetSubs(subId)
+		if err != nil || result == nil {
+			logger.Error(err)
+			c.String(400, "Error!")
+		} else {
 
-		// Add headers
-		c.Writer.Header().Set("Subscription-Userinfo", headers[0])
-		c.Writer.Header().Set("Profile-Update-Interval", headers[1])
-		c.Writer.Header().Set("Profile-Title", headers[2])
+			// Add headers
+			c.Writer.Header().Set("Subscription-Userinfo", headers[0])
+			c.Writer.Header().Set("Profile-Update-Interval", headers[1])
+			c.Writer.Header().Set("Profile-Title", headers[2])
 
-		c.String(200, *result)
+			c.String(200, *result)
+		}
 	}
 }

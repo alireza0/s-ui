@@ -18,6 +18,7 @@ var LastUpdate int64
 type ConfigService struct {
 	ClientService
 	TlsService
+	InDataService
 	singbox.Controller
 	SettingService
 }
@@ -80,7 +81,7 @@ func (s *ConfigService) GetConfig() (*SingBoxConfig, error) {
 
 func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string) error {
 	var err error
-	var clientChanges, tlsChanges, settingChanges, configChanges []model.Changes
+	var clientChanges, tlsChanges, inChanges, settingChanges, configChanges []model.Changes
 	if _, ok := changes["clients"]; ok {
 		err = json.Unmarshal([]byte(changes["clients"]), &clientChanges)
 		if err != nil {
@@ -89,6 +90,12 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 	}
 	if _, ok := changes["tls"]; ok {
 		err = json.Unmarshal([]byte(changes["tls"]), &tlsChanges)
+		if err != nil {
+			return err
+		}
+	}
+	if _, ok := changes["inData"]; ok {
+		err = json.Unmarshal([]byte(changes["inData"]), &inChanges)
 		if err != nil {
 			return err
 		}
@@ -124,6 +131,12 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 	}
 	if len(tlsChanges) > 0 {
 		err = s.TlsService.Save(tx, tlsChanges)
+		if err != nil {
+			return err
+		}
+	}
+	if len(inChanges) > 0 {
+		err = s.InDataService.Save(tx, inChanges)
 		if err != nil {
 			return err
 		}
@@ -185,14 +198,19 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 
 	// Log changes
 	dt := time.Now().Unix()
-	allChanges := append(append(clientChanges, settingChanges...), append(configChanges, tlsChanges...)...)
-	for index := range allChanges {
-		allChanges[index].DateTime = dt
-		allChanges[index].Actor = loginUser
-	}
-	err = tx.Model(model.Changes{}).Create(&allChanges).Error
-	if err != nil {
-		return err
+	allChanges := append(clientChanges, settingChanges...)
+	allChanges = append(allChanges, configChanges...)
+	allChanges = append(allChanges, tlsChanges...)
+	allChanges = append(allChanges, inChanges...)
+	if len(allChanges) > 0 {
+		for index := range allChanges {
+			allChanges[index].DateTime = dt
+			allChanges[index].Actor = loginUser
+		}
+		err = tx.Model(model.Changes{}).Create(&allChanges).Error
+		if err != nil {
+			return err
+		}
 	}
 
 	LastUpdate = dt

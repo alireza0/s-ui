@@ -2,9 +2,10 @@
   <InboundVue 
     v-model="modal.visible"
     :visible="modal.visible"
-    :id="modal.id"
+    :index="modal.index"
     :stats="modal.stats"
     :data="modal.data"
+    :cData="modal.cData"
     :inTags="inTags"
     :outTags="outTags"
     :tlsConfigs="tlsConfigs"
@@ -111,6 +112,7 @@ import { Client } from '@/types/clients'
 import { Link, LinkUtil } from '@/plugins/link'
 import { i18n } from '@/locales'
 import { push } from 'notivue'
+import { fillData } from '@/plugins/outJson'
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
@@ -122,6 +124,10 @@ const inbounds = computed((): Inbound[] => {
 
 const tlsConfigs = computed((): any[] => {
   return <any[]> Data().tlsConfigs
+})
+
+const inData = computed((): any[] => {
+  return <any[]> Data().inData
 })
 
 const inTags = computed((): string[] => {
@@ -146,53 +152,62 @@ const v2rayStats = computed((): V2rayApiStats => {
 
 const modal = ref({
   visible: false,
-  id: -1,
+  index: -1,
   data: "",
+  cData: "",
   stats: false,
 })
 
 let delOverlay = ref(new Array<boolean>)
 
-const showModal = (id: number) => {
-  modal.value.id = id
-  modal.value.data = id == -1 ? '' : JSON.stringify(inbounds.value[id])
-  modal.value.stats = id == -1 ? false : v2rayStats.value.inbounds.includes(inbounds.value[id].tag)
+const showModal = (index: number) => {
+  modal.value.index = index
+  if (index == -1){
+    modal.value.data = ''
+    modal.value.cData = ''
+    modal.value.stats = false
+  } else {
+    modal.value.data = JSON.stringify(inbounds.value[index])
+    modal.value.stats = v2rayStats.value.inbounds.includes(inbounds.value[index].tag)
+    const inDataIndex = inData.value.findIndex(d => d.tag == inbounds.value[index].tag)
+    modal.value.cData = inDataIndex == -1 ? '' : JSON.stringify(inData.value[inDataIndex])
+  }
   modal.value.visible = true
 }
 const closeModal = () => {
   modal.value.visible = false
 }
-const saveModal = (data:Inbound, stats: boolean, tls_id: number) => {
+const saveModal = (data:Inbound, stats: boolean, tls_id: number, cData: any) => {
   // Check duplicate tag
-  const oldTag = modal.value.id != -1 ? inbounds.value[modal.value.id].tag : null
+  const oldTag = modal.value.index != -1 ? inbounds.value[modal.value.index].tag : null
   if (data.tag != oldTag && inTags.value.includes(data.tag)) {
     push.error({
       message: i18n.global.t('error.dplData') + ": " + i18n.global.t('objects.tag')
     })
     return
   }
+  if (cData.id != -1) {
+    cData.tag = data.tag
+    fillData(cData.outJson, data,tls_id>0 ? tlsConfigs.value.findLast(t => t.id == tls_id).client : {})
+  }
 
   // New or Edit
-  if (modal.value.id == -1) {
+  if (modal.value.index == -1) {
     inbounds.value.push(data)
     if (stats && data.tag.length>0) {
       v2rayStats.value.inbounds.push(data.tag)
     }
-    // Update tls preset
-    if (tls_id>0) {
-      tlsConfigs.value.findLast(t => t.id == tls_id).inbounds.push(data.tag)
+    if (cData.id != -1){
+      inData.value.push(cData)
     }
   } else {
-    const oldTag = inbounds.value[modal.value.id].tag
+    const oldTag = inbounds.value[modal.value.index].tag
     const sIndex = v2rayStats.value.inbounds.findIndex(i => i == data.tag) // Find if new tag exists
 
     // Update tls preset
     const oldTlsConfigIndex = tlsConfigs?.value.findIndex(t => t.inbounds?.includes(oldTag))
     if (oldTlsConfigIndex != -1){
       tlsConfigs.value[oldTlsConfigIndex].inbounds = tlsConfigs?.value[oldTlsConfigIndex].inbounds.filter((i:string) => i != oldTag)
-    }
-    if (tls_id>0) {
-      tlsConfigs.value.findLast(t => t.id == tls_id).inbounds.push(data.tag)
     }
 
     if (oldTag != data.tag) {
@@ -208,8 +223,24 @@ const saveModal = (data:Inbound, stats: boolean, tls_id: number) => {
       if (sIndex != -1) v2rayStats.value.inbounds.splice(sIndex,1)
     }
 
-    inbounds.value[modal.value.id] = data
+    inbounds.value[modal.value.index] = data
+    const inDataIndex = inData.value.findIndex(indata => indata.tag == oldTag)
+    if (cData.id != -1) {
+      if (inDataIndex == -1){
+        inData.value.push(cData)
+      } else {
+        inData.value[inDataIndex] = cData
+      }
+    } else if (inDataIndex != -1) {
+      Data().delInData(inData.value[inDataIndex].id)
+      inData.value.splice(inDataIndex,1)
+    }
   }
+  // Update tls preset
+  if (tls_id>0) {
+    tlsConfigs.value.findLast(t => t.id == tls_id).inbounds.push(data.tag)
+  }
+
   if (Object.hasOwn(data,'users')) {
     // Set users
     data = buildInboundsUsers(data)
@@ -226,10 +257,14 @@ const updateLinks = (i: any) => {
         const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.includes(inb.tag))
         const newLinks = <Link[]>[]
         clientInbounds.forEach(i =>{
-          const tlsClient = tlsConfigs?.value.findLast((t:any) => t.inbounds.includes(i.tag))?.client?? null
-          const uri = LinkUtil.linkGenerator(client.name,i, tlsClient)
-          if (uri.length>0){
-            newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
+          const tlsClient = tlsConfigs?.value.findLast((t:any) => t.inbounds.includes(i.tag))?.client?? {}
+          const cData = <any>Data().inData?.findLast((d:any) => d.tag == i.tag)
+          const addrs = cData ? <any[]>cData.addrs : []
+          const uris = LinkUtil.linkGenerator(client.name,i, tlsClient, addrs)
+          if (uris.length>0){
+            uris.forEach(uri => {
+              newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
+            })
           }
         })
         let links = client.links && client.links.length>0? client.links : <Link[]>[]
@@ -251,8 +286,8 @@ const delInbound = (index: number) => {
       inbU.users.forEach((u:any) => {
         const c_index = clients.value.findIndex(c => u.username? u.username == c.name : u.name == c.name)
         if (c_index != -1) {
-          const clientInbounds = clients.value[c_index].inbounds.filter((x:string) => x!=tag)
-          clients.value[c_index].inbounds = clientInbounds
+          clients.value[c_index].inbounds = clients.value[c_index].inbounds.filter((x:string) => x!=tag)
+          clients.value[c_index].links = clients.value[c_index].links.filter((x:any) => x.remark!=tag)
         }
       })
     }

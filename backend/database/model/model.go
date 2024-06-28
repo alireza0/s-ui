@@ -16,6 +16,13 @@ type Tls struct {
 	Client   json.RawMessage `json:"client" form:"client"`
 }
 
+type InboundData struct {
+	Id      uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Tag     string          `json:"tag" form:"tag"`
+	Addrs   json.RawMessage `json:"addrs" form:"addrs"`
+	OutJson json.RawMessage `json:"outJson" form:"outJson"`
+}
+
 type User struct {
 	Id         uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
 	Username   string `json:"username" form:"username"`

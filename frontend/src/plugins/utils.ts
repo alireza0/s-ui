@@ -37,11 +37,11 @@ export const FindDiff = {
 
     return differences
   },
-  Clients(value1: any[], value2: any[]): any {
+  ArrObj(value1: any[], value2: any[], key: string): any {
     const differences: any[] = []
     value1.forEach((v1,index) => {
-      if(index >= value2.length) differences.push({key: "clients", action: "new", obj: v1})
-      else if(!this.deepCompare(v1,value2[index])) differences.push({key: "clients", action: "edit", obj: v1})
+      if(index >= value2.length) differences.push({key: key, action: "new", obj: v1})
+      else if(!this.deepCompare(v1,value2[index])) differences.push({key: key, action: "edit", obj: v1})
     })
     return differences
   },

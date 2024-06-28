@@ -8,7 +8,8 @@
   >
     <v-tab value="t1">{{ $t('setting.interface') }}</v-tab>
     <v-tab value="t2">{{ $t('setting.sub') }}</v-tab>
-    <v-tab value="t3">Language</v-tab>
+    <v-tab value="t3">{{ $t('setting.sub') }} JSON</v-tab>
+    <v-tab value="t4">Language</v-tab>
   </v-tabs>
   <v-card-text>
     <v-row align="center" justify="center" style="margin-bottom: 10px;">
@@ -128,6 +129,10 @@
       </v-window-item>
 
       <v-window-item value="t3">
+        <SubJsonExtVue :settings="settings" />
+      </v-window-item>
+
+      <v-window-item value="t4">
         <v-row>
           <v-col cols="12" sm="6" md="4">
             <v-select
@@ -146,11 +151,12 @@
 </template>
 
 <script lang="ts" setup>
-import { useLocale } from "vuetify"
+import { useLocale } from 'vuetify'
 import { languages } from '@/locales'
-import { Ref, computed, inject, onMounted, ref } from "vue"
-import HttpUtils from "@/plugins/httputil"
-import { FindDiff } from "@/plugins/utils"
+import { Ref, computed, inject, onMounted, ref } from 'vue'
+import HttpUtils from '@/plugins/httputil'
+import { FindDiff } from '@/plugins/utils'
+import SubJsonExtVue from '@/components/SubJsonExt.vue'
 const locale = useLocale()
 const tab = ref("t1")
 const loading:Ref = inject('loading')?? ref(false)
@@ -177,6 +183,7 @@ const settings = ref({
 	subEncode: "true",
 	subShowInfo: "false",
 	subURI: "",
+  subJsonExt: "",
 })
 
 onMounted(async () => {loadData()})
