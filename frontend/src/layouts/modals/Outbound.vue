@@ -157,6 +157,7 @@ export default {
         this.outbound = createOutbound("direct",{ tag: "direct-" + RandomUtil.randomSeq(3) })
         this.title = "add"
       }
+      this.tab = "t1"
       this.outboundStats = this.$props.stats
     },
     changeType() {
@@ -183,6 +184,7 @@ export default {
         if (msg.success) {
           this.outbound = msg.obj
           this.tab = "t1"
+          this.link = ""
         }
       }
     }

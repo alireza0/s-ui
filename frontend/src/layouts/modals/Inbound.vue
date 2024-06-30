@@ -5,7 +5,7 @@
         {{ $t('actions.' + title) + " " + $t('objects.inbound') }}
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text style="padding-top: 0; overflow-y: scroll;">
+      <v-card-text style="padding: 0 16px; overflow-y: scroll;">
         <v-container style="padding: 0;">
           <v-row>
             <v-col cols="12" sm="6" md="4">
@@ -60,7 +60,6 @@
                   <AddrVue :addr="addr" :hasTls="Object.hasOwn(inbound,'tls')" />
                 </template>
               </v-card>
-              <pre dir="ltr">{{ inData }}</pre>
             </v-window-item>
           </v-window>
         </v-container>

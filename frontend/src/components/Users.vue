@@ -16,7 +16,7 @@
 <script lang="ts">
 
 export default {
-  props: ['inbound', 'id'],
+  props: ['inbound'],
   data() {
     return {
       hasUser: false,

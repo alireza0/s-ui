@@ -5,7 +5,7 @@
         {{ $t('actions.' + title) + " " + $t('objects.client') }}
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text style="padding: 0 16px;">
+      <v-card-text style="padding: 0 16px; overflow-y: scroll;">
         <v-container style="padding: 0;">
           <v-tabs
             v-model="tab"

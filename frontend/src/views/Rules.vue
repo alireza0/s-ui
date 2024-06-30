@@ -29,7 +29,7 @@
   <v-row>
     <v-col cols="12">{{ $t('rule.ruleset') }}</v-col>
     <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>rulesets" :key="item.tag">
-      <v-card rounded="xl" elevation="5" min-width="200" :title="index">
+      <v-card rounded="xl" elevation="5" min-width="200" :title="index+1">
         <v-card-subtitle style="margin-top: -20px;">
           <v-row>
             <v-col>{{ $t('ruleset.' + item.type) }}</v-col>
@@ -86,7 +86,7 @@
   <v-row>
     <v-col cols="12">{{ $t('pages.rules') }}</v-col>
     <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>rules">
-      <v-card rounded="xl" elevation="5" min-width="200" :title="index">
+      <v-card rounded="xl" elevation="5" min-width="200" :title="index+1">
         <v-card-subtitle style="margin-top: -20px;">
           <v-row>
             <v-col>{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</v-col>
