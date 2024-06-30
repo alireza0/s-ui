@@ -40,7 +40,7 @@
   </v-row>
   <v-row>
     <template v-for="(item, index) in clients" :key="item.id">
-      <v-col cols="12" sm="4" md="3" lg="2" v-if="checkFilter(item)">
+      <v-col cols="12" sm="4" md="3" lg="2" :style="checkFilter(item)? '' : 'opacity: .2'">
         <v-card rounded="xl" elevation="5" min-width="200">
           <v-card-title>
             <v-row>
