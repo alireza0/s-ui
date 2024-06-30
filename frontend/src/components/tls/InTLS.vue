@@ -7,7 +7,7 @@
       <v-col cols="12" sm="6" md="4" v-if="tls.enabled">
         <v-select
           hide-details
-          label="Preset"
+          :label="$t('template')"
           :items="tlsItems"
           @update:model-value="changeTlsItem($event)"
           v-model="tlsId">

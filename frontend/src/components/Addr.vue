@@ -18,7 +18,7 @@
     </v-col>
     <v-col cols="12" sm="6" md="4" v-if="optionRemark">
       <v-text-field
-      label="Remark"
+      :label="$t('in.remark')"
       hide-details
       v-model="addr.remark">
       </v-text-field>
@@ -53,12 +53,12 @@
     <v-col cols="auto" align="end" justify="center">
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details variant="tonal">Address Options</v-btn>
+          <v-btn v-bind="props" hide-details variant="tonal">{{ $t('in.mdOption') }}</v-btn>
         </template>
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionRemark" color="primary" label="Remark" hide-details></v-switch>
+              <v-switch v-model="optionRemark" color="primary" :label="$t('in.remark')" hide-details></v-switch>
             </v-list-item>
             <v-list-item v-if="hasTls">
               <v-switch v-model="optionTLS" color="primary" :label="$t('objects.tls')" hide-details></v-switch>

@@ -128,8 +128,14 @@
                 </v-card-actions>
               </v-card>
             </v-overlay>
-            <v-btn icon="mdi-qrcode" @click="showQrCode(index)" />
-            <v-btn icon="mdi-chart-line" @click="showStats(item.name)" />
+            <v-btn icon="mdi-qrcode" @click="showQrCode(index)">
+              <v-icon />
+              <v-tooltip activator="parent" location="top" text="QR-Code"></v-tooltip>
+            </v-btn>
+            <v-btn icon="mdi-chart-line" @click="showStats(item.name)" v-if="v2rayStats.users.includes(item.name)">
+              <v-icon />
+              <v-tooltip activator="parent" location="top" :text="$t('stats.graphTitle')"></v-tooltip>
+            </v-btn>
           </v-card-actions>
         </v-card>      
       </v-col>

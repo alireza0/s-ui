@@ -28,8 +28,8 @@
             fixed-tabs
             align-tabs="center"
           >
-            <v-tab value="s">Server Side</v-tab>
-            <v-tab value="c">Client Side</v-tab>
+            <v-tab value="s">{{ $t('in.sSide') }}</v-tab>
+            <v-tab value="c">{{ $t('in.cSide') }}</v-tab>
           </v-tabs>
           <v-window v-model="side" style="margin-top: 10px;">
             <v-window-item value="s">
@@ -51,12 +51,11 @@
             <v-window-item value="c">
               <OutJsonVue :inData="inData" :type="inbound.type" />
               <v-card>
-                <v-card-subtitle>
-                  Multi Domain
+                <v-card-subtitle>{{ $t('in.multiDomain') }}
                   <v-icon @click="add_addr" icon="mdi-plus"></v-icon>
                 </v-card-subtitle>
                 <template v-for="addr,index in inData.addrs">
-                  Address #{{ (index+1) }} <v-icon icon="mdi-delete" @click="inData.addrs.splice(index,1)" />
+                  {{ $t('in.addr') }} #{{ (index+1) }} <v-icon icon="mdi-delete" @click="inData.addrs.splice(index,1)" />
                   <v-divider></v-divider>
                   <AddrVue :addr="addr" :hasTls="Object.hasOwn(inbound,'tls')" />
                 </template>

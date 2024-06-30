@@ -1,21 +1,21 @@
 <template>
-  <v-card subtitle="Client JSON Template">
+  <v-card>
     <v-row>
-      <v-col cols="12" sm="6" md="3" lg="2">
+      <v-col cols="12" sm="6" md="3">
         <v-select
           v-model="ruleToDirect"
           :items="geoList"
-          label="Rules To Direct"
+          :label="$t('setting.toDirect')"
           multiple
           chips
           hide-details
         ></v-select>
       </v-col>
-      <v-col cols="12" sm="6" md="3" lg="2">
+      <v-col cols="12" sm="6" md="3">
         <v-select
           v-model="ruleToBlock"
           :items="geoList"
-          label="Rules To Block"
+          :label="$t('setting.toBlock')"
           multiple
           chips
           hide-details
@@ -32,7 +32,7 @@
         </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="3" lg="2">
-        <v-switch v-model="subJsonExt.log.timestamp" color="primary" label="Timestamp" hide-details />
+        <v-switch v-model="subJsonExt.log.timestamp" color="primary" :label="$t('setting.timestamp')" hide-details />
       </v-col>
     </v-row>
     <v-row v-if="enableDns">
@@ -40,7 +40,7 @@
         <v-text-field
           v-model="proxyDns"
           hide-details
-          label="Golbal DNS"
+          :label="$t('setting.globalDns')"
         ></v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="3" lg="2">
@@ -48,14 +48,14 @@
           v-model="directDns"
           hide-details
           clearable
-          label="Direct DNS"
+          :label="$t('setting.directDns')"
         ></v-text-field>
       </v-col>
-      <v-col cols="12" sm="6" md="3" lg="2" v-if="directDns.length>0">
+      <v-col cols="12" sm="6" md="3" v-if="directDns.length>0">
         <v-select
           v-model="dnsToDirect"
           :items="geositeList"
-          label="DNS To Direct"
+          :label="$t('setting.toDirectDns')"
           multiple
           chips
           hide-details
@@ -66,12 +66,12 @@
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details variant="tonal">Options</v-btn>
+          <v-btn v-bind="props" hide-details variant="tonal">{{ $t('setting.jsonSubOptions') }}</v-btn>
         </template>
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="enableLog" color="primary" label="Log" hide-details></v-switch>
+              <v-switch v-model="enableLog" color="primary" :label="$t('basic.log.title')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
               <v-switch v-model="enableDns" color="primary" label="DNS" hide-details></v-switch>

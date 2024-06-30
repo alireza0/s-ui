@@ -8,7 +8,7 @@
   >
     <v-tab value="t1">{{ $t('setting.interface') }}</v-tab>
     <v-tab value="t2">{{ $t('setting.sub') }}</v-tab>
-    <v-tab value="t3">{{ $t('setting.sub') }} JSON</v-tab>
+    <v-tab value="t3">{{ $t('setting.jsonSub') }}</v-tab>
     <v-tab value="t4">Language</v-tab>
   </v-tabs>
   <v-card-text>

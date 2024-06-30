@@ -82,7 +82,10 @@
               </v-card-actions>
             </v-card>
           </v-overlay>
-          <v-btn icon="mdi-chart-line" @click="showStats(item.tag)" />
+          <v-btn icon="mdi-chart-line" @click="showStats(item.tag)" v-if="v2rayStats.outbounds.includes(item.tag)">
+            <v-icon />
+            <v-tooltip activator="parent" location="top" :text="$t('stats.graphTitle')"></v-tooltip>
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-col>
