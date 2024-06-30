@@ -9,19 +9,46 @@
         </v-row>
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text>
-        <v-row>
-          <v-col style="text-align: center;" @click="copyToClipboard(clientSub)">
-            <v-chip>{{ $t('setting.sub') }}</v-chip>
-            <QrcodeVue :value="clientSub" :size="300" :margin="1" style="border-radius: 1rem;" />
-          </v-col>
-        </v-row>
-        <v-row v-for="l in clientLinks">
-          <v-col style="text-align: center;" @click="copyToClipboard(l.uri)">
-            <v-chip>{{ l.remark?? "-" }}</v-chip><br />
-            <QrcodeVue :value="l.uri" :size="300" :margin="1" style="border-radius: 1rem;" />
-          </v-col>
-        </v-row>
+      <v-card-text style="overflow-y: auto; padding: 0">
+        <v-tabs
+          v-model="tab"
+          density="compact"
+          fixed-tabs
+          align-tabs="center"
+        >
+          <v-tab value="sub">{{ $t('setting.sub') }}</v-tab>
+          <v-tab value="link">{{ $t('client.links') }}</v-tab>
+        </v-tabs>
+        <v-window v-model="tab" style="margin-top: 10px;">
+          <v-window-item value="sub">
+            <v-row>
+              <v-col style="text-align: center;">
+                <v-chip>{{ $t('setting.sub') }}</v-chip><br />
+                <QrcodeVue :value="clientSub" :size="size" @click="copyToClipboard(clientSub)" :margin="1" style="border-radius: 1rem;" />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col style="text-align: center;">
+                <v-chip>{{ $t('setting.jsonSub') }}</v-chip><br />
+                <QrcodeVue :value="clientSub + '?format=json'" :size="size" @click="copyToClipboard(clientSub + '?format=json')" :margin="1" style="border-radius: 1rem;" />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col style="text-align: center;">
+                <v-chip>SING-BOX</v-chip><br />
+                <QrcodeVue :value="singbox" :size="size" @click="copyToClipboard(singbox)" :margin="1" style="border-radius: .8rem;" />
+              </v-col>
+            </v-row>
+          </v-window-item>
+          <v-window-item value="link">
+            <v-row v-for="l in clientLinks">
+              <v-col style="text-align: center;">
+                <v-chip>{{ l.remark?? $t('client.' + l.type) }}</v-chip><br />
+                <QrcodeVue :value="l.uri" :size="size" @click="copyToClipboard(l.uri)" :margin="1" style="border-radius: .5rem;" />
+              </v-col>
+            </v-row>
+          </v-window-item>
+        </v-window>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -35,9 +62,10 @@ import { i18n } from '@/locales'
 import { push } from 'notivue'
 
 export default {
-  props: ['index'],
+  props: ['index', 'visible'],
   data() {
     return {
+      tab: "sub",
     }
   },
   methods: {
@@ -81,9 +109,25 @@ export default {
     clientSub() {
       return Data().subURI + this.client.name
     },
+    singbox() {
+      const url = Data().subURI + this.client.name + "?format=json"
+      return "sing-box://import-remote-profile?url=" +  encodeURIComponent(url) + "#" + this.client.name
+    },
     clientLinks() {
       return this.client.links?? []
+    },
+    size() {
+      if (window.innerWidth > 380) return 300
+      if (window.innerWidth > 330) return 280
+      return 250
     }
+  },
+  watch: {
+    visible(v) {
+      if (v) {
+        this.tab = "sub"
+      }
+    },
   },
   components: { QrcodeVue }
 }
