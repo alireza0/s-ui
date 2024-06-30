@@ -5,7 +5,7 @@
         {{ $t('actions.' + title) + " " + $t('objects.tls') }}
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text>
+      <v-card-text style="padding: 0 16px; overflow-y: scroll;">
         <v-card class="rounded-lg">
           <v-row>
             <v-col cols="12" sm="6" md="4">
@@ -407,13 +407,17 @@ export default {
               if (line === "-----BEGIN PRIVATE KEY-----") {
                   isPrivateKey = true
                   isPublicKey = false
+                  privateKey.push(line)
               } else if (line === "-----END PRIVATE KEY-----") {
                   isPrivateKey = false
+                  privateKey.push(line)
               } else if (line === "-----BEGIN CERTIFICATE-----") {
                   isPublicKey = true
                   isPrivateKey = false
+                  publicKey.push(line)
               } else if (line === "-----END CERTIFICATE-----") {
                   isPublicKey = false
+                  publicKey.push(line)
               } else if (isPrivateKey) {
                   privateKey.push(line)
               } else if (isPublicKey) {

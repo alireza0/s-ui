@@ -59,7 +59,6 @@
           <v-textarea
             :label="$t('tls.key')"
             hide-details
-            rows="3"
             v-model="echKeyText">
           </v-textarea>
         </v-col>
@@ -69,7 +68,6 @@
           <v-textarea
             :label="$t('tls.cert')"
             hide-details
-            rows="3"
             v-model="echConfigText">
           </v-textarea>
         </v-col>
@@ -88,7 +86,7 @@ export default {
   props: ['iTls','oTls'],
   data() {
     return {
-      useEchPath: 0,
+      useEchPath: this.$props.iTls?.ech?.key? 1:0,
       loading: false,
     }
   },
@@ -110,13 +108,17 @@ export default {
             if (line === "-----BEGIN ECH CONFIGS-----") {
               isConfig = true
               isKey = false
+              config.push(line)
             } else if (line === "-----END ECH CONFIGS-----") {
               isConfig = false
+              config.push(line)
             } else if (line === "-----BEGIN ECH KEYS-----") {
               isKey = true
               isConfig = false
+              key.push(line)
             } else if (line === "-----END ECH KEYS-----") {
               isKey = false
+              key.push(line)
             } else if (isConfig) {
               config.push(line)
             } else if (isKey) {
