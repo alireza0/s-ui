@@ -9,7 +9,7 @@
     "lint": "eslint . --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@mdi/font": "7.0.96",
+    "@mdi/font": "7.4.47",
     "axios": "^1.7.2",
     "chart.js": "^4.4.3",
     "clipboard": "^2.0.11",
@@ -19,26 +19,24 @@
     "pinia": "^2.1.7",
     "qrcode.vue": "^3.4.1",
     "roboto-fontface": "^0.10.0",
-    "vue": "^3.2.0",
+    "vue": "^3.4.31",
     "vue-chartjs": "^5.3.1",
     "vue-i18n": "^9.13.1",
-    "vue-router": "^4.3.2",
+    "vue-router": "^4.4.0",
     "vue3-persian-datetime-picker": "^1.2.2",
-    "vuetify": "^3.6.7"
+    "vuetify": "^3.6.10"
   },
   "devDependencies": {
-    "@babel/types": "^7.24.5",
-    "@types/node": "^18.19.33",
-    "@vitejs/plugin-vue": "^4.6.2",
-    "@vue/eslint-config-typescript": "^11.0.3",
-    "eslint": "^8.57.0",
+    "@babel/types": "^7.24.7",
+    "@types/node": "^20.14.9",
+    "@vitejs/plugin-vue": "^5.0.5",
     "eslint-plugin-vue": "^9.26.0",
     "material-design-icons-iconfont": "^6.7.0",
-    "sass": "^1.77.2",
-    "typescript": "^5.4.5",
+    "sass": "^1.77.6",
+    "typescript": "^5.5.2",
     "unplugin-fonts": "^1.1.1",
-    "vite": "^4.5.3",
-    "vite-plugin-vuetify": "^1.0.2",
-    "vue-tsc": "^1.8.27"
+    "vite": "^5.3.2",
+    "vite-plugin-vuetify": "^2.0.3",
+    "vue-tsc": "^2.0.22"
   }
 }
