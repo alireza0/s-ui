@@ -147,10 +147,11 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]mode
 					newOut[key] = value
 				}
 				// Change and push copied config
-				newOut["server"] = addr["server"].(string)
-				port := addr["server_port"].(float64)
+				newOut["server"], _ = addr["server"].(string)
+				port, _ := addr["server_port"].(float64)
 				newOut["server_port"] = int(port)
-				newTag := fmt.Sprintf("%d.%s", index+1, tag)
+				remark, _ := addr["remark"].(string)
+				newTag := fmt.Sprintf("%d.%s%s", index+1, tag, remark)
 				outTags = append(outTags, newTag)
 				newOut["tag"] = newTag
 				outbounds = append(outbounds, newOut)
@@ -193,19 +194,6 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 
 func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	rules := []interface{}{
-		map[string]interface{}{
-			"type": "logical",
-			"mode": "or",
-			"rules": []interface{}{
-				map[string]interface{}{
-					"port": 53,
-				},
-				map[string]interface{}{
-					"protocol": "dns",
-				},
-			},
-			"outbound": "dns-out",
-		},
 		map[string]interface{}{
 			"clash_mode": "Direct",
 			"outbound":   "direct",

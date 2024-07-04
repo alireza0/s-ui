@@ -115,41 +115,56 @@ export default {
       defaultDns: {
         "servers": [
           {
-            "tag": "ProxyDns",
-            "address": "8.8.8.8",
-            "detour": "proxy"
+            "address": "tcp://8.8.8.8",
+            "detour": "proxy",
+            "address_resolver": "local-dns",
+            "tag": "proxy-dns"
           },
           {
-            "tag": "block",
-            "address": "rcode://success"
+            "tag": "local-dns",
+            "address": "local",
+            "detour": "direct"
+          },
+          {
+            "address": "rcode://success",
+            "tag": "block"
           }
         ],
         "rules": [
           {
             "clash_mode": "Global",
-            "server": "ProxyDns"
+            "source_ip_cidr": [
+              "172.19.0.0/30"
+            ],
+            "server": "proxy-dns"
+          },
+          {
+            "source_ip_cidr": [
+              "172.19.0.0/30"
+            ],
+            "server": "proxy-dns"
           }
         ],
-        "final": "ProxyDns",
+        "final": "local-dns",
         "strategy": "prefer_ipv4"
       },
       geositeList: [
         { title: "Private", value: "geosite-private" },
         { title: "Ads", value: "geosite-ads" },
-        { title: "Iran", value: "geosite-ir" },
-        { title: "China", value: "geosite-cn" },
-        { title: "Vietnam", value: "geosite-vn" },
+        { title: "🇮🇷 Iran", value: "geosite-ir" },
+        { title: "🇨🇳 China", value: "geosite-cn" },
+        { title: "🇻🇳 Vietnam", value: "geosite-vn" },
       ],
       geoList: [
-        { title: "DNS-Private", value: "geoip-private" },
+        { title: "Site-Private", value: "geoip-private" },
         { title: "IP-Private", value: "geosite-private" },
-        { title: "DNS-Ads", value: "geosite-ads" },
-        { title: "DNS-Iran", value: "geosite-ir" },
-        { title: "IP-Iran", value: "geoip-ir" },
-        { title: "DNS-China", value: "geosite-cn" },
-        { title: "IP-China", value: "geoip-cn" },
-        { title: "DNS-Vietnam", value: "geosite-vn" },
-        { title: "IP-Vietnam", value: "geoip-vn" },
+        { title: "Site-Ads", value: "geosite-ads" },
+        { title: "🇮🇷 Site-Iran", value: "geosite-ir" },
+        { title: "🇮🇷 IP-Iran", value: "geoip-ir" },
+        { title: "🇨🇳 Site-China", value: "geosite-cn" },
+        { title: "🇨🇳 IP-China", value: "geoip-cn" },
+        { title: "🇻🇳 Site-Vietnam", value: "geosite-vn" },
+        { title: "🇻🇳 IP-Vietnam", value: "geoip-vn" },
       ],
       geo: [
         {
@@ -225,7 +240,18 @@ export default {
     },
     enableDns: {
       get() :boolean { return this.subJsonExt?.dns != undefined },
-      set(v:boolean) { v ? this.subJsonExt.dns = this.defaultDns : delete this.subJsonExt.dns }
+      set(v:boolean) {
+        if (v) {
+          this.subJsonExt.dns = this.defaultDns
+          if (this.rules == undefined) this.subJsonExt.rules = []
+          this.subJsonExt.rules.unshift({ protocol: "dns", outbound: "dns-out" })
+        } else {
+          delete this.subJsonExt.dns
+          const ruleDnsIndex = this.subJsonExt?.rules?.findIndex((r:any) => r.protocol = "dns" && r.outbound == "dns-out")
+          if (ruleDnsIndex >= 0) this.subJsonExt.rules.splice(ruleDnsIndex,1)
+          if (this.rules.length == 0) delete this.subJsonExt.rules
+        }
+      }
     },
     enableExp: {
       get() :boolean { return this.subJsonExt?.experimental != undefined },
@@ -237,34 +263,34 @@ export default {
       set(v:string) { this.dns.servers[0].address = v.length>0 ? v : "8.8.8.8" }
     },
     directDns: {
-      get() :string { return this.dns?.servers?.findLast((d:any) => d.tag == "DirectDns")?.address?? "" },
+      get() :string { return this.dns?.servers?.findLast((d:any) => d.tag == "direct-dns")?.address?? "" },
       set(v:string) {
-        const sIndex = this.dns.servers.findIndex((d:any) => d.tag == "DirectDns")
+        const sIndex = this.dns.servers.findIndex((d:any) => d.tag == "direct-dns")
         if (v?.length>0) {
           if (sIndex === -1) {
-            this.dns.servers.push({ tag: "DirectDns", address: v, detour: "direct" })
-            this.dns.rules.push({ clash_mode: "Direct", server: "DirectDns" })
+            this.dns.servers.push({ tag: "direct-dns", address: v, detour: "direct" })
+            this.dns.rules.push({ clash_mode: "Direct", server: "direct-dns" })
           } else {
             this.dns.servers[sIndex].address = v
           }
         } else {
           this.dns.servers.splice(sIndex,1)
-          this.dns.rules = this.dns.rules.filter((r:any) => r.server != "DirectDns")
+          this.dns.rules = this.dns.rules.filter((r:any) => r.server != "direct-dns")
         }
       },
     },
     dnsToDirect: {
       get() :string[] {
-        const ruleIndex = this.dns?.rules?.findIndex((r:any) => r.server == "DirectDns" && Object.hasOwn(r,'rule_set'))
+        const ruleIndex = this.dns?.rules?.findIndex((r:any) => r.server == "direct-dns" && Object.hasOwn(r,'rule_set'))
         return ruleIndex >= 0 ? this.dns.rules[ruleIndex].rule_set : []
       },
       set(v:string[]) {
-        const ruleIndex = this.dns?.rules?.findIndex((r:any) => r.server == "DirectDns" && Object.hasOwn(r,'rule_set'))
+        const ruleIndex = this.dns?.rules?.findIndex((r:any) => r.server == "direct-dns" && Object.hasOwn(r,'rule_set'))
         if (v.length>0) {
           if (ruleIndex >= 0){
             this.dns.rules[ruleIndex].rule_set = v
           } else {
-            this.dns.rules.push({ rule_set: v, server: "DirectDns" })
+            this.dns.rules.push({ rule_set: v, server: "direct-dns" })
           }
         } else {
           if (ruleIndex != -1) this.dns.rules.splice(ruleIndex,1)
