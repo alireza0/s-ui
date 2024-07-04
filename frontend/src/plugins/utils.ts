@@ -76,8 +76,8 @@ export const FindDiff = {
   
     // Check if both objects are plain objects
     if (typeof obj1 === 'object' && typeof obj2 === 'object' && obj1 !== null && obj2 !== null) {
-      const keys1 = Object.keys(obj1)
-      const keys2 = Object.keys(obj2)
+      const keys1 = Object.keys(obj1).filter(key => obj1[key] !== undefined)
+      const keys2 = Object.keys(obj2).filter(key => obj2[key] !== undefined)
   
       if (keys1.length !== keys2.length) {
         return false

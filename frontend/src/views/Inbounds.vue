@@ -242,6 +242,7 @@ const saveModal = (data:Inbound, stats: boolean, tls_id: number, cData: any) => 
   // Update tls preset
   if (tls_id>0) {
     tlsConfigs.value.findLast(t => t.id == tls_id).inbounds.push(data.tag)
+    tlsConfigs.value.sort()
   }
 
   if (Object.hasOwn(data,'users')) {
