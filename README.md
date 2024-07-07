@@ -179,10 +179,18 @@ To run backend (from root folder of repository):
 
 ## Recommended OS
 
+- Ubuntu 20.04+
+- Debian 11+
 - CentOS 8+
-- Ubuntu 20+
-- Debian 10+
 - Fedora 36+
+- Arch Linux
+- Parch Linux
+- Manjaro
+- Armbian
+- AlmaLinux 9+
+- Rocky Linux 9+
+- Oracle Linux 8+
+- OpenSUSE Tubleweed
 
 ## Environment Variables
 

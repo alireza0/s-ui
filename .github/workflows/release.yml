@@ -14,7 +14,10 @@ jobs:
           - amd64
           - arm64
           - armv7
+          - armv6
+          - armv5
           - 386
+          - s390x
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout repository
@@ -39,8 +42,14 @@ jobs:
             sudo apt install gcc-aarch64-linux-gnu
           elif [ "${{ matrix.platform }}" == "armv7" ]; then
             sudo apt install gcc-arm-linux-gnueabihf
+          elif [ "${{ matrix.platform }}" == "armv6" ]; then
+            sudo apt install gcc-arm-linux-gnueabihf
+          elif [ "${{ matrix.platform }}" == "armv5" ]; then
+            sudo apt install gcc-arm-linux-gnueabi
           elif [ "${{ matrix.platform }}" == "386" ]; then
             sudo apt install gcc-i686-linux-gnu
+          elif [ "${{ matrix.platform }}" == "s390x" ]; then
+            sudo apt install gcc-s390x-linux-gnu
           fi
 
       - name: Build frontend
@@ -63,9 +72,20 @@ jobs:
             export GOARCH=arm
             export GOARM=7
             export CC=arm-linux-gnueabihf-gcc
+          elif [ "${{ matrix.platform }}" == "armv6" ]; then
+            export GOARCH=arm
+            export GOARM=6
+            export CC=arm-linux-gnueabihf-gcc
+          elif [ "${{ matrix.platform }}" == "armv5" ]; then
+            export GOARCH=arm
+            export GOARM=5
+            export CC=arm-linux-gnueabi-gcc
           elif [ "${{ matrix.platform }}" == "386" ]; then
             export GOARCH=386
             export CC=i686-linux-gnu-gcc
+          elif [ "${{ matrix.platform }}" == "s390x" ]; then
+            export GOARCH=s390x
+            export CC=s390x-linux-gnu-gcc
           fi
 
           #### Build Sing-Box
