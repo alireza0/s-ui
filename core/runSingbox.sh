@@ -20,7 +20,17 @@ terminateSingbox()
   fi
 }
 
+reloadSingbox()
+{
+  if kill -0 $tokill > /dev/null 2>&1; then
+    kill -HUP $tokill
+  else
+    runSingbox
+  fi
+}
+
 trap terminateSingbox SIGINT SIGTERM SIGKILL
+trap reloadSingbox SIGHUP
 
 runSingbox
 
@@ -32,13 +42,12 @@ do
         echo "Signal received: $signal"
         # Remove singnal file
         rm -f signal >> /dev/null 2>&1
-        case ${signal} in 
+        case ${signal} in
             "stop")
                 terminateSingbox
                 ;;
             "restart")
-                terminateSingbox
-                runSingbox
+                reloadSingbox
                 ;;
         esac
     fi
@@ -47,7 +56,7 @@ do
     if ! kill -0 $tokill > /dev/null 2>&1; then
         if [ "$signal" != "stop" ]; then
             echo "Sing-Box with PID $tokill crashed. Breaking the loop..."
-            break
+            exit 1
         fi
     fi
 done
