@@ -114,22 +114,22 @@ export default {
       set(newValue: any) {
         switch (newValue) {
         case 1:
-          this.Inbound.password = undefined
-          this.Inbound.users = undefined
-          this.Inbound.handshake_for_server_name = undefined
+          delete this.Inbound.password
+          delete this.Inbound.users
+          delete this.Inbound.handshake_for_server_name
           break;
         case 2:
           if (!this.Inbound.password) {
             this.Inbound.password = ""
           }
-          this.Inbound.users = undefined
+          delete this.Inbound.users
           if (!this.Inbound.handshake_for_server_name) {
             this.Inbound.handshake_for_server_name = {}
           }
           break;
         case 3:
-          this.Inbound.password = undefined
-          if (Object.hasOwn(this.Inbound, 'users')) {
+          delete this.Inbound.password
+          if (!Object.hasOwn(this.Inbound, 'users')) {
             this.Inbound.users = []
           }
           if (!this.Inbound.handshake_for_server_name) {
