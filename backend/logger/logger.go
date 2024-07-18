@@ -8,16 +8,14 @@ import (
 	"github.com/op/go-logging"
 )
 
-var logger *logging.Logger
-var logBuffer []struct {
-	time  string
-	level logging.Level
-	log   string
-}
-
-func init() {
-	InitLogger(logging.INFO)
-}
+var (
+	logger    *logging.Logger
+	logBuffer []struct {
+		time  string
+		level logging.Level
+		log   string
+	}
+)
 
 func InitLogger(level logging.Level) {
 	newLogger := logging.MustGetLogger("s-ui")
@@ -28,10 +26,10 @@ func InitLogger(level logging.Level) {
 
 	backend, err = logging.NewSyslogBackend("")
 	if err != nil {
-		println(err)
+		println("Unable to use syslog: " + err.Error())
 		backend = logging.NewLogBackend(os.Stderr, "", 0)
 	}
-	if ppid > 0 && err != nil {
+	if ppid > 1 && err != nil {
 		format = logging.MustStringFormatter(`%{time:2006/01/02 15:04:05} %{level} - %{message}`)
 	} else {
 		format = logging.MustStringFormatter(`%{level} - %{message}`)

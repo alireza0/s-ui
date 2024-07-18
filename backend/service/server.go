@@ -141,21 +141,27 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 
 func (s *ServerService) GetLogs(service string, count string, level string) []string {
 	c, _ := strconv.Atoi(count)
-	var lines []string
-	if service == "sing-box" {
-		cmdArgs := []string{"journalctl", "-u", service, "--no-pager", "-n", count, "-p", level}
-		// Run the command
-		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		err := cmd.Run()
-		if err != nil {
-			return []string{"Failed to run journalctl command!"}
-		}
-		lines = strings.Split(out.String(), "\n")
-	} else {
-		lines = logger.GetLogs(c, level)
+
+	if service == "s-ui" {
+		return logger.GetLogs(c, level)
 	}
+	ppid := os.Getppid()
+	var lines []string
+	var cmdArgs []string
+	if ppid > 1 {
+		cmdArgs = []string{"journalctl", "-u", service, "--no-pager", "-n", count, "-p", level}
+	} else {
+		cmdArgs = []string{"tail", "/logs/" + service + ".log", "-n", count}
+	}
+	// Run the command
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return []string{"Failed to get logs!", err.Error()}
+	}
+	lines = strings.Split(out.String(), "\n")
 
 	return lines
 }
