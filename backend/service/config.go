@@ -248,7 +248,7 @@ func (s *ConfigService) Save(singboxConfig *SingBoxConfig) error {
 		return err
 	}
 
-	data, err := json.MarshalIndent(singboxConfig, " ", "  ")
+	data, err := json.MarshalIndent(singboxConfig, "", "  ")
 	if err != nil {
 		return err
 	}

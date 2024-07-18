@@ -79,7 +79,7 @@ func (j *JsonService) GetJson(subId string, format string) (*string, error) {
 	// Add other objects from settings
 	j.addOthers(&jsonConfig)
 
-	result, _ := json.MarshalIndent(jsonConfig, " ", "  ")
+	result, _ := json.MarshalIndent(jsonConfig, "", "  ")
 	resultStr := string(result)
 	return &resultStr, nil
 }
