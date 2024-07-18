@@ -57,14 +57,7 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 			logger.Infof("Unable to get session's max age from DB")
 		}
 
-		if sessionMaxAge > 0 {
-			err = SetMaxAge(c, sessionMaxAge*60)
-			if err != nil {
-				logger.Infof("Unable to set session's max age")
-			}
-		}
-
-		err = SetLoginUser(c, loginUser)
+		err = SetLoginUser(c, loginUser, sessionMaxAge)
 		if err == nil {
 			logger.Info("user ", loginUser, " login success")
 		} else {
