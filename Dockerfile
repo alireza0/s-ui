@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM node:alpine as front-builder
+FROM --platform=$BUILDPLATFORM node:alpine AS front-builder
 WORKDIR /app
 COPY frontend/ ./
 RUN npm install && npm run build
@@ -20,5 +20,6 @@ ENV TZ=Asia/Tehran
 WORKDIR /app
 RUN apk add  --no-cache --update ca-certificates tzdata
 COPY --from=backend-builder  /app/sui /app/
+COPY entrypoint.sh /app/
 VOLUME [ "s-ui" ]
-CMD [ "./sui" ]
+ENTRYPOINT [ "./entrypoint.sh" ]

@@ -8,6 +8,7 @@ services:
       - "singbox:/app/bin"
       - "$PWD/db:/app/db"
       - "$PWD/cert:/app/cert"
+      - "logs:/logs"
     environment:
       SINGBOX_API: "sing-box:1080"
       SUI_DB_FOLDER: "db"
@@ -18,7 +19,16 @@ services:
       - "2096:2096"
     networks:
       - s-ui
-    entrypoint: "./sui migrate && ./sui"
+    links:
+      - syslog
+    logging:
+      driver: syslog
+      options:
+        tag: "s-ui"
+        syslog-address: "udp://127.0.0.1:1514"
+    entrypoint: "./entrypoint.sh"
+    depends_on:
+      - syslog
 
   sing-box:
     image: alireza7/s-ui-singbox
@@ -34,12 +44,39 @@ services:
       - "2443:2443"
       - "3443:3443"
     restart: unless-stopped
+    links:
+      - syslog
+    logging:
+      driver: syslog
+      options:
+        tag: "sing-box"
+        syslog-address: "udp://127.0.0.1:1514"
     depends_on:
       - s-ui
+      - syslog
+
+  syslog:
+    image: rsyslog/syslog_appliance_alpine
+    container_name: syslog
+    volumes:
+      - "logs:/logs"
+    networks:
+      - s-ui
+    ports:
+      - "127.0.0.1:1514:1514/udp"
+    restart: unless-stopped
+    environment:
+      - RSYSLOG_CONF_GLOBAL_CONF=template(name="RemoteLogs" type="string" string="/logs/%programname%.log")
+      - RSYSLOG_CONF_INPUT_UDP="input(type=\"imudp\" port=\"1514\" ruleset=\"remote\")"
+      - RSYSLOG_CONF_RULESET_REMOTE="ruleset(name=\"remote\") { action(type=\"omfile\" dynaFile=\"RemoteLogs\") }"
+    command: >
+      sh -c 'touch /config/container_config'
 
 networks:
   s-ui:
     driver: bridge
 
 volumes:
+  logs:
   singbox:
+  
