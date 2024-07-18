@@ -6,10 +6,10 @@ import (
 	"log"
 	"os"
 	"s-ui/config"
-	"s-ui/database"
 	"s-ui/database/model"
 	"strings"
 
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -21,11 +21,10 @@ func migrateDb() {
 		return
 	}
 
-	err = database.OpenDB(path)
+	db, err := gorm.Open(sqlite.Open(path))
 	if err != nil {
 		log.Fatal(err)
 	}
-	db := database.GetDB()
 	tx := db.Begin()
 	defer func() {
 		if err == nil {
