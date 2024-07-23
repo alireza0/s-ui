@@ -169,10 +169,12 @@ export default {
       const prevConfig = { tag: tag ,listen: this.inbound.listen, listen_port: this.inbound.listen_port }
       this.inbound = createInbound(this.inbound.type, prevConfig)
       if (this.HasInData.includes(this.inbound.type)){
-        this.inData = <InData>{id: 0, tag: this.inbound.tag, addrs: [], outJson: {}}
+        this.inData.outJson = {}
+        this.inData.tag = tag
       } else {
         this.inData = <InData>{id: -1}
       }
+      this.tls_id.value = 0
       this.side = "s"
     },
     add_addr() {
