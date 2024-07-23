@@ -42,6 +42,9 @@ func (s *LinkService) GetLinks(linkJson *json.RawMessage, types string, clientIn
 }
 
 func (s *LinkService) addClientInfo(uri string, clientInfo string) string {
+	if len(clientInfo) == 0 {
+		return uri
+	}
 	protocol := strings.Split(uri, "://")
 	if len(protocol) < 2 {
 		return uri

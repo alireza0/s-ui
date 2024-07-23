@@ -456,7 +456,7 @@ export namespace LinkUtil {
         if (a.insecure) {
           newParams.allowInsecure = 1
         }
-        newParams.ps = encodeURIComponent(a.remark ? inbound.tag + a.remark : inbound.tag)
+        newParams.ps = inbound.tag + (a.remark??'')
         links.push('vmess://' + utf8ToBase64(JSON.stringify(newParams, null, 2)))
       })
     }
