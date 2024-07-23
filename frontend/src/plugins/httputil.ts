@@ -85,4 +85,4 @@ const HttpUtils = {
   },
 }
 
-export default HttpUtils;
+export default HttpUtils

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from 'axios'
 
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
@@ -50,7 +50,7 @@ axios.interceptors.response.use(
         }
         return Promise.reject(error)
     }
-);
+)
 
 const api = axios.create()
 

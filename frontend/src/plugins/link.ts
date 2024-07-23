@@ -10,8 +10,8 @@ export interface Link {
 }
 
 function utf8ToBase64(utf8String: string): string {
-  const encodedUtf8 = encodeURIComponent(utf8String).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode(parseInt(p1, 16)));
-  return btoa(encodedUtf8);
+  const encodedUtf8 = encodeURIComponent(utf8String).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode(parseInt(p1, 16)))
+  return btoa(encodedUtf8)
 }
 
 export namespace LinkUtil {
