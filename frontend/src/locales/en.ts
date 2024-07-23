@@ -157,6 +157,7 @@ export default {
   client: {
     name: "Name",
     desc: "Description",
+    group: "Group",
     inboundTags: "Inbound Tags",
     basics: "Basics",
     config: "Config",

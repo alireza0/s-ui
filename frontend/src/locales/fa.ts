@@ -156,6 +156,7 @@ export default {
   client: {
     name: "نام",
     desc: "شرح",
+    group: "گروه",
     inboundTags: "برچسب‌های ورودی",
     basics: "پایه",
     config: "تنظیم",

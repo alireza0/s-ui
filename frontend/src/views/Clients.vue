@@ -5,6 +5,7 @@
     :visible="modal.visible"
     :index="modal.index"
     :data="modal.data"
+    :groups="groups"
     :stats="modal.stats"
     :inboundTags="inboundTags"
     @close="closeModal"
@@ -181,6 +182,10 @@ const inboundTags = computed((): string[] => {
   return inbounds.value?.filter(i => i.tag != "" && Object.hasOwn(i,'users')).map(i => i.tag)
 })
 
+const groups = computed((): string[] => {
+  if (!clients.value) return []
+  return Array.from(new Set(clients.value?.map(c => c.group)))
+})
 const filter = ref("")
 
 const filterItems = [

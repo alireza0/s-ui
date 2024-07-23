@@ -41,7 +41,8 @@ type Client struct {
 	Expiry   int64           `json:"expiry" form:"expiry"`
 	Down     int64           `json:"down" form:"down"`
 	Up       int64           `json:"up" form:"up"`
-	Desc     string          `json:"desc" from:"desc"`
+	Desc     string          `json:"desc" form:"desc"`
+	Group    string          `json:"group" form:"group"`
 }
 
 type Stats struct {

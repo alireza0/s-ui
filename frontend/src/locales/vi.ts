@@ -157,6 +157,7 @@ export default {
   client: {
     name: "Tên",
     desc: "Mô tả",
+    group: "Nhóm",
     inboundTags: "Thẻ đầu vào",
     basics: "Cơ bản",
     config: "Cấu hình",

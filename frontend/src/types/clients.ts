@@ -13,6 +13,7 @@ export interface Client {
   up: number
   down: number
   desc: string
+  group: string
 }
 
 const defaultClient: Client = {
@@ -26,6 +27,7 @@ const defaultClient: Client = {
   up: 0,
   down: 0,
   desc: "",
+  group: "",
 }
 
 type Config = {
