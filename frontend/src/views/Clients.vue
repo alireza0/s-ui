@@ -299,7 +299,7 @@ const updateLinks = (c:Client):Link[] => {
     const tlsConfig = <any>Data().tlsConfigs?.findLast((t:any) => t.inbounds.includes(i.tag))
     const cData = <any>Data().inData?.findLast((d:any) => d.tag == i.tag)
     const addrs = cData ? <any[]>cData.addrs : []
-    const uris = LinkUtil.linkGenerator(c.name,i, tlsConfig?.client?? {}, addrs)
+    const uris = LinkUtil.linkGenerator(c,i, tlsConfig?.client?? {}, addrs)
     if (uris.length>0){
       uris.forEach(uri => {
         newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })

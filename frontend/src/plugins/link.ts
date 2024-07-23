@@ -1,6 +1,7 @@
 import { Hysteria, Hysteria2, InTypes, Inbound, Naive, Shadowsocks, TUIC, Trojan, VLESS, VMess } from "@/types/inbounds"
 import { HTTP, WebSocket, gRPC, HTTPUpgrade, Transport, TrspTypes } from "@/types/transport"
 import RandomUtil from "./randomUtil"
+import { Client } from "@/types/clients"
 
 export interface Link {
   type: "local" | "external" | "sub"
@@ -14,7 +15,7 @@ function utf8ToBase64(utf8String: string): string {
 }
 
 export namespace LinkUtil {
-  export function linkGenerator(user: string, inbound: Inbound, tlsClient: any = {}, addrs: any[] = []): string[] {
+  export function linkGenerator(user: Client, inbound: Inbound, tlsClient: any = {}, addrs: any[] = []): string[] {
     switch(inbound.type){
       case InTypes.Shadowsocks:
         return shadowsocksLink(user,<Shadowsocks>inbound, addrs)
@@ -36,8 +37,8 @@ export namespace LinkUtil {
     return []
   }
 
-  function shadowsocksLink(user: string, inbound: Shadowsocks, addrs: any[]): string[] {
-    const userPass = inbound.users?.find(i => i.name == user)?.password
+  function shadowsocksLink(user: Client, inbound: Shadowsocks, addrs: any[]): string[] {
+    const userPass = user.config.shadowsocks?.password
     const password = [userPass]
     if (inbound.method.startsWith('2022')) password.push(inbound.password)
     const params = {
@@ -70,8 +71,8 @@ export namespace LinkUtil {
     return links
   }
 
-  function hysteriaLink(user: string, inbound: Hysteria, addrs: any[], tlsClient: any): string[] {
-    const auth = inbound.users.find(i => i.name == user)?.auth_str
+  function hysteriaLink(user: Client, inbound: Hysteria, addrs: any[], tlsClient: any): string[] {
+    const auth = user.config.hysteria.auth_str
     const params = {
       upmbps: inbound.up_mbps?? null,
       downmbps: inbound.down_mbps?? null,
@@ -118,8 +119,8 @@ export namespace LinkUtil {
     return links
   }
 
-  function hysteria2Link(user: string, inbound: Hysteria2, addrs: any[], tlsClient: any): string[] {
-    const password = inbound.users.find(i => i.name == user)?.password
+  function hysteria2Link(user: Client, inbound: Hysteria2, addrs: any[], tlsClient: any): string[] {
+    const password = user.config.hysteria2.password
     const params = {
       upmbps: inbound.up_mbps?? null,
       downmbps: inbound.down_mbps?? null,
@@ -166,8 +167,8 @@ export namespace LinkUtil {
     return links
   }
 
-  function naiveLink(user: string, inbound: Naive, addrs: any[], tlsClient: any): string[] {
-    const password = inbound.users.find(i => i.username == user)?.password
+  function naiveLink(user: Client, inbound: Naive, addrs: any[], tlsClient: any): string[] {
+    const password = user.config.naive.password
 
     let links = <string[]>[]
     if (addrs.length == 0) {
@@ -208,8 +209,8 @@ export namespace LinkUtil {
     return links
   }
 
-  function tuicLink(user: string, inbound: TUIC, addrs: any[], tlsClient: any): string[] {
-    const u = inbound.users.find(i => i.name == user)
+  function tuicLink(user: Client, inbound: TUIC, addrs: any[], tlsClient: any): string[] {
+    const u = user.config.tuic
     const params = {
       sni: inbound.tls.server_name?? null,
       alpn: inbound.tls.alpn?.join(',')?? null,
@@ -286,8 +287,8 @@ export namespace LinkUtil {
     return params
   }
 
-  function vlessLink(user: string, inbound: VLESS, addrs: any[], tlsClient: any): string[] {
-    const u = inbound.users.find(i => i.name == user)
+  function vlessLink(user: Client, inbound: VLESS, addrs: any[], tlsClient: any): string[] {
+    const u = user.config.vless
     const transport = <Transport>inbound.transport
 
     const tParams = getTransportParams(transport)
@@ -348,8 +349,8 @@ export namespace LinkUtil {
     return links
   }
 
-  function trojanLink(user: string, inbound: Trojan, addrs: any[], tlsClient: any): string[] {
-    const u = inbound.users.find(i => i.name == user)
+  function trojanLink(user: Client, inbound: Trojan, addrs: any[], tlsClient: any): string[] {
+    const u = user.config.trojan
     const transport = <Transport>inbound.transport
 
     const tParams = getTransportParams(transport)
@@ -410,8 +411,8 @@ export namespace LinkUtil {
     return links
   }
 
-  function vmessLink(user: string, inbound: VMess, addrs: any[], tlsClient: any): string[] {
-    const u = inbound.users.find(i => i.name == user)
+  function vmessLink(user: Client, inbound: VMess, addrs: any[], tlsClient: any): string[] {
+    const u = user.config.vmess
     const transport = <Transport>inbound.transport
 
     const tParams = getTransportParams(transport)

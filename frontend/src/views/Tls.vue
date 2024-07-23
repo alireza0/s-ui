@@ -150,27 +150,25 @@ const delTls = (index: number) => {
 }
 
 const updateLinks = (i:any,tlsClient:any) => {
-  if(i.users && i.users.length>0){
-    i.users.forEach((u:any) => {
-      const client = clients.value.find(c => u.username? c.name == u.username : c.name == u.name)
-      if (client){
-        const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.includes(inb.tag))
-        const newLinks = <Link[]>[]
-        clientInbounds.forEach(i =>{
-          const cData = <any>Data().inData?.findLast((d:any) => d.tag == i.tag)
-          const addrs = cData ? <any[]>cData.addrs : []
-          const uris = LinkUtil.linkGenerator(client,i, tlsClient, addrs)
-          if (uris.length>0){
-            uris.forEach(uri => {
-              newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
-            })
-          }
-        })
-        let links = client.links && client.links.length>0? client.links : <Link[]>[]
-        links = [...newLinks, ...links.filter((l:Link) => l.type != 'local')]
+  if(i.users){
+    const uClients = clients.value.filter(c => c.inbounds.includes(i.tag))
+    uClients.forEach((client:any) => {
+      const clientInbounds = <Inbound[]>inbounds.value.filter(inb => client?.inbounds.includes(inb.tag))
+      const newLinks = <Link[]>[]
+      clientInbounds.forEach(i =>{
+        const cData = <any>Data().inData?.findLast((d:any) => d.tag == i.tag)
+        const addrs = cData ? <any[]>cData.addrs : []
+        const uris = LinkUtil.linkGenerator(client,i, tlsClient, addrs)
+        if (uris.length>0){
+          uris.forEach(uri => {
+            newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
+          })
+        }
+      })
+      let links = client.links && client.links.length>0? client.links : <Link[]>[]
+      links = [...newLinks, ...links.filter((l:Link) => l.type != 'local')]
 
-        client.links = links
-      }
+      client.links = links
     })
   }
 }
