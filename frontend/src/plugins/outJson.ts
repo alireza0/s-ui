@@ -1,6 +1,7 @@
 import { Hysteria, Hysteria2, Inbound, InTypes, Shadowsocks, Trojan, TUIC, VLESS, VMess, ShadowTLS } from "@/types/inbounds"
 import { iTls } from "@/types/inTls"
 import { oTls } from "@/types/outTls"
+import RandomUtil from "./randomUtil"
 
 export function fillData(out: any, inbound: Inbound, tlsClient: any) {
   if (Object.hasOwn(inbound, 'tls')) {
@@ -52,6 +53,10 @@ function addTls(out: any, tls: iTls, tlsClient: oTls){
   if(tls.min_version) out.tls.min_version = tls.min_version
   if(tls.max_version) out.tls.max_version = tls.max_version
   if(tls.cipher_suites) out.tls.cipher_suites = tls.cipher_suites
+  if(tls.reality?.enabled){
+    out.tls.reality.enabled = true
+    out.tls.reality.short_id = tls.reality.short_id[RandomUtil.randomInt(tls.reality.short_id.length)]
+  }
 }
 
 function shadowsocksOut(out: any, inbound: Shadowsocks) {
