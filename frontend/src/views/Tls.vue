@@ -85,10 +85,11 @@
 import TlsVue from '@/layouts/modals/Tls.vue'
 import Data from '@/store/modules/data'
 import { computed, ref } from 'vue'
-import { Config } from '@/types/config';
-import { Inbound } from '@/types/inbounds';
-import { Client } from '@/types/clients';
-import { Link, LinkUtil } from '@/plugins/link';
+import { Config } from '@/types/config'
+import { Inbound } from '@/types/inbounds'
+import { Client } from '@/types/clients'
+import { Link, LinkUtil } from '@/plugins/link'
+import { fillData } from '@/plugins/outJson'
 
 const tlsConfigs = computed((): any[] => {
   return Data().tlsConfigs
@@ -96,6 +97,10 @@ const tlsConfigs = computed((): any[] => {
 
 const inbounds = computed((): any[] => {
   return <any[]>(<Config>Data().config)?.inbounds
+})
+
+const inData = computed((): any[] => {
+  return <any[]> Data().inData
 })
 
 const clients = computed((): any[] => {
@@ -135,6 +140,7 @@ const saveModal = (data:any) => {
     tlsConfigs.value[modal.value.index] = data
     inbounds?.value.filter(i => tlsConfigs.value[modal.value.index].inbounds.includes(i.tag)).forEach(i =>{
       if (i.tls != undefined) i.tls = data.server
+      updateInData(i,data.client)
       updateLinks(i,data.client)
     })
   }
@@ -170,6 +176,13 @@ const updateLinks = (i:any,tlsClient:any) => {
 
       client.links = links
     })
+  }
+}
+
+const updateInData = (i:any, c:any) => {
+  const inDataIndex = inData.value.findIndex(d => d.tag == i.tag)
+  if (inDataIndex != -1) {
+    fillData(inData.value[inDataIndex].outJson, i, c)
   }
 }
 </script>
