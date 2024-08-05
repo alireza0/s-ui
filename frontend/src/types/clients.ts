@@ -56,7 +56,8 @@ export function updateConfigs(configs: Config, newUserName: string): Config {
 
 export function randomConfigs(user: string): Config {
   const mixedPassword = RandomUtil.randomSeq(10)
-  const ssPassword = RandomUtil.randomShadowsocksPassword(32)
+  const ssPassword16 = RandomUtil.randomShadowsocksPassword(16)
+  const ssPassword32 = RandomUtil.randomShadowsocksPassword(32)
   const uuid = RandomUtil.randomUUID()
   return {
     mixed: {
@@ -73,11 +74,15 @@ export function randomConfigs(user: string): Config {
     },
     shadowsocks: {
       name: user,
-      password: ssPassword,
+      password: ssPassword32,
+    },
+    shadowsocks16: {
+      name: user,
+      password: ssPassword16,
     },
     shadowtls: {
       name: user,
-      password: ssPassword,
+      password: ssPassword32,
     },
     vmess: {
       name: user,
