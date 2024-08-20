@@ -157,6 +157,8 @@ export default {
         { title: "RU IP ", value: "ru-geoip" },
         { title: "Telegram", value: "geosite-telegram" },
         { title: "WhatsApp", value: "geosite-whatsapp" },
+        { title: "RU Android apps", value: "ru-android-apps" },
+        { title: "RU vk.com", value: "ru-geosite-vk" },
       ],
       geo: [
         {
@@ -192,6 +194,20 @@ export default {
           type: "remote",
           format: "binary",
           url: "https://raw.githubusercontent.com/jeffscrum/sb-rulesets/master/custom/whatsapp.srs",
+          download_detour: "direct"
+        },
+        {
+          tag: "ru-android-apps",
+          type: "remote",
+          format: "binary",
+          url: "https://raw.githubusercontent.com/jeffscrum/sb-rulesets/master/custom/ru-android-apps.srs",
+          download_detour: "direct"
+        },
+        {
+          tag: "ru-geosite-vk",
+          type: "remote",
+          format: "binary",
+          url: "https://raw.githubusercontent.com/jeffscrum/sb-rulesets/master/custom/vk.srs",
           download_detour: "direct"
         },
       ],
