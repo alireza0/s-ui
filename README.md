@@ -9,11 +9,6 @@
 
 > **Disclaimer:** This project is only for personal learning and communication, please do not use it for illegal purposes, please do not use it in a production environment
 
-**If you think this project is helpful to you, you may wish to give a**:star2:
-
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/alireza7)
-
-- USDT (TRC20): `TYTq73Gj6dJ67qe58JVPD9zpjW2cc9XgVz`
 
 ## Quick Overview
 | Features                               |      Enable?       |
@@ -37,7 +32,7 @@
 ## Install & Upgrade to Latest Version
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/jeffscrum/s-ui/master/install.sh)
 ```
 
 ## Install Custom Version
@@ -45,7 +40,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.s
 **Step 1:** To install your desired version, add the version to the end of the installation command. e.g., ver `0.0.1`:
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh) 0.0.1
+bash <(curl -Ls https://raw.githubusercontent.com/jeffscrum/s-ui/master/install.sh) 0.0.1
 ```
 
 ## Uninstall S-UI
@@ -80,7 +75,7 @@ curl -fsSL https://get.docker.com | sh
 
 ```shell
 mkdir s-ui && cd s-ui
-wget -q https://raw.githubusercontent.com/alireza0/s-ui/main/docker-compose.yml
+wget -q https://raw.githubusercontent.com/jeffscrum/s-ui/main/docker-compose.yml
 docker compose up -d
 ```
 
@@ -225,6 +220,3 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 ```
 
 </details>
-
-## Stargazers over Time
-[![Stargazers over time](https://starchart.cc/alireza0/s-ui.svg)](https://starchart.cc/alireza0/s-ui)
