@@ -20,7 +20,7 @@ RUN set -ex \
 
 FROM --platform=$TARGETPLATFORM alpine
 LABEL maintainer="Alireza <alireza7@gmail.com>"
-ENV TZ=Asia/Tehran
+ENV TZ=Europe/Moscow
 WORKDIR /app
 RUN apk add  --no-cache --update ca-certificates tzdata bash
 COPY --from=singbox-builder /app/sing-box/sing-box .
