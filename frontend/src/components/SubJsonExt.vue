@@ -149,87 +149,51 @@ export default {
         "strategy": "prefer_ipv4"
       },
       geositeList: [
-        { title: "Private", value: "geosite-private" },
-        { title: "Ads", value: "geosite-ads" },
-        { title: "🇮🇷 Iran", value: "geosite-ir" },
-        { title: "🇨🇳 China", value: "geosite-cn" },
-        { title: "🇻🇳 Vietnam", value: "geosite-vn" },
+        { title: "RU Private", value: "ru-geosite" },
       ],
       geoList: [
-        { title: "Site-Private", value: "geoip-private" },
-        { title: "IP-Private", value: "geosite-private" },
-        { title: "Site-Ads", value: "geosite-ads" },
-        { title: "🇮🇷 Site-Iran", value: "geosite-ir" },
-        { title: "🇮🇷 IP-Iran", value: "geoip-ir" },
-        { title: "🇨🇳 Site-China", value: "geosite-cn" },
-        { title: "🇨🇳 IP-China", value: "geoip-cn" },
-        { title: "🇻🇳 Site-Vietnam", value: "geosite-vn" },
-        { title: "🇻🇳 IP-Vietnam", value: "geoip-vn" },
+        { title: "RU Site", value: "ru-geosite" },
+        { title: "Site-Private", value: "geosite-private" },
+        { title: "RU IP ", value: "ru-geoip" },
+        { title: "Telegram", value: "geosite-telegram" },
+        { title: "WhatsApp", value: "geosite-whatsapp" },
       ],
       geo: [
         {
-          tag: "geosite-ads",
+          tag: "ru-geosite",
           type: "remote",
           format: "binary",
-          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/category-ads-all.srs",
+          url: "https://raw.githubusercontent.com/jeffscrum/sb-rulesets/master/custom/ru-sites.srs",
           download_detour: "direct"
         },
         {
           tag: "geosite-private",
           type: "remote",
           format: "binary",
-          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/private.srs",
+          url: "https://raw.githubusercontent.com/jeffscrum/sb-rulesets/master/custom/private.srs",
           download_detour: "direct"
         },
         {
-          tag: "geosite-ir",
+          tag: "ru-geoip",
           type: "remote",
           format: "binary",
-          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/category-ir.srs",
+          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/ru.srs",
           download_detour: "direct"
         },
         {
-          tag: "geosite-cn",
+          tag: "geosite-telegram",
           type: "remote",
           format: "binary",
-          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs",
+          url: "https://raw.githubusercontent.com/jeffscrum/sb-rulesets/master/custom/telegram.srs",
           download_detour: "direct"
         },
         {
-          tag: "geosite-vn",
+          tag: "geosite-whatsapp",
           type: "remote",
           format: "binary",
-          url: "https://github.com/Thaomtam/Geosite-vn/raw/rule-set/Geosite-vn.srs",
+          url: "https://raw.githubusercontent.com/jeffscrum/sb-rulesets/master/custom/whatsapp.srs",
           download_detour: "direct"
         },
-        {
-          tag: "geoip-private",
-          type: "remote",
-          format: "binary",
-          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/private.srs",
-          download_detour: "direct"
-        },
-        {
-          tag: "geoip-ir",
-          type: "remote",
-          format: "binary",
-          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/ir.srs",
-          download_detour: "direct"
-        },
-        {
-          tag: "geoip-cn",
-          type: "remote",
-          format: "binary",
-          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs",
-          download_detour: "direct"
-        },
-        {
-          tag: "geoip-vn",
-          type: "remote",
-          format: "binary",
-          url: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/vn.srs",
-          download_detour: "direct"
-        }
       ],
     }
   },
