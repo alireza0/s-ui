@@ -62,7 +62,7 @@ elif [[ "${release}" == "fedora" ]]; then
         echo -e "${red} Please use Fedora 36 or higher version!${plain}\n" && exit 1
     fi
 elif [[ "${release}" == "debian" ]]; then
-    if [[ ${os_version} -lt 11 ]]; then
+    if [[ ${os_version} -lt 11 ]] ] && [[ $(</etc/debian_release) != */sid ]]; then
         echo -e "${red} Please use Debian 11 or higher ${plain}\n" && exit 1
     fi
 elif [[ "${release}" == "almalinux" ]]; then
