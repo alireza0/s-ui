@@ -156,6 +156,7 @@ To run backend (from root folder of repository):
 - Vietnamese
 - Chinese (Simplified)
 - Chinese (Traditional)
+- Russian
 
 ## Features
 

@@ -4,6 +4,7 @@ import fa from './fa'
 import vi from './vi'
 import zhcn from './zhcn'
 import zhtw from './zhtw'
+import ru from './ru'
 
 export const i18n = createI18n({
   legacy: false,
@@ -14,7 +15,8 @@ export const i18n = createI18n({
     fa: fa,
     vi: vi,
     zhHans: zhcn,
-    zhHant: zhtw
+    zhHant: zhtw,
+    ru: ru
   },
 })
 
@@ -24,4 +26,5 @@ export const languages = [
   { title: 'Tiếng Việt', value: 'vi' },
   { title: '简体中文', value: 'zhHans' },
   { title: '繁體中文', value: 'zhHant' },
+  { title: 'Русский', value: 'ru' },
 ]
