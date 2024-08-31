@@ -184,6 +184,7 @@ uninstall() {
     systemctl stop sing-box
     systemctl disable sing-box
     rm /etc/systemd/system/s-ui.service -f
+    rm /etc/systemd/system/sing-box.service -f
     systemctl daemon-reload
     systemctl reset-failed
     rm /etc/s-ui/ -rf
