@@ -150,6 +150,24 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]mode
 				newOut["server"], _ = addr["server"].(string)
 				port, _ := addr["server_port"].(float64)
 				newOut["server_port"] = int(port)
+
+				// Override TLS
+				newTls, overrideTls := addr["tls"].(bool)
+				if overrideTls {
+					tlsIf := map[string]interface{}{}
+					if newTls {
+						tlsIf["enabled"] = true
+						newSNI, overrideSNI := addr["server_name"].(string)
+						if overrideSNI {
+							tlsIf["server_name"] = newSNI
+						}
+						newInsecure, overrideInsecure := addr["insecure"].(bool)
+						if overrideInsecure {
+							tlsIf["insecure"] = newInsecure
+						}
+					}
+					newOut["tls"] = tlsIf
+				}
 				remark, _ := addr["remark"].(string)
 				newTag := fmt.Sprintf("%d.%s%s", index+1, tag, remark)
 				outTags = append(outTags, newTag)
