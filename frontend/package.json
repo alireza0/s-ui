@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@mdi/font": "7.4.47",
-    "axios": "^1.7.2",
+    "axios": "^1.7.4",
     "chart.js": "^4.4.3",
     "clipboard": "^2.0.11",
     "core-js": "^3.37.1",
