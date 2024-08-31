@@ -222,8 +222,8 @@ export default {
   data() {
     return {
       menu: false,
-      usePath: 0,
-      useEchPath: 0,
+      usePath: this.$props.outbound?.tls?.certificate? 1:0,
+      useEchPath: this.$props.outbound?.tls.ech?.config? 1:0,
       defaults: defaultOutTls,
       alpn: [
         { title: "H3", value: 'h3' },
