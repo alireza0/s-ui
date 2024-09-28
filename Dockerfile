@@ -1,6 +1,7 @@
 FROM --platform=$BUILDPLATFORM node:alpine AS front-builder
 WORKDIR /app
 COPY frontend/ ./
+ENV NODE_OPTIONS=--max_old_space_size=2048
 RUN npm install && npm run build
 
 FROM golang:1.22-alpine AS backend-builder
