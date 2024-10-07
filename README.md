@@ -80,7 +80,7 @@ curl -fsSL https://get.docker.com | sh
 
 ```shell
 mkdir s-ui && cd s-ui
-wget -q https://raw.githubusercontent.com/alireza0/s-ui/main/docker-compose.yml
+wget -q https://raw.githubusercontent.com/alireza0/s-ui/refs/tags/1.0.0/docker-compose.yml
 docker compose up -d
 ```
 
