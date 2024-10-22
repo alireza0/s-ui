@@ -31,7 +31,7 @@
         type="number"
         min="0"
         hide-details
-        v-model="server_port">
+        v-model.number="server_port">
         </v-text-field>
       </v-col>
     </v-row>
@@ -78,7 +78,7 @@
           type="number"
           min="0"
           hide-details
-          v-model="value.server_port">
+          v-model.number="value.server_port">
           </v-text-field>
         </v-col>
       </v-row>
