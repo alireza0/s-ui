@@ -247,7 +247,7 @@ export default {
           this.subJsonExt.rules.unshift({ protocol: "dns", outbound: "dns-out" })
         } else {
           delete this.subJsonExt.dns
-          const ruleDnsIndex = this.subJsonExt?.rules?.findIndex((r:any) => r.protocol = "dns" && r.outbound == "dns-out")
+          const ruleDnsIndex = this.subJsonExt?.rules?.findIndex((r:any) => r.protocol == "dns" && r.outbound == "dns-out")
           if (ruleDnsIndex >= 0) this.subJsonExt.rules.splice(ruleDnsIndex,1)
           if (this.rules.length == 0) delete this.subJsonExt.rules
         }
