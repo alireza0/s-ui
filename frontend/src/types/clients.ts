@@ -121,5 +121,9 @@ export function randomConfigs(user: string): Config {
 export function createClient<T extends Client>(json?: Partial<T>): Client {
   defaultClient.name = RandomUtil.randomSeq(8)
   const defaultObject: Client = { ...defaultClient, ...(json || {}) }
+
+  // Add missing config
+  defaultObject.config = { ...randomConfigs(defaultObject.name), ...defaultObject.config }
+  
   return defaultObject
 }

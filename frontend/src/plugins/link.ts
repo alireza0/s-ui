@@ -38,7 +38,7 @@ export namespace LinkUtil {
   }
 
   function shadowsocksLink(user: Client, inbound: Shadowsocks, addrs: any[]): string[] {
-    const userPass = user.config.shadowsocks?.password
+    const userPass = inbound.method == "2022-blake3-aes-128-gcm" ? user.config.shadowsocks16?.password : user.config.shadowsocks?.password
     const password = [userPass]
     if (inbound.method.startsWith('2022')) password.push(inbound.password)
     const params = {
