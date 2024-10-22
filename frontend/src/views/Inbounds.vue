@@ -311,6 +311,10 @@ const delInbound = (index: number) => {
   }
   if (index < Data().oldData.config.inbounds.length){
     Data().delInbound(index)
+  } else {
+    // Delete new inbound's inData if exists
+    const inDataIndex = Data().inData.findIndex((d:any) => d.tag == tag)
+    if (inDataIndex != -1) Data().inData.splice(inDataIndex, 1)
   }
   delOverlay.value[index] = false
 }

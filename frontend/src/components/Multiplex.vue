@@ -85,6 +85,7 @@ export default {
   },
   computed: {
     mux(): oMultiplex {
+      if (!Object.hasOwn(this.$props.data,"multiplex")) this.$props.data.multiplex = {}
       return <oMultiplex> this.$props.data.multiplex
     },
     muxEnable: {

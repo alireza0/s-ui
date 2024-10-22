@@ -50,6 +50,7 @@
             </v-window-item>
             <v-window-item value="c">
               <OutJsonVue :inData="inData" :type="inbound.type" />
+              <Multiplex v-if="Object.hasOwn(inbound,'multiplex')" direction="out" :data="inData.outJson" />
               <v-card>
                 <v-card-subtitle>{{ $t('in.multiDomain') }}
                   <v-icon @click="add_addr" icon="mdi-plus"></v-icon>
@@ -169,6 +170,7 @@ export default {
       const prevConfig = { tag: tag ,listen: this.inbound.listen, listen_port: this.inbound.listen_port }
       this.inbound = createInbound(this.inbound.type, prevConfig)
       if (this.HasInData.includes(this.inbound.type)){
+        if (this.inData.id == -1) this.inData.id = 0
         this.inData.outJson = {}
         this.inData.tag = tag
       } else {
