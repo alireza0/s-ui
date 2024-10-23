@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 	"s-ui/database/model"
 
-	sessions "github.com/Calidity/gin-sessions"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,17 +16,26 @@ func init() {
 	gob.Register(model.User{})
 }
 
-func SetLoginUser(c *gin.Context, userName string) error {
+func SetLoginUser(c *gin.Context, userName string, maxAge int) error {
+	options := sessions.Options{
+		Path:   "/",
+		Secure: false,
+	}
+	if maxAge > 0 {
+		options.MaxAge = maxAge * 60
+	}
+
 	s := sessions.Default(c)
 	s.Set(loginUser, userName)
+	s.Options(options)
+
 	return s.Save()
 }
 
-func SetMaxAge(c *gin.Context, maxAge int) error {
+func SetMaxAge(c *gin.Context) error {
 	s := sessions.Default(c)
 	s.Options(sessions.Options{
-		Path:   "/",
-		MaxAge: maxAge,
+		Path: "/",
 	})
 	return s.Save()
 }

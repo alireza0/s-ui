@@ -23,7 +23,7 @@
 | Multi-Client/Inbound                   | :heavy_check_mark: |
 | Advanced Traffic Routing Interface     | :heavy_check_mark: |
 | Client & Traffic & System Status       | :heavy_check_mark: |
-| Subscription Service (link + info)     | :heavy_check_mark: |
+| Subscription Service (link/json + info)| :heavy_check_mark: |
 | Dark/Light Theme                       | :heavy_check_mark: |
 
 
@@ -80,7 +80,7 @@ curl -fsSL https://get.docker.com | sh
 
 ```shell
 mkdir s-ui && cd s-ui
-wget -q https://raw.githubusercontent.com/alireza0/s-ui/main/docker-compose.yml
+wget -q https://raw.githubusercontent.com/alireza0/s-ui/refs/tags/1.0.0/docker-compose.yml
 docker compose up -d
 ```
 
@@ -104,6 +104,56 @@ docker build -t s-ui .
 
 </details>
 
+## Manual run + contribution
+
+<details>
+   <summary>Click for details</summary>
+
+### Build and run whole project
+```shell
+./runSUI.sh
+```
+
+### - Frontend
+
+Frontend codes are in `frontend` folder in the root of repository.
+
+To run it localy for instant developement you can use (apply automatic changes on file save):
+```shell
+cd frontend
+npm run dev
+```
+> By this command it will run a `vite` web server on separate port `3000`, with backend proxy to `http://localhost:2095`. You can change it in `frontend/vite.config.mts`.
+
+To build fronend:
+```shell
+cd frontend
+npm run build
+```
+
+### - Backend
+Backend codes are in `backend` folder in the root of repository.
+> Please build fronend once before!
+
+To build backend:
+```shell
+cd backend
+
+# remove old frontend compiled files
+rm -fr web/html/*
+# apply new frontend compiled files
+cp -R ../frontend/dist/ web/html/
+# build
+go build -o ../sui main.go
+```
+
+To run backend (from root folder of repository):
+```shell
+./sui
+```
+
+</details>
+
 ## Languages
 
 - English
@@ -111,6 +161,7 @@ docker build -t s-ui .
 - Vietnamese
 - Chinese (Simplified)
 - Chinese (Traditional)
+- Russian
 
 ## Features
 
@@ -129,10 +180,18 @@ docker build -t s-ui .
 
 ## Recommended OS
 
+- Ubuntu 20.04+
+- Debian 11+
 - CentOS 8+
-- Ubuntu 20+
-- Debian 10+
 - Fedora 36+
+- Arch Linux
+- Parch Linux
+- Manjaro
+- Armbian
+- AlmaLinux 9+
+- Rocky Linux 9+
+- Oracle Linux 8+
+- OpenSUSE Tubleweed
 
 ## Environment Variables
 
@@ -169,4 +228,4 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 </details>
 
 ## Stargazers over Time
-[![Stargazers over time](https://starchart.cc/alireza0/s-ui.svg?variant=adaptive)](https://starchart.cc/alireza0/s-ui)
+[![Stargazers over time](https://starchart.cc/alireza0/s-ui.svg)](https://starchart.cc/alireza0/s-ui)

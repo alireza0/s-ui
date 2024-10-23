@@ -8,6 +8,21 @@ type Setting struct {
 	Value string `json:"value" form:"value"`
 }
 
+type Tls struct {
+	Id       uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Name     string          `json:"name" form:"name"`
+	Inbounds json.RawMessage `json:"inbounds" form:"inbounds"`
+	Server   json.RawMessage `json:"server" form:"server"`
+	Client   json.RawMessage `json:"client" form:"client"`
+}
+
+type InboundData struct {
+	Id      uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Tag     string          `json:"tag" form:"tag"`
+	Addrs   json.RawMessage `json:"addrs" form:"addrs"`
+	OutJson json.RawMessage `json:"outJson" form:"outJson"`
+}
+
 type User struct {
 	Id         uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
 	Username   string `json:"username" form:"username"`
@@ -16,17 +31,18 @@ type User struct {
 }
 
 type Client struct {
-	Id       uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
-	Enable   bool   `json:"enable" form:"enable"`
-	Name     string `json:"name" form:"name"`
-	Config   string `json:"config" form:"config"`
-	Inbounds string `json:"inbounds" form:"inbounds"`
-	Links    string `json:"links" form:"links"`
-	Volume   int64  `json:"volume" form:"volume"`
-	Expiry   int64  `json:"expiry" form:"expiry"`
-	Down     int64  `json:"down" form:"down"`
-	Up       int64  `json:"up" form:"up"`
-	Desc     string `json:"desc" from:"desc"`
+	Id       uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Enable   bool            `json:"enable" form:"enable"`
+	Name     string          `json:"name" form:"name"`
+	Config   json.RawMessage `json:"config" form:"config"`
+	Inbounds json.RawMessage `json:"inbounds" form:"inbounds"`
+	Links    json.RawMessage `json:"links" form:"links"`
+	Volume   int64           `json:"volume" form:"volume"`
+	Expiry   int64           `json:"expiry" form:"expiry"`
+	Down     int64           `json:"down" form:"down"`
+	Up       int64           `json:"up" form:"up"`
+	Desc     string          `json:"desc" form:"desc"`
+	Group    string          `json:"group" form:"group"`
 }
 
 type Stats struct {

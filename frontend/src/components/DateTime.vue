@@ -42,6 +42,7 @@
 <script lang="ts">
 import DatePicker from 'vue3-persian-datetime-picker'
 import { i18n } from '@/locales'
+import 'moment/locale/vi'
 import 'moment/locale/zh-cn'
 import 'moment/locale/zh-tw'
 
@@ -58,7 +59,14 @@ export default {
   computed: {
     locale() {
       const l = i18n.global.locale.value
-      return l.replace('zh', 'zh-')
+      switch (l) {
+        case "zhHans":
+          return "zh-cn"
+        case "zhHant":
+          return "zh-tw"
+        default:
+          return l
+      }
     },
     dateFormatted() {
       if (this.expDate == 0) return i18n.global.t('unlimited')

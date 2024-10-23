@@ -10,6 +10,7 @@ import (
 
 	statsService "github.com/v2fly/v2ray-core/v5/app/stats/command"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type V2rayAPI struct {
@@ -22,7 +23,7 @@ func (v *V2rayAPI) Init(ApiAddr string) (err error) {
 	if len(ApiAddr) == 0 {
 		return common.NewError("The api address is wrong: ", ApiAddr)
 	}
-	v.grpcClient, err = grpc.Dial(ApiAddr, grpc.WithInsecure())
+	v.grpcClient, err = grpc.NewClient(ApiAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}

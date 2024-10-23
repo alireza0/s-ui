@@ -35,14 +35,14 @@ const RandomUtil = {
     return btoa(String.fromCharCode(...array))
   },
   randomShortId(): string[] {
-    let shortIds = ['','','','']
-    for (var ii = 0; ii < 4; ii++) {
-        for (var jj = 0; jj < this.randomInt(8); jj++){
-            let randomNum = this.randomInt(256)
-            shortIds[ii] += ('0' + randomNum.toString(16)).slice(-2)
-        }
-    }
-    return shortIds
+    let shortIds = new Array(24).fill('')
+    for (var ii = 1; ii < 24; ii++) {
+      for (var jj = 0; jj <= this.randomInt(7); jj++){
+          let randomNum = this.randomInt(256)
+          shortIds[ii] += ('0' + randomNum.toString(16)).slice(-2)
+      }
+  }
+  return shortIds
   }
 }
 

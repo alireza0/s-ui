@@ -15,17 +15,20 @@
       </v-text-field>
     </v-col>
     <v-col cols="12" sm="6" md="4">
-      <v-text-field
-      label="Method"
+      <v-select
+      :label="$t('transport.httpMethod')"
       hide-details
+      clearable
+      @click:clear="delete transport.method"
+      :items="methodList"
       v-model="transport.method">
-      </v-text-field>
+      </v-select>
     </v-col>
   </v-row>
   <v-row>
     <v-col cols="12" sm="6" md="4">
       <v-text-field
-      label="Idle Timeout"
+      :label="$t('transport.idleTimeout')"
       hide-details
       type="number"
       suffix="s"
@@ -35,7 +38,7 @@
     </v-col>
     <v-col cols="12" sm="6" md="4">
       <v-text-field
-      label="Ping Timeout"
+      :label="$t('transport.pingTimeout')"
       hide-details
       type="number"
       suffix="s"
@@ -44,14 +47,17 @@
       </v-text-field>
     </v-col>
   </v-row>
+  <Headers :data="transport" />
 </template>
 
 <script lang="ts">
 import { HTTP } from '../../types/transport'
+import Headers from '../Headers.vue'
 export default {
   props: ['transport'],
   data() {
     return {
+      methodList: ['POST', 'GET', 'PUT', 'PATCH', 'DELETE']
     }
   },
   computed: {
@@ -70,6 +76,7 @@ export default {
       get() { return this.Http.ping_timeout ? parseInt(this.Http.ping_timeout.replace('s','')) : '' },
       set(newValue:number) { this.$props.transport.ping_timeout = newValue ? newValue + 's' : '' }
     }
-  }
+  },
+  components: { Headers }
 }
 </script>

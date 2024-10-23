@@ -2,7 +2,7 @@
   <v-row>
     <v-col cols="12" sm="6" md="4">
       <v-text-field
-      label="Service Name"
+      :label="$t('transport.grpcServiceName')"
       hide-details
       v-model="transport.service_name">
       </v-text-field>
@@ -11,7 +11,7 @@
       <v-switch
         color="primary"
         v-model="transport.permit_without_stream"
-        label="Permit Without Stream"
+        :label="$t('transport.grpcPws')"
         hide-details>
       </v-switch>
     </v-col>
@@ -19,7 +19,7 @@
   <v-row>
     <v-col cols="12" sm="6" md="4">
       <v-text-field
-      label="Idle Timeout"
+      :label="$t('transport.idleTimeout')"
       hide-details
       type="number"
       suffix="s"
@@ -29,7 +29,7 @@
     </v-col>
     <v-col cols="12" sm="6" md="4">
       <v-text-field
-      label="Ping Timeout"
+      :label="$t('transport.pingTimeout')"
       hide-details
       type="number"
       suffix="s"

@@ -22,4 +22,5 @@ func (s *DelStatsJob) Run() {
 		logger.Warning("Deleting old statistics failed: ", err)
 		return
 	}
+	logger.Debug("Stats older than ", s.trafficAge, " days were deleted")
 }

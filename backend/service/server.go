@@ -1,10 +1,13 @@
 package service
 
 import (
+	"bytes"
 	"os"
+	"os/exec"
 	"runtime"
 	"s-ui/config"
 	"s-ui/logger"
+	"strconv"
 	"strings"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -134,4 +137,51 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 	info["ipv6"] = ipv6
 
 	return info
+}
+
+func (s *ServerService) GetLogs(service string, count string, level string) []string {
+	c, _ := strconv.Atoi(count)
+
+	if service == "s-ui" {
+		return logger.GetLogs(c, level)
+	}
+	ppid := os.Getppid()
+	var lines []string
+	var cmdArgs []string
+	if ppid > 1 {
+		cmdArgs = []string{"journalctl", "-u", service, "--no-pager", "-n", count, "-p", level}
+	} else {
+		cmdArgs = []string{"tail", "/logs/" + service + ".log", "-n", count}
+	}
+	// Run the command
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return []string{"Failed to get logs!", err.Error()}
+	}
+	lines = strings.Split(out.String(), "\n")
+
+	return lines
+}
+
+func (s *ServerService) GenKeypair(keyType string, options string) []string {
+	if len(keyType) == 0 {
+		return []string{"No keypair to generate"}
+	}
+	sbExec := s.GetBinaryPath()
+	cmdArgs := []string{"generate", keyType + "-keypair"}
+	if keyType == "tls" || keyType == "ech" {
+		cmdArgs = append(cmdArgs, options)
+	}
+	// Run the command
+	cmd := exec.Command(sbExec, cmdArgs...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return []string{"Failed to generate keypair"}
+	}
+	return strings.Split(out.String(), "\n")
 }

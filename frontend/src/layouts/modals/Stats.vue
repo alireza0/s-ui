@@ -3,8 +3,8 @@
     <v-card class="rounded-lg" :loading="loading" color="background">
       <v-card-title>
         <v-row>
-          <v-col>
-            {{ $t('stats.graphTitle') + " - " + $t('objects.' + resource) + " : " + tag }}
+          <v-col cols="auto">
+            {{ $t('stats.graphTitle') }}
           </v-col>
           <v-spacer></v-spacer>
           <v-col cols="auto"><v-icon icon="mdi-close" @click="$emit('close')"></v-icon></v-col>
@@ -12,7 +12,13 @@
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text style="padding: 0 16px;">
-        <v-container id="container">
+        <div style="text-align: center; margin: 5px;">
+          {{ $t('objects.' + resource) + " : " + tag }}
+        </div>
+        <v-radio-group v-model="limit" @change="loadData" density="compact" :loading="loading" inline hide-details>
+          <v-radio v-for="p in periods" :label="p.title" :value="p.value"></v-radio>
+        </v-radio-group>
+        <v-container id="container" style="height:40vh;">
           <v-alert :text="$t('noData')" type="warning" variant="outlined" v-if="alert"></v-alert>
           <Line v-if="loaded" :data="usage" :options="<any>options" />
         </v-container>
@@ -60,12 +66,28 @@ export default {
       loaded: false,
       alert: false,
       intervalId: <any>0,
+      limit: 1,
+      periods: [
+        { value: 1, title: i18n.global.n(1) + i18n.global.t('date.h')},
+        { value: 6, title: i18n.global.n(6) + i18n.global.t('date.h')},
+        { value: 12, title: i18n.global.n(12) + i18n.global.t('date.h')},
+        { value: 24, title: i18n.global.n(1) + i18n.global.t('date.d')},
+        { value: 48, title: i18n.global.n(2) + i18n.global.t('date.d')},
+        { value: 240, title: i18n.global.n(10) + i18n.global.t('date.d')},
+        { value: 480, title: i18n.global.n(20) + i18n.global.t('date.d')},
+        { value: 720, title: i18n.global.n(30) + i18n.global.t('date.d')},
+        { value: 1440, title: i18n.global.n(60) + i18n.global.t('date.d')},
+        { value: 2160, title: i18n.global.n(90) + i18n.global.t('date.d')},
+      ],
       options: {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
         interaction: {
           intersect: false,
           mode: 'index',
+        },
+        elements: {
+          point: { pointStyle: 'crossRot' }
         },
         plugins: {
           tooltip: {
@@ -99,13 +121,13 @@ export default {
     }
   },
   methods: {
-    async loadData(limit: number) {
+    async loadData() {
       this.loading = true
-      const data = await HttpUtils.get('api/stats', { resource: this.resource, tag: this.tag, limit: limit })
+      const data = await HttpUtils.get('api/stats', { resource: this.resource, tag: this.tag, limit: this.limit })
       if (data.success && data.obj) {
         const obj = <any[]>data.obj
         const l = String(i18n.global.locale) == 'fa' ? "fa-IR" : "en-US"
-        const oneStep = limit * 3600 * 1000 / 360 // Each 10 sec
+        const oneStep = this.limit * 3600 * 1000 / 360 // Each 10 sec
         const now = new Date().getTime()
         const steps = <number[]>[]
         for (let i = 360; i >= 0; i--) {
@@ -145,8 +167,10 @@ export default {
           ],
         }
         this.loaded = true
+        this.alert = false
       } else {
         this.alert = true
+        this.loaded = false
       }
       this.loading = false
     },
@@ -163,10 +187,10 @@ export default {
   watch: {
     visible(v) {
       if (v) {
-        const limit = 1
-        this.loadData(limit)
+        this.limit = 1
+        this.loadData()
         this.intervalId = setInterval(() => {
-          this.loadData(limit)
+          this.loadData()
         }, 10000)
       } else {
         this.loaded = false

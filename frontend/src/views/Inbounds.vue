@@ -2,9 +2,13 @@
   <InboundVue 
     v-model="modal.visible"
     :visible="modal.visible"
-    :id="modal.id"
+    :index="modal.index"
     :stats="modal.stats"
     :data="modal.data"
+    :cData="modal.cData"
+    :inTags="inTags"
+    :outTags="outTags"
+    :tlsConfigs="tlsConfigs"
     @close="closeModal"
     @save="saveModal"
   />
@@ -23,7 +27,7 @@
   <v-row>
     <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>inbounds" :key="item.tag">
       <v-card rounded="xl" elevation="5" min-width="200" :title="item.tag">
-        <v-card-subtitle>
+        <v-card-subtitle style="margin-top: -20px;">
           <v-row>
             <v-col>{{ item.type }}</v-col>
           </v-row>
@@ -42,7 +46,7 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col>{{ $t('in.tls') }}</v-col>
+            <v-col>{{ $t('objects.tls') }}</v-col>
             <v-col dir="ltr">
               {{ Object.hasOwn(item,'tls') ? $t(item.tls?.enabled ? 'enable' : 'disable') : '-'  }}
             </v-col>
@@ -90,7 +94,10 @@
               </v-card-actions>
             </v-card>
           </v-overlay>
-          <v-btn icon="mdi-chart-line" @click="showStats(item.tag)" />
+          <v-btn icon="mdi-chart-line" @click="showStats(item.tag)" v-if="v2rayStats.inbounds.includes(item.tag)">
+            <v-icon />
+            <v-tooltip activator="parent" location="top" :text="$t('stats.graphTitle')"></v-tooltip>
+          </v-btn>
         </v-card-actions>
       </v-card>      
     </v-col>
@@ -106,6 +113,9 @@ import { computed, ref } from 'vue'
 import { InTypes, Inbound, InboundWithUser, ShadowTLS, VLESS } from '@/types/inbounds'
 import { Client } from '@/types/clients'
 import { Link, LinkUtil } from '@/plugins/link'
+import { i18n } from '@/locales'
+import { push } from 'notivue'
+import { fillData } from '@/plugins/outJson'
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
@@ -113,6 +123,22 @@ const appConfig = computed((): Config => {
 
 const inbounds = computed((): Inbound[] => {
   return <Inbound[]> appConfig.value.inbounds
+})
+
+const tlsConfigs = computed((): any[] => {
+  return <any[]> Data().tlsConfigs
+})
+
+const inData = computed((): any[] => {
+  return <any[]> Data().inData
+})
+
+const inTags = computed((): string[] => {
+  return inbounds.value?.map(i => i.tag)
+})
+
+const outTags = computed((): string[] => {
+  return appConfig.value.outbounds?.map(i => i.tag)
 })
 
 const clients = computed((): Client[] => {
@@ -124,37 +150,68 @@ const onlines = computed(() => {
 })
 
 const v2rayStats = computed((): V2rayApiStats => {
-  return <V2rayApiStats> appConfig.value.experimental.v2ray_api.stats
+  return <V2rayApiStats> appConfig.value.experimental?.v2ray_api.stats
 })
 
 const modal = ref({
   visible: false,
-  id: -1,
+  index: -1,
   data: "",
+  cData: "",
   stats: false,
 })
 
 let delOverlay = ref(new Array<boolean>)
 
-const showModal = (id: number) => {
-  modal.value.id = id
-  modal.value.data = id == -1 ? '' : JSON.stringify(inbounds.value[id])
-  modal.value.stats = id == -1 ? false : v2rayStats.value.inbounds.includes(inbounds.value[id].tag)
+const showModal = (index: number) => {
+  modal.value.index = index
+  if (index == -1){
+    modal.value.data = ''
+    modal.value.cData = ''
+    modal.value.stats = false
+  } else {
+    modal.value.data = JSON.stringify(inbounds.value[index])
+    modal.value.stats = v2rayStats.value.inbounds.includes(inbounds.value[index].tag)
+    const inDataIndex = inData.value.findIndex(d => d.tag == inbounds.value[index].tag)
+    modal.value.cData = inDataIndex == -1 ? '' : JSON.stringify(inData.value[inDataIndex])
+  }
   modal.value.visible = true
 }
 const closeModal = () => {
   modal.value.visible = false
 }
-const saveModal = (data:Inbound, stats: boolean) => {
+const saveModal = (data:Inbound, stats: boolean, tls_id: number, cData: any) => {
+  // Check duplicate tag
+  const oldTag = modal.value.index != -1 ? inbounds.value[modal.value.index].tag : null
+  if (data.tag != oldTag && inTags.value.includes(data.tag)) {
+    push.error({
+      message: i18n.global.t('error.dplData') + ": " + i18n.global.t('objects.tag')
+    })
+    return
+  }
+  if (cData.id != -1) {
+    cData.tag = data.tag
+    fillData(cData.outJson, data,tls_id>0 ? tlsConfigs.value.findLast(t => t.id == tls_id).client : {})
+  }
+
   // New or Edit
-  if (modal.value.id == -1) {
+  if (modal.value.index == -1) {
     inbounds.value.push(data)
     if (stats && data.tag.length>0) {
       v2rayStats.value.inbounds.push(data.tag)
     }
+    if (cData.id != -1){
+      inData.value.push(cData)
+    }
   } else {
-    const oldTag = inbounds.value[modal.value.id].tag
+    const oldTag = inbounds.value[modal.value.index].tag
     const sIndex = v2rayStats.value.inbounds.findIndex(i => i == data.tag) // Find if new tag exists
+
+    // Update tls preset
+    const oldTlsConfigIndex = tlsConfigs?.value.findIndex(t => t.inbounds?.includes(oldTag))
+    if (oldTlsConfigIndex != -1){
+      tlsConfigs.value[oldTlsConfigIndex].inbounds = tlsConfigs?.value[oldTlsConfigIndex].inbounds.filter((i:string) => i != oldTag)
+    }
 
     if (oldTag != data.tag) {
       v2rayStats.value.inbounds = v2rayStats.value.inbounds.filter(item => item != oldTag)
@@ -169,32 +226,54 @@ const saveModal = (data:Inbound, stats: boolean) => {
       if (sIndex != -1) v2rayStats.value.inbounds.splice(sIndex,1)
     }
 
-    inbounds.value[modal.value.id] = data
+    inbounds.value[modal.value.index] = data
+    const inDataIndex = inData.value.findIndex(indata => indata.tag == oldTag)
+    if (cData.id != -1) {
+      if (inDataIndex == -1){
+        inData.value.push(cData)
+      } else {
+        inData.value[inDataIndex] = cData
+      }
+    } else if (inDataIndex != -1) {
+      Data().delInData(inData.value[inDataIndex].id)
+      inData.value.splice(inDataIndex,1)
+    }
   }
-  // Set users
-  data = buildInboundsUsers(data)
-  // Update links
-  if (Object.hasOwn(data,'users')) updateLinks(data)
+  // Update tls preset
+  if (tls_id>0) {
+    tlsConfigs.value.findLast(t => t.id == tls_id).inbounds.push(data.tag)
+    tlsConfigs.value.sort()
+  }
+
+  if (Object.hasOwn(data,'users')) {
+    // Set users
+    data = buildInboundsUsers(data)
+    // Update links
+    updateLinks(data)
+  }
   modal.value.visible = false
 }
-const updateLinks = (i: InboundWithUser) => {
-  if(i.users && i.users.length>0){
-    i.users.forEach((u:any) => {
-      const client = clients.value.find(c => u.username? c.name == u.username : c.name == u.name)
-      if (client){
-        const clientInbounds = <Inbound[]>inbounds.value.filter(i => client?.inbounds.split(',').includes(i.tag))
-        const newLinks = <Link[]>[]
-        clientInbounds.forEach(i =>{
-          const uri = LinkUtil.linkGenerator(client.name,i)
-          if (uri.length>0){
+const updateLinks = (i: any) => {
+  if(i.users){
+    const uClients = clients.value.filter(c => c.inbounds.includes(i.tag))
+    uClients.forEach((u:Client) => {
+      const clientInbounds = <Inbound[]>inbounds.value.filter(inb => u.inbounds.includes(inb.tag))
+      const newLinks = <Link[]>[]
+      clientInbounds.forEach(i =>{
+        const tlsClient = tlsConfigs?.value.findLast((t:any) => t.inbounds.includes(i.tag))?.client?? {}
+        const cData = <any>Data().inData?.findLast((d:any) => d.tag == i.tag)
+        const addrs = cData ? <any[]>cData.addrs : []
+        const uris = LinkUtil.linkGenerator(u,i, tlsClient, addrs)
+        if (uris.length>0){
+          uris.forEach(uri => {
             newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
-          }
-        })
-        let links = client.links && client.links.length>0? <Link[]>JSON.parse(client.links) : <Link[]>[]
-        links = [...newLinks, ...links.filter(l => l.type != 'local')]
+          })
+        }
+      })
+      let links = u.links && u.links.length>0? u.links : <Link[]>[]
+      links = [...newLinks, ...links.filter(l => l.type != 'local')]
 
-        client.links = JSON.stringify(links)
-      }
+      u.links = links
     })
   }
 }
@@ -203,19 +282,26 @@ const delInbound = (index: number) => {
   inbounds.value.splice(index,1)
   const tag = inb.tag
 
-  if (Object.hasOwn(inb,'users')){
+  if (Object.hasOwn(inb,'users')) {
     const inbU = <InboundWithUser>inb
     if (inbU.users && inbU.users.length>0){
       inbU.users.forEach((u:any) => {
-        const c_index = clients.value.findIndex(c => u.username? u.username == c.name : u.user == c.name)
+        const c_index = clients.value.findIndex(c => u.username? u.username == c.name : u.name == c.name)
         if (c_index != -1) {
-          const clientInbounds = clients.value[c_index].inbounds.split(',').filter((x:string) => x!=tag)
-          clients.value[c_index].inbounds = clientInbounds.join(',')
+          clients.value[c_index].inbounds = clients.value[c_index].inbounds.filter((x:string) => x!=tag)
+          clients.value[c_index].links = clients.value[c_index].links.filter((x:any) => x.remark!=tag)
         }
       })
     }
   }
 
+  // Delete binded tls if exists
+  if (Object.hasOwn(inb,'tls')) {
+    const oldTlsConfigIndex = tlsConfigs?.value.findIndex(t => t.inbounds?.includes(inb.tag))
+    if (oldTlsConfigIndex != -1){
+      tlsConfigs.value[oldTlsConfigIndex].inbounds = tlsConfigs?.value[oldTlsConfigIndex].inbounds.filter((i:string) => i != inb.tag)
+    }
+  }
 
   // Delete stats if exists and will be orphaned
   const tagCounts = inbounds.value.filter(i => i.tag == inb.tag).length
@@ -225,20 +311,23 @@ const delInbound = (index: number) => {
   }
   if (index < Data().oldData.config.inbounds.length){
     Data().delInbound(index)
+  } else {
+    // Delete new inbound's inData if exists
+    const inDataIndex = Data().inData.findIndex((d:any) => d.tag == tag)
+    if (inDataIndex != -1) Data().inData.splice(inDataIndex, 1)
   }
   delOverlay.value[index] = false
 }
-const buildInboundsUsers = (inbound:InboundWithUser):Inbound => {
+const buildInboundsUsers = (inbound:any):Inbound => {
     const users = <any>[]
-    const inboundClients = clients.value.filter(c => c.enable && c.inbounds.split(',').includes(inbound.tag))
+    const inboundClients = clients.value.filter(c => c.enable && c.inbounds.includes(inbound.tag))
     inboundClients.forEach(c => {
-      const clientConfig = JSON.parse(c.config)
       // Remove flow in non tls VLESS
       if (inbound.type == InTypes.VLESS) {
         const vlessInbound = <VLESS>inbound
-        if (!vlessInbound.tls?.enabled || vlessInbound.transport?.type) delete(clientConfig["vless"].flow)
+        if (!vlessInbound.tls?.enabled || vlessInbound.transport?.type) delete(c.config?.vless?.flow)
       }
-      users.push(clientConfig[inbound.type])
+      users.push(c.config[inbound.type])
     })
     inbound.users = users
 
@@ -258,11 +347,10 @@ const buildInboundsUsers = (inbound:InboundWithUser):Inbound => {
 }
 const changeClientInboundsTag = (oldtag: string, newTag:string) => {
   clients.value.forEach((c, c_index) => {
-    const inboundsArray = c.inbounds.split(',')
-    const inbound_index = inboundsArray.findIndex(i => i == oldtag)
+    const inbound_index = c.inbounds.findIndex(i => i == oldtag)
     if (inbound_index != -1) {
-      inboundsArray[inbound_index] = newTag
-      clients.value[c_index].inbounds = inboundsArray.join(',')
+      c.inbounds[inbound_index] = newTag
+      clients.value[c_index].inbounds = c.inbounds
     }
   })
 }

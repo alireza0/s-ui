@@ -15,14 +15,17 @@
       </v-text-field>
     </v-col>
   </v-row>
+  <Headers :data="transport" />
 </template>
 
 <script lang="ts">
+import Headers from '../Headers.vue';
 export default {
   props: ['transport'],
   data() {
     return {
     }
-  }
+  },
+  components: { Headers }
 }
 </script>

@@ -18,7 +18,7 @@ var defaultValueMap = map[string]string{
 	"webListen":     "",
 	"webDomain":     "",
 	"webPort":       "2095",
-	"webSecret":     common.Random(32),
+	"secret":        common.Random(32),
 	"webCertFile":   "",
 	"webKeyFile":    "",
 	"webPath":       "/app/",
@@ -36,6 +36,7 @@ var defaultValueMap = map[string]string{
 	"subEncode":     "true",
 	"subShowInfo":   "false",
 	"subURI":        "",
+	"subJsonExt":    "",
 }
 
 type SettingService struct {
@@ -65,7 +66,7 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 	}
 
 	// Due to security principles
-	delete(allSetting, "webSecret")
+	delete(allSetting, "secret")
 
 	return &allSetting, nil
 }
@@ -127,9 +128,9 @@ func (s *SettingService) getBool(key string) (bool, error) {
 	return strconv.ParseBool(str)
 }
 
-func (s *SettingService) setBool(key string, value bool) error {
-	return s.setString(key, strconv.FormatBool(value))
-}
+// func (s *SettingService) setBool(key string, value bool) error {
+// 	return s.setString(key, strconv.FormatBool(value))
+// }
 
 func (s *SettingService) getInt(key string) (int, error) {
 	str, err := s.getString(key)
@@ -191,11 +192,11 @@ func (s *SettingService) SetWebPath(webPath string) error {
 }
 
 func (s *SettingService) GetSecret() ([]byte, error) {
-	secret, err := s.getString("webSecret")
-	if secret == defaultValueMap["webSecret"] {
-		err := s.saveSetting("webSecret", secret)
+	secret, err := s.getString("secret")
+	if secret == defaultValueMap["secret"] {
+		err := s.saveSetting("secret", secret)
 		if err != nil {
-			logger.Warning("save webSecret failed:", err)
+			logger.Warning("save secret failed:", err)
 		}
 	}
 	return []byte(secret), err
@@ -318,10 +319,10 @@ func (s *SettingService) Save(tx *gorm.DB, changes []model.Changes) error {
 		json.Unmarshal(change.Obj, &obj)
 
 		// Secure file existance check
-		if key == "webCertFile" ||
+		if obj != "" && (key == "webCertFile" ||
 			key == "webKeyFile" ||
 			key == "subCertFile" ||
-			key == "subKeyFile" {
+			key == "subKeyFile") {
 			err = s.fileExists(obj)
 			if err != nil {
 				return common.NewError(" -> ", obj, " is not exists")
@@ -345,6 +346,10 @@ func (s *SettingService) Save(tx *gorm.DB, changes []model.Changes) error {
 		}
 	}
 	return err
+}
+
+func (s *SettingService) GetSubJsonExt() (string, error) {
+	return s.getString("subJsonExt")
 }
 
 func (s *SettingService) fileExists(path string) error {

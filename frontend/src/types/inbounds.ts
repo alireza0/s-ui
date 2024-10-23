@@ -1,4 +1,4 @@
-import { iMultiplex } from "./inMultiplex"
+import { iMultiplex } from "./multiplex"
 import { iTls } from "./inTls"
 import { Dial } from "./outbounds"
 import { Transport } from "./transport"
@@ -119,10 +119,7 @@ export interface Naive extends InboundBasics {
 export interface Hysteria extends InboundBasics {
   up_mbps: number
   down_mbps: number
-  obfs?: {
-    type?: "salamander"
-    password?: string
-  }
+  obfs?: string
   users: NameAuth[]
   recv_window_conn?: number
   recv_window_client?: number

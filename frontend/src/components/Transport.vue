@@ -1,5 +1,5 @@
 <template>
-    <v-card :subtitle="$t('in.transport')">
+    <v-card :subtitle="$t('objects.transport')">
     <v-row>
       <v-col cols="12" sm="6" md="4">
         <v-switch color="primary" :label="$t('transport.enable')" v-model="tpEnable" hide-details></v-switch>
@@ -7,7 +7,6 @@
       <v-col cols="12" sm="6" md="4" v-if="tpEnable">
         <v-select
           hide-details
-          width="100"
           :label="$t('type')"
           :items="Object.keys(trspTypes).map((key,index) => ({title: key, value: Object.values(trspTypes)[index]}))"
           v-model="transportType">
@@ -28,7 +27,7 @@ import WebSocket from './transports/WebSocket.vue'
 import GRPC from './transports/gRPC.vue'
 import HttpUpgrade from './transports/HttpUpgrade.vue'
 export default {
-  props: ['inbound'],
+  props: ['data'],
   data() {
     return {
       trspTypes: TrspTypes
@@ -36,15 +35,15 @@ export default {
   },
   computed: {
     Transport() {
-      return <Transport>this.$props.inbound.transport
+      return <Transport>this.$props.data.transport
     },
     tpEnable: {
-      get() { return Object.hasOwn(this.$props.inbound.transport, 'type') },
-      set(newValue: boolean) { this.$props.inbound.transport = newValue ? { type: 'http' } : {} }
+      get() { return Object.hasOwn(this.$props.data.transport, 'type') },
+      set(newValue: boolean) { this.$props.data.transport = newValue ? { type: 'http' } : {} }
     },
     transportType: {
       get() { return this.Transport.type },
-      set(newValue: string) { this.$props.inbound.transport = { type: newValue } }
+      set(newValue: string) { this.$props.data.transport = { type: newValue } }
     }
   },
   components: { Http, WebSocket, GRPC, HttpUpgrade }

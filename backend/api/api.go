@@ -1,9 +1,9 @@
 package api
 
 import (
-	"fmt"
 	"s-ui/logger"
 	"s-ui/service"
+	"s-ui/util"
 	"strconv"
 	"strings"
 
@@ -15,6 +15,8 @@ type APIHandler struct {
 	service.UserService
 	service.ConfigService
 	service.ClientService
+	service.TlsService
+	service.InDataService
 	service.PanelService
 	service.StatsService
 	service.ServerService
@@ -55,14 +57,7 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 			logger.Infof("Unable to get session's max age from DB")
 		}
 
-		if sessionMaxAge > 0 {
-			err = SetMaxAge(c, sessionMaxAge*60)
-			if err != nil {
-				logger.Infof("Unable to set session's max age")
-			}
-		}
-
-		err = SetLoginUser(c, loginUser)
+		err = SetLoginUser(c, loginUser, sessionMaxAge)
 		if err == nil {
 			logger.Info("user ", loginUser, " login success")
 		} else {
@@ -94,6 +89,10 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 	case "restartApp":
 		err = a.PanelService.RestartPanel(3)
 		jsonMsg(c, "restartApp", err)
+	case "linkConvert":
+		link := c.Request.FormValue("link")
+		result, _, err := util.GetOutbound(link, 0)
+		jsonObj(c, result, err)
 	default:
 		jsonMsg(c, "API call", nil)
 	}
@@ -151,19 +150,45 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 	case "onlines":
 		onlines, err := a.StatsService.GetOnlines()
 		jsonObj(c, onlines, err)
+	case "logs":
+		service := c.Query("s")
+		count := c.Query("c")
+		level := c.Query("l")
+		logs := a.ServerService.GetLogs(service, count, level)
+		jsonObj(c, logs, nil)
+	case "changes":
+		actor := c.Query("a")
+		chngKey := c.Query("k")
+		count := c.Query("c")
+		changes := a.ConfigService.GetChanges(actor, chngKey, count)
+		jsonObj(c, changes, nil)
+	case "keypairs":
+		kType := c.Query("k")
+		options := c.Query("o")
+		keypair := a.ServerService.GenKeypair(kType, options)
+		jsonObj(c, keypair, nil)
 	default:
 		jsonMsg(c, "API call", nil)
 	}
 }
 
-func (a *APIHandler) loadData(c *gin.Context) (string, error) {
-	var data string
+func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
+	data := make(map[string]interface{}, 0)
 	lu := c.Query("lu")
-	isUpdated, err := a.ConfigService.CheckChnages(lu)
+	isUpdated, err := a.ConfigService.CheckChanges(lu)
 	if err != nil {
 		return "", err
 	}
 	onlines, err := a.StatsService.GetOnlines()
+
+	sysInfo := a.ServerService.GetSingboxInfo()
+	if sysInfo["running"] == false {
+		logs := a.ServerService.GetLogs("sing-box", "1", "debug")
+		if len(logs) > 0 {
+			data["lastLog"] = logs[0]
+		}
+	}
+
 	if err != nil {
 		return "", err
 	}
@@ -176,13 +201,26 @@ func (a *APIHandler) loadData(c *gin.Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		tlsConfigs, err := a.TlsService.GetAll()
+		if err != nil {
+			return "", err
+		}
+		inData, err := a.InDataService.GetAll()
+		if err != nil {
+			return "", err
+		}
 		subURI, err := a.SettingService.GetFinalSubURI(strings.Split(c.Request.Host, ":")[0])
 		if err != nil {
 			return "", err
 		}
-		data = fmt.Sprintf(`{"config": %s,"clients": %s,"subURI": "%s", "onlines": %s}`, string(*config), clients, subURI, onlines)
+		data["config"] = *config
+		data["clients"] = clients
+		data["tls"] = tlsConfigs
+		data["inData"] = inData
+		data["subURI"] = subURI
+		data["onlines"] = onlines
 	} else {
-		data = fmt.Sprintf(`{"onlines": %s}`, onlines)
+		data["onlines"] = onlines
 	}
 
 	return data, nil

@@ -8,7 +8,8 @@
   >
     <v-tab value="t1">{{ $t('setting.interface') }}</v-tab>
     <v-tab value="t2">{{ $t('setting.sub') }}</v-tab>
-    <v-tab value="t3">Language</v-tab>
+    <v-tab value="t3">{{ $t('setting.jsonSub') }}</v-tab>
+    <v-tab value="t4">Language</v-tab>
   </v-tabs>
   <v-card-text>
     <v-row align="center" justify="center" style="margin-bottom: 10px;">
@@ -30,7 +31,7 @@
             <v-text-field v-model="settings.webListen" :label="$t('setting.addr')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field v-model="webPort" :label="$t('setting.port')" hide-details></v-text-field>
+            <v-text-field v-model.number="webPort" min="1" type="number" :label="$t('setting.port')" hide-details></v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-text-field v-model="settings.webPath" :label="$t('setting.webPath')" hide-details></v-text-field>
@@ -51,8 +52,9 @@
             <v-text-field
               type="number"
               v-model.number="sessionMaxAge"
+              min="0"
               :label="$t('setting.sessionAge')"
-              :suffix="$t('date.h')"
+              :suffix="$t('date.m')"
               hide-details
               ></v-text-field>
           </v-col>
@@ -60,6 +62,7 @@
             <v-text-field
               type="number"
               v-model.number="trafficAge"
+              min="0"
               :label="$t('setting.trafficAge')"
               :suffix="$t('date.d')"
               hide-details
@@ -87,7 +90,7 @@
           <v-col cols="12" sm="6" md="4">
             <v-text-field
               type="number"
-              v-model="subPort"
+              v-model.number="subPort"
               min="1"
               :label="$t('setting.port')"
               hide-details></v-text-field>
@@ -114,6 +117,7 @@
             <v-text-field
               type="number"
               v-model.number="subUpdates"
+              min="0"
               :label="$t('setting.update')"
               hide-details
               ></v-text-field>
@@ -125,6 +129,10 @@
       </v-window-item>
 
       <v-window-item value="t3">
+        <SubJsonExtVue :settings="settings" />
+      </v-window-item>
+
+      <v-window-item value="t4">
         <v-row>
           <v-col cols="12" sm="6" md="4">
             <v-select
@@ -143,11 +151,12 @@
 </template>
 
 <script lang="ts" setup>
-import { useLocale } from "vuetify"
+import { useLocale } from 'vuetify'
 import { languages } from '@/locales'
-import { Ref, computed, inject, onMounted, ref } from "vue"
-import HttpUtils from "@/plugins/httputil"
-import { FindDiff } from "@/plugins/utils"
+import { Ref, computed, inject, onMounted, ref } from 'vue'
+import HttpUtils from '@/plugins/httputil'
+import { FindDiff } from '@/plugins/utils'
+import SubJsonExtVue from '@/components/SubJsonExt.vue'
 const locale = useLocale()
 const tab = ref("t1")
 const loading:Ref = inject('loading')?? ref(false)
@@ -174,6 +183,7 @@ const settings = ref({
 	subEncode: "true",
 	subShowInfo: "false",
 	subURI: "",
+  subJsonExt: "",
 })
 
 onMounted(async () => {loadData()})
@@ -248,28 +258,28 @@ const subShowInfo = computed({
 })
 
 const webPort = computed({
-  get: () => { return parseInt(settings.value.webPort) },
-  set: (v:number) => { settings.value.webPort = v.toString() }
+  get: () => { return settings.value.webPort.length>0 ? parseInt(settings.value.webPort) : 2095 },
+  set: (v:number) => { settings.value.webPort = v>0 ? v.toString() : "2095" }
 })
 
 const sessionMaxAge = computed({
-  get: () => { return parseInt(settings.value.sessionMaxAge) },
-  set: (v:number) => { settings.value.sessionMaxAge = v.toString() }
+  get: () => { return settings.value.sessionMaxAge.length>0 ? parseInt(settings.value.sessionMaxAge) : 0 },
+  set: (v:number) => { settings.value.sessionMaxAge = v>0 ? v.toString() : "0" }
 })
 
 const trafficAge = computed({
-  get: () => { return parseInt(settings.value.trafficAge) },
-  set: (v:number) => { settings.value.trafficAge = v.toString() }
+  get: () => { return settings.value.trafficAge.length>0 ? parseInt(settings.value.trafficAge) : 0 },
+  set: (v:number) => { settings.value.trafficAge = v>0 ? v.toString() : "0" }
 })
 
 const subPort = computed({
-  get: () => { return parseInt(settings.value.subPort) },
-  set: (v:number) => { settings.value.subPort = v.toString() }
+  get: () => { return settings.value.subPort.length>0 ? parseInt(settings.value.subPort) : 2096 },
+  set: (v:number) => { settings.value.subPort = v>0 ? v.toString() : "2096" }
 })
 
 const subUpdates = computed({
-  get: () => { return parseInt(settings.value.subUpdates) },
-  set: (v:number) => { settings.value.subUpdates = v.toString() }
+  get: () => { return settings.value.subUpdates.length>0 ? parseInt(settings.value.subUpdates) : 12 },
+  set: (v:number) => { settings.value.subUpdates = v>0 ? v.toString() : "12" }
 })
 
 const stateChange = computed(() => {

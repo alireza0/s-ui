@@ -37,11 +37,11 @@ export const FindDiff = {
 
     return differences
   },
-  Clients(value1: any[], value2: any[]): any {
+  ArrObj(value1: any[], value2: any[], key: string): any {
     const differences: any[] = []
     value1.forEach((v1,index) => {
-      if(index >= value2.length) differences.push({key: "clients", action: "new", obj: v1})
-      else if(!this.deepCompare(v1,value2[index])) differences.push({key: "clients", action: "edit", obj: v1})
+      if(index >= value2.length) differences.push({key: key, action: "new", obj: v1})
+      else if(!this.deepCompare(v1,value2[index])) differences.push({key: key, action: "edit", obj: v1})
     })
     return differences
   },
@@ -76,8 +76,8 @@ export const FindDiff = {
   
     // Check if both objects are plain objects
     if (typeof obj1 === 'object' && typeof obj2 === 'object' && obj1 !== null && obj2 !== null) {
-      const keys1 = Object.keys(obj1)
-      const keys2 = Object.keys(obj2)
+      const keys1 = Object.keys(obj1).filter(key => obj1[key] !== undefined)
+      const keys2 = Object.keys(obj2).filter(key => obj2[key] !== undefined)
   
       if (keys1.length !== keys2.length) {
         return false

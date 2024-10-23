@@ -1,30 +1,33 @@
+import { Link } from "@/plugins/link"
 import RandomUtil from "@/plugins/randomUtil"
 
 export interface Client {
   id?: number
 	enable: boolean
 	name: string
-	config: string
-	inbounds: string
-  links: string
+	config: Config
+	inbounds: string[]
+  links: Link[]
 	volume: number
 	expiry: number
   up: number
   down: number
   desc: string
+  group: string
 }
 
 const defaultClient: Client = {
   enable: true,
   name: "",
-  config: "[]",
-  inbounds: "",
-  links: "[]",
+  config: {},
+  inbounds: [],
+  links: [],
   volume: 0,
   expiry: 0,
   up: 0,
   down: 0,
   desc: "",
+  group: "",
 }
 
 type Config = {
@@ -35,12 +38,11 @@ type Config = {
   }
 }
 
-export function updateConfigs(configs: string, newUserName: string): string {
-  const updatedConfigs: Config = JSON.parse(configs)
+export function updateConfigs(configs: Config, newUserName: string): Config {
 
-  for (const key in updatedConfigs) {
-    if (updatedConfigs.hasOwnProperty(key)) {
-      const config = updatedConfigs[key]
+  for (const key in configs) {
+    if (configs.hasOwnProperty(key)) {
+      const config = configs[key]
       if (config.hasOwnProperty("name")) {
         config.name = newUserName
       } else if (config.hasOwnProperty("username")) {
@@ -49,12 +51,13 @@ export function updateConfigs(configs: string, newUserName: string): string {
     }
   }
 
-  return JSON.stringify(updatedConfigs)
+  return configs
 }
 
 export function randomConfigs(user: string): Config {
   const mixedPassword = RandomUtil.randomSeq(10)
-  const ssPassword = RandomUtil.randomShadowsocksPassword(32)
+  const ssPassword16 = RandomUtil.randomShadowsocksPassword(16)
+  const ssPassword32 = RandomUtil.randomShadowsocksPassword(32)
   const uuid = RandomUtil.randomUUID()
   return {
     mixed: {
@@ -71,11 +74,15 @@ export function randomConfigs(user: string): Config {
     },
     shadowsocks: {
       name: user,
-      password: ssPassword,
+      password: ssPassword32,
+    },
+    shadowsocks16: {
+      name: user,
+      password: ssPassword16,
     },
     shadowtls: {
       name: user,
-      password: ssPassword,
+      password: ssPassword32,
     },
     vmess: {
       name: user,
@@ -112,6 +119,11 @@ export function randomConfigs(user: string): Config {
 }
 
 export function createClient<T extends Client>(json?: Partial<T>): Client {
+  defaultClient.name = RandomUtil.randomSeq(8)
   const defaultObject: Client = { ...defaultClient, ...(json || {}) }
+
+  // Add missing config
+  defaultObject.config = { ...randomConfigs(defaultObject.name), ...defaultObject.config }
+  
   return defaultObject
 }

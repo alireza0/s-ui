@@ -40,6 +40,11 @@ const routes = [
         component: () => import('@/views/Rules.vue'),
       },
       {
+        path: '/tls',
+        name: 'pages.tls',
+        component: () => import('@/views/Tls.vue'),
+      },
+      {
         path: '/basics',
         name: 'pages.basics',
         component: () => import('@/views/Basics.vue'),

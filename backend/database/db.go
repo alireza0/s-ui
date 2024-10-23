@@ -29,7 +29,7 @@ func initUser() error {
 	return nil
 }
 
-func InitDB(dbPath string) error {
+func OpenDB(dbPath string) error {
 	dir := path.Dir(dbPath)
 	err := os.MkdirAll(dir, 01740)
 	if err != nil {
@@ -48,12 +48,19 @@ func InitDB(dbPath string) error {
 		Logger: gormLogger,
 	}
 	db, err = gorm.Open(sqlite.Open(dbPath), c)
+	return err
+}
+
+func InitDB(dbPath string) error {
+	err := OpenDB(dbPath)
 	if err != nil {
 		return err
 	}
 
 	err = db.AutoMigrate(
 		&model.Setting{},
+		&model.Tls{},
+		&model.InboundData{},
 		&model.User{},
 		&model.Stats{},
 		&model.Client{},

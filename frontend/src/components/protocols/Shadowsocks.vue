@@ -4,16 +4,28 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           hide-details
-          label="Method"
+          :label="$t('in.ssMethod')"
           :items="ssMethods"
-          v-model="inbound.method">
+          @update:model-value="changeMethod($event)"
+          v-model="data.method">
         </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-text-field v-model="inbound.password" label="Password" hide-details></v-text-field>
+        <Network :data="data" />
       </v-col>
-      <v-col cols="12" sm="6" md="4">
-        <Network :inbound="inbound" />
+      <v-col cols="12" sm="6" md="4" v-if="direction == 'out'">
+        <UoT :data="data" />
+      </v-col>
+    </v-row>
+    <v-row v-if="data.method.startsWith('2022')">
+      <v-col cols="12" sm="8">
+        <v-text-field
+          v-model="data.password"
+          :label="$t('types.pw')"
+          hide-details
+          append-inner-icon="mdi-refresh"
+          @click:append-inner="changeMethod(data.method)">
+        </v-text-field>
       </v-col>
     </v-row>
   </v-card>
@@ -21,24 +33,35 @@
 
 <script lang="ts">
 import Network from '@/components/Network.vue'
+import UoT from '@/components/UoT.vue';
+import RandomUtil from '@/plugins/randomUtil';
 
 export default {
-    props: ['inbound'],
-    data() {
-        return {
-            ssMethods: [
-                "none",
-                "aes-128-gcm",
-                "aes-192-gcm",
-                "aes-256-gcm",
-                "chacha20-ietf-poly1305",
-                "xchacha20-ietf-poly1305",
-                "2022-blake3-aes-128-gcm",
-                "2022-blake3-aes-256-gcm",
-                "2022-blake3-chacha20-poly1305"
-            ]
-        }
-    },
-    components: { Network }
+  props: ['direction','data'],
+  data() {
+    return {
+      ssMethods: [
+        "none",
+        "aes-128-gcm",
+        "aes-192-gcm",
+        "aes-256-gcm",
+        "chacha20-ietf-poly1305",
+        "xchacha20-ietf-poly1305",
+        "2022-blake3-aes-128-gcm",
+        "2022-blake3-aes-256-gcm",
+        "2022-blake3-chacha20-poly1305"
+      ]
+    }
+  },
+  methods: {
+    changeMethod(ssMethod :string) {
+      if (ssMethod.startsWith('2022')) {
+        this.$props.data.password = ssMethod == "2022-blake3-aes-128-gcm" ? RandomUtil.randomShadowsocksPassword(16) : RandomUtil.randomShadowsocksPassword(32)
+      } else {
+        this.$props.data.password = ''
+      }
+    }
+  },
+  components: { Network, UoT }
 }
 </script>
