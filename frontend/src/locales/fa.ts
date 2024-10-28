@@ -308,7 +308,7 @@ export default {
     privateIp: "آدرس های IP نامعتبر",
     port: "پورت‌ها",
     portRange: "محدوده‌های پورت",
-    srcIp: "محدوده‌های آدرس IP مبدا",
+    srcCidr: "محدوده‌های آدرس IP مبدا",
     srcPrivateIp: "آدرس‌های IP مبدا نامعتبر",
     srcPort: "پورت‌های مبدا",
     srcPortRange: "محدوده پورتهای منبع",

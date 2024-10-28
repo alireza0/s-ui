@@ -116,7 +116,7 @@
       </v-col>
       <v-col cols="12" sm="6" v-if="rule.source_ip_cidr != undefined">
         <v-text-field
-        :label="$t('rule.srcIp') + ' ' + $t('commaSeparated')"
+        :label="$t('rule.srcCidr') + ' ' + $t('commaSeparated')"
         hide-details
         v-model="source_ip_cidr"></v-text-field>
       </v-col>
