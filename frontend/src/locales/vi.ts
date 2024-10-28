@@ -103,6 +103,7 @@ export default {
     disable: "Vô hiệu hóa",
     close: "Đóng",
     restartApp: "Khởi động lại ứng dụng",
+    restartSb: "Khởi động lại Singbox",
   },
   login: {
     title: "Đăng nhập",

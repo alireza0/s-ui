@@ -102,6 +102,7 @@ export default {
     disable: "غیرفعال",
     close: "بستن",
     restartApp: "ریستارت پنل",
+    restartSb: "ریستارت سینگ‌باکس",
   },
   login: {
     title: "ورود",

@@ -103,6 +103,7 @@ export default {
     disable: "Disable",
     close: "Close",
     restartApp: "Restart App",
+    restartSb: "Restart Singbox",
   },
   login: {
     title: "Login",

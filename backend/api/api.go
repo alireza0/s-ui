@@ -3,6 +3,7 @@ package api
 import (
 	"s-ui/logger"
 	"s-ui/service"
+	"s-ui/singbox"
 	"s-ui/util"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ type APIHandler struct {
 	service.PanelService
 	service.StatsService
 	service.ServerService
+	singbox.Controller
 }
 
 func NewAPIHandler(g *gin.RouterGroup) {
@@ -89,6 +91,9 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 	case "restartApp":
 		err = a.PanelService.RestartPanel(3)
 		jsonMsg(c, "restartApp", err)
+	case "restartSb":
+		err = a.Controller.Restart()
+		jsonMsg(c, "restartSb", err)
 	case "linkConvert":
 		link := c.Request.FormValue("link")
 		result, _, err := util.GetOutbound(link, 0)

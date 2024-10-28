@@ -104,6 +104,7 @@ export default {
     disable: "禁用",
     close: "關閉",
     restartApp: "重啟面板",
+    restartSb: "重啟 Singbox",
   },
   login: {
     title: "登錄",

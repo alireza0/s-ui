@@ -103,6 +103,7 @@ export default {
     disable: "禁用",
     close: "关闭",
     restartApp: "重启面板",
+    restartSb: "重启 Singbox",
   },
   login: {
     title: "登录",

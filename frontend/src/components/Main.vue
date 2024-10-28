@@ -5,7 +5,7 @@
   :logType="logModal.logType"
   @close="closeLogs"
   />
-  <v-container class="fill-height">
+  <v-container class="fill-height" :loading="loading">
     <v-responsive :class="reloadItems.length>0 ? 'fill-height text-center' : 'align-center'" >
       <v-row class="d-flex align-center justify-center">
         <v-col cols="auto">
@@ -116,6 +116,12 @@
                       </v-tooltip>
                       <v-icon icon="mdi-list-box-outline" :color="tilesData.sbd?.running ? 'success': 'error'" />
                     </v-chip>
+                    <v-chip density="compact" color="transparent" v-if="tilesData.sbd?.running && !loading" style="cursor: pointer;" @click="restartSingbox()">
+                      <v-tooltip activator="parent" location="top">
+                        {{ $t('actions.restartSb') }}
+                      </v-tooltip>
+                      <v-icon icon="mdi-restart" color="warning" />
+                    </v-chip>
                   </v-col>
                   <v-col cols="4">{{ $t('main.info.memory') }}</v-col>
                   <v-col cols="8">
@@ -168,6 +174,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { i18n } from '@/locales'
 import LogVue from '@/layouts/modals/Logs.vue'
 
+const loading = ref(false)
 const menu = ref(false)
 const menuItems = [
   { title: i18n.global.t('main.gauges'), value: [
@@ -248,5 +255,11 @@ const openLogs = (logType: string) => {
 const closeLogs = () => {
   logModal.value.logType = "s-ui"
   logModal.value.visible = false
+}
+
+const restartSingbox = async () => {
+  loading.value = true
+  await HttpUtils.post('api/restartSb',{})
+  loading.value = false
 }
 </script>

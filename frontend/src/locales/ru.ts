@@ -103,6 +103,7 @@ export default {
     disable: "Отключить",
     close: "Закрыть",
     restartApp: "Перезапустить приложение",
+    restartSb: "Перезапустить Singbox",
   },
   login: {
     title: "Вход",
