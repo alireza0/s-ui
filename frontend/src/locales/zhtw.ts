@@ -166,6 +166,11 @@ export default {
     external: "外部鏈接",
     sub: "外部訂閱",
   },
+  bulk: {
+    add: "批量添加",
+    order: "排序",
+    random: "隨機",
+  },
   types: {
     un: "用戶名",
     pw: "密碼",

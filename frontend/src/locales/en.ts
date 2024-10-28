@@ -165,6 +165,11 @@ export default {
     external: "External Link",
     sub: "External Subscription",
   },
+  bulk: {
+    add: "Add Bulk",
+    order: "Order",
+    random: "Random",
+  },
   types: {
     un: "Username",
     pw: "Password",

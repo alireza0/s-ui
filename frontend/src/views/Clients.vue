@@ -11,6 +11,14 @@
     @close="closeModal"
     @save="saveModal"
   />
+  <ClientBulk 
+    v-model="addBulkModal"
+    :visible="addBulkModal"
+    :groups="groups"
+    :inboundTags="inboundTags"
+    @close="closeBulk"
+    @save="saveBulk"
+  />
   <QrCode
     v-model="qrcode.visible"
     :visible="qrcode.visible"
@@ -29,10 +37,27 @@
       <v-btn color="primary" @click="showModal(-1)">{{ $t('actions.add') }}</v-btn>
     </v-col>
     <v-col cols="auto">
+      <v-menu v-model="actionMenu" :close-on-content-click="false" location="bottom center">
+        <template v-slot:activator="{ props }">
+          <v-btn v-bind="props" hide-details variant="text" icon>
+            <v-icon icon="mdi-tools" color="primary" />
+          </v-btn>
+        </template>
+        <v-list density="compact" nav>
+          <v-list-item link @click="addBulk">
+            <template v-slot:prepend>
+              <v-icon icon="mdi-account-multiple-plus"></v-icon>
+            </template>
+            <v-list-item-title v-text="$t('bulk.add')"></v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-col>
+    <v-col cols="auto">
       <v-menu v-model="filterMenu" :close-on-content-click="false" location="bottom center">
         <template v-slot:activator="{ props }">
-          <v-btn v-bind="props" hide-details variant="tonal">{{ $t('filter') }}
-            <v-badge color="error" dot v-if="filterSettings.enabled" floating />
+          <v-btn v-bind="props" hide-details variant="text" icon>
+            <v-icon :icon="filterSettings.enabled ? 'mdi-filter-check-outline' : 'mdi-filter-menu-outline'" :color="filterSettings.enabled ? 'primary' : ''" />
           </v-btn>
         </template>
         <v-card>
@@ -93,9 +118,9 @@
       </v-menu>
     </v-col>
     <v-col cols="auto">
-      <v-switch v-model="tableView" color="primary" hide-details>
-        <template v-slot:label><v-icon icon="mdi-table"></v-icon></template>
-      </v-switch>
+      <v-btn hide-details variant="text" icon @click="toggleClientView">
+      <v-icon :icon="tableView ? 'mdi-table-eye' : 'mdi-table-eye-off'" :color="tableView ? 'primary' : ''"></v-icon>
+      </v-btn>
     </v-col>
   </v-row>
   <template v-for="group in groups" v-if="!tableView">
@@ -319,6 +344,7 @@
 <script lang="ts" setup>
 import Data from '@/store/modules/data'
 import ClientModal from '@/layouts/modals/Client.vue'
+import ClientBulk from '@/layouts/modals/ClientBulk.vue'
 import QrCode from '@/layouts/modals/QrCode.vue'
 import Stats from '@/layouts/modals/Stats.vue'
 import { Client, createClient } from '@/types/clients'
@@ -364,6 +390,7 @@ const groups = computed((): string[] => {
   return Array.from(new Set(clients.value?.map(c => c.group)))
 })
 
+const actionMenu = ref(false)
 const filterMenu = ref(false)
 const filterSettings = ref({
   enabled: false,
@@ -372,7 +399,12 @@ const filterSettings = ref({
   text: '',
   filteredClients: <any[]>[]
 })
-const tableView = ref(false)
+const tableView = ref(localStorage.getItem('clientView') == 'table')
+
+const toggleClientView = () => {
+  localStorage.setItem('clientView',tableView.value ? 'tile' : 'table')
+  tableView.value = !tableView.value
+}
 
 const filterItems = [
   { title: i18n.global.t('none'), value: '' },
@@ -591,5 +623,27 @@ const clearFilter = () => {
     filteredClients: <any[]>[]
   }
   filterMenu.value = false
+}
+
+const addBulkModal = ref(false)
+
+const addBulk = () => {
+  addBulkModal.value = true
+  actionMenu.value = false
+}
+
+const closeBulk = () => {
+  addBulkModal.value = false
+}
+
+const saveBulk = (bulkClients: Client[], clientInbounds: string[], clientStats: boolean) => {
+  bulkClients.forEach((c,c_index) => {
+    bulkClients[c_index].links = updateLinks(c)
+  })
+  clients.value.push(...bulkClients)
+  buildInboundsUsers(clientInbounds)
+  // Stats
+  if (clientStats) v2rayStats.value.users.push(...bulkClients.map(bc => bc.name))
+  closeBulk()
 }
 </script>

@@ -164,6 +164,11 @@ export default {
     external: "لینک‌ خارجی",
     sub: "سابسکریپشن خارجی",
   },
+  bulk: {
+    add: "ایجاد انبوه",
+    order: "ترتیب",
+    random: "تصادفی",
+  },
   types: {
     un: "نام کاربری",
     pw: "رمز",

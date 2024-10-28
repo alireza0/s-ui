@@ -165,6 +165,11 @@ export default {
     external: "Liên kết bên ngoài",
     sub: "Đăng ký bên ngoài",
   },
+  bulk: {
+    add: "Thêm Hàng loạt",
+    order: "Sắp xếp",
+    random: "Ngẫu nhiên",
+  },
   types: {
     un: "Tên người dùng",
     pw: "Mật khẩu",
