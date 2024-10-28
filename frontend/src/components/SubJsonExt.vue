@@ -62,6 +62,48 @@
         ></v-select>
       </v-col>
     </v-row>
+    <template v-if="enableInb">
+      <v-row>
+        <v-col cols="12" sm="6" md="3">
+          <v-combobox
+            v-model="inbounds[0].address"
+            :items="defaultInb[0].address"
+            chips
+            multiple
+            hide-details
+            :label="$t('in.addr')"
+          ></v-combobox>
+        </v-col>
+        <v-col cols="12" sm="6" md="3" lg="2">
+          <v-text-field
+            type="number"
+            v-model.number="inbounds[0].mtu"
+            hide-details
+            label="MTU"
+          ></v-text-field>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12" sm="6" md="3">
+          <v-combobox
+            v-model="inbounds[0].exclude_package"
+            :items="['ir.mci.ecareapp','com.myirancell']"
+            chips
+            multiple
+            hide-details
+            :label="$t('setting.excludePkg')"
+          ></v-combobox>
+        </v-col>
+        <v-col cols="12" sm="6" md="3" lg="2">
+          <v-switch
+            v-model="platformProxy"
+            hide-details
+            color="primary"
+            label="Platform HTTP proxy"
+          ></v-switch>
+        </v-col>
+      </v-row>
+    </template>
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
@@ -75,6 +117,9 @@
             </v-list-item>
             <v-list-item>
               <v-switch v-model="enableDns" color="primary" label="DNS" hide-details></v-switch>
+            </v-list-item>
+            <v-list-item>
+              <v-switch v-model="enableInb" color="primary" :label="$t('objects.inbound')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
               <v-switch v-model="enableExp" color="primary" label="Experimental" hide-details></v-switch>
@@ -98,6 +143,36 @@ export default {
         "level": "info",
         "timestamp": true
       },
+      defaultInb: [
+        {
+          "type": "tun",
+          "address": [
+            "172.19.0.1/30",
+            "fdfe:dcba:9876::1/126"
+          ],
+          "mtu": 9000,
+          "auto_route": true,
+          "strict_route": false,
+          "sniff": true,
+          "endpoint_independent_nat": false,
+          "stack": "system",
+          "exclude_package": [],
+          "platform": {
+            "http_proxy": {
+              "enabled": true,
+              "server": "127.0.0.1",
+              "server_port": 2080
+            }
+          }
+        },
+        {
+          "type": "mixed",
+          "listen": "127.0.0.1",
+          "listen_port": 2080,
+          "sniff": true,
+          "users": []
+        }
+      ],
       defaultExp: {
         "clash_api": {
           "external_controller": "127.0.0.1:9090",
@@ -253,6 +328,10 @@ export default {
         }
       }
     },
+    enableInb: {
+      get() :boolean { return this.subJsonExt?.inbounds != undefined },
+      set(v:boolean) { v ? this.subJsonExt.inbounds = this.defaultInb.slice() : delete this.subJsonExt.inbounds }
+    },
     enableExp: {
       get() :boolean { return this.subJsonExt?.experimental != undefined },
       set(v:boolean) { v ? this.subJsonExt.experimental = this.defaultExp : delete this.subJsonExt.experimental }
@@ -297,6 +376,11 @@ export default {
         }
         this.updateRuleSets()
       }
+    },
+    inbounds():any[] { return this.subJsonExt?.inbounds?? undefined },
+    platformProxy: {
+      get() :boolean { return this.inbounds[0]?.platform != undefined },
+      set(v:boolean) { this.subJsonExt.inbounds[0].platform = v ? this.defaultInb[0].platform : undefined }
     },
     rules():any { return this.subJsonExt?.rules?? undefined },
     ruleToDirect: {

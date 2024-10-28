@@ -154,6 +154,7 @@ export default {
     directDns: "Direct DNS",
     toDirectDns: "Route to Direct DNS",
     jsonSubOptions: "Other Options",
+    excludePkg: "Exclude Packages",
   },
   client: {
     name: "Name",

@@ -153,6 +153,7 @@ export default {
     directDns: "DNS مستقیم",
     toDirectDns: "هدایت به DNS مستقیم",
     jsonSubOptions: "گزینه‌های دیگر",
+    excludePkg: "نرم‌افزارهای استثنا",
   },
   client: {
     name: "نام",

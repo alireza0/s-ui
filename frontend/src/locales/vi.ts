@@ -154,6 +154,7 @@ export default {
     directDns: "DNS Trực tiếp",
     toDirectDns: "Chuyển hướng tới DNS Trực tiếp",
     jsonSubOptions: "Tùy chọn Khác",
+    excludePkg: "Loại trừ Gói",
   },
   client: {
     name: "Tên",

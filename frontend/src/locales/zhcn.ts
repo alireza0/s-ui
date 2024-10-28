@@ -154,6 +154,7 @@ export default {
     directDns: "直连 DNS",
     toDirectDns: "路由到直连 DNS",
     jsonSubOptions: "其他选项",
+    excludePkg: "排除包",
   },
   client: {
     name: "名称",

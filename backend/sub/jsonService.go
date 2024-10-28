@@ -14,10 +14,10 @@ const defaultJson = `
   "inbounds": [
     {
       "type": "tun",
-      "inet4_address": "172.19.0.1/30",
-      "inet6_address": [
-      "fdfe:dcba:9876::1/126"
-  	],
+      "address": [
+				"172.19.0.1/30",
+				"fdfe:dcba:9876::1/126"
+			],
       "mtu": 9000,
       "auto_route": true,
       "strict_route": false,
@@ -249,8 +249,11 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	if _, ok := othersJson["dns"]; ok {
 		(*jsonConfig)["dns"] = othersJson["dns"]
 	}
+	if _, ok := othersJson["inbounds"]; ok {
+		(*jsonConfig)["inbounds"] = othersJson["inbounds"]
+	}
 	if _, ok := othersJson["experimental"]; ok {
-		(*jsonConfig)["experimental"] = othersJson["lexperimentalog"]
+		(*jsonConfig)["experimental"] = othersJson["experimental"]
 	}
 	if _, ok := othersJson["rule_set"]; ok {
 		route["rule_set"] = othersJson["rule_set"]
