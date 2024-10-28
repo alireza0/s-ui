@@ -436,9 +436,9 @@ show_status() {
 show_enable_status() {
     check_enabled $1
     if [[ $? == 0 ]]; then
-        echo -e "Start automatically: ${green}Yes${plain}"
+        echo -e "Start ${1} automatically: ${green}Yes${plain}"
     else
-        echo -e "Start automatically: ${red}No${plain}"
+        echo -e "Start ${1} automatically: ${red}No${plain}"
     fi
 }
 
