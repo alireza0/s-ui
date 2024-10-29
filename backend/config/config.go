@@ -79,3 +79,12 @@ func GetDefaultConfig() string {
 func GetEnvApi() string {
 	return os.Getenv("SINGBOX_API")
 }
+
+func IsSystemd() bool {
+	pid := os.Getppid()
+	cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/comm", pid))
+	if err != nil {
+		return false
+	}
+	return string(cmdline) == "systemd\n"
+}

@@ -145,10 +145,9 @@ func (s *ServerService) GetLogs(service string, count string, level string) []st
 	if service == "s-ui" {
 		return logger.GetLogs(c, level)
 	}
-	ppid := os.Getppid()
 	var lines []string
 	var cmdArgs []string
-	if ppid > 1 {
+	if IsSystemd {
 		cmdArgs = []string{"journalctl", "-u", service, "--no-pager", "-n", count, "-p", level}
 	} else {
 		cmdArgs = []string{"tail", "/logs/" + service + ".log", "-n", count}

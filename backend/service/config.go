@@ -14,6 +14,7 @@ import (
 
 var ApiAddr string
 var LastUpdate int64
+var IsSystemd bool
 
 type ConfigService struct {
 	ClientService
@@ -38,6 +39,7 @@ func NewConfigService() *ConfigService {
 }
 
 func (s *ConfigService) InitConfig() error {
+	IsSystemd = config.IsSystemd()
 	configPath := config.GetBinFolderPath()
 	data, err := os.ReadFile(configPath + "/config.json")
 	if err != nil {
