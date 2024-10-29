@@ -207,6 +207,10 @@ export default {
       authTimeout: "Thời gian chờ Xác thực",
       hb: "Nhịp tim",
     },
+    tun: {
+      addr: "Địa chỉ",
+      ifName: "Tên Giao diện",
+    },
     vless: {
       flow: "Luồng",
       udpEnc: "Mã hóa Gói UDP",

@@ -206,6 +206,10 @@ export default {
       authTimeout: "مهلت احراز هویت",
       hb: "ضربان قلب",
     },
+    tun: {
+      addr: "آدرس‌ها",
+      ifName: "نام اینترفیس",
+    },
     vless: {
       flow: "جریان",
       udpEnc: "کدگذاری بسته UDP",

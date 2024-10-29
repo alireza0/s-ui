@@ -207,6 +207,10 @@ export default {
       authTimeout: "认证超时",
       hb: "心跳包",
     },
+    tun: {
+      addr: "地址",
+      ifName: "接口名称",
+    },
     vless: {
       flow: "流控",
       udpEnc: "UDP 数据包编码",

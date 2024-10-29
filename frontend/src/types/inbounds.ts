@@ -17,7 +17,7 @@ export const InTypes = {
   TUIC: 'tuic',
   Hysteria2: 'hysteria2',
   VLESS: 'vless',
-  // Tun: 'tun',
+  Tun: 'tun',
   Redirect: 'redirect',
   TProxy: 'tproxy',
 }
@@ -165,7 +165,31 @@ export interface Hysteria2 extends InboundBasics {
   brutal_debug?: boolean
 }
 export interface Tun extends InboundBasics {
-  [otherProperties: string]: any
+  interface_name?: string
+  address?: string[]
+  mtu?: number
+  endpoint_independent_nat?: boolean
+  udp_timeout?: string
+  stack?: string
+  // auto_route?: boolean
+  // gso?: boolean
+  // strict_route?: boolean
+  // iproute2_table_index?: number
+  // iproute2_rule_index?: number
+  // auto_redirect?: boolean
+  // auto_redirect_input_mark?: string
+  // auto_redirect_output_mark?: string
+  // route_address?: string[]
+  // route_exclude_address?: string[]
+  // include_interface?: string[]
+  // exclude_interface?: string[]
+  // include_uid?: string[]
+  // include_uid_range?: string[]
+  // exclude_uid?: number[]
+  // exclude_uid_range?: string[]
+  // include_android_user?: number[]
+  // include_package?: string[]
+  // exclude_package?: string[]
 }
 export interface Redirect extends InboundBasics {}
 export interface TProxy extends InboundBasics {
@@ -187,7 +211,7 @@ type InterfaceMap = {
   tuic: TUIC
   hysteria2: Hysteria2
   vless: VLESS
-  // tun: Tun
+  tun: Tun
   redirect: Redirect
   tproxy: TProxy
 }
@@ -228,7 +252,7 @@ const defaultValues: Record<InType, Inbound> = {
   tuic: <TUIC>{ type: InTypes.TUIC, users: <TuicUser[]>[], congestion_control: "cubic", tls: { enabled: true } },
   hysteria2: <Hysteria2>{ type: InTypes.Hysteria2, users: <NamePass[]>[], tls: { enabled: true } },
   vless: <VLESS>{ type: InTypes.VLESS, users: <VlessUser[]>[], tls: {}, multiplex: {}, transport: {} },
-  // tun: <Tun>{ type: InTypes.Tun },
+  tun: <Tun>{ type: InTypes.Tun, mtu: 9000, stack: 'system', udp_timeout: '5m' },
   redirect: <Redirect>{ type: InTypes.Redirect },
   tproxy: <TProxy>{ type: InTypes.TProxy },
 }

@@ -208,6 +208,10 @@ export default {
       authTimeout: "身份驗證超時",
       hb: "心跳",
     },
+    tun: {
+      addr: "地址",
+      ifName: "介面名稱",
+    },
     vless: {
       flow: "流量",
       udpEnc: "UDP 封包編碼",

@@ -207,6 +207,10 @@ export default {
       authTimeout: "Authentication Timeout",
       hb: "Heartbeat",
     },
+    tun: {
+      addr: "Addresses",
+      ifName: "Interface Name",
+    },
     vless: {
       flow: "Flow",
       udpEnc: "UDP Packet Encoding",

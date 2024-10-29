@@ -207,6 +207,10 @@ export default {
       authTimeout: "Таймаут аутентификации",
       hb: "Сердцебиение",
     },
+    tun: {
+      addr: "Адреса",
+      ifName: "Имя интерфейса",
+    },
     vless: {
       flow: "Поток",
       udpEnc: "Кодирование UDP пакетов",
