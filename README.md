@@ -27,7 +27,7 @@
 | Dark/Light Theme                       | :heavy_check_mark: |
 
 
-## Default Installation Informarion
+## Default Installation Information
 - Panel Port: 2095
 - Panel Path: /app/
 - Subscription Port: 2096
@@ -40,12 +40,12 @@
 bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh)
 ```
 
-## Install Custom Version
+## Install legacy Version
 
-**Step 1:** To install your desired version, add the version to the end of the installation command. e.g., ver `0.0.1`:
+**Step 1:** To install your desired legacy version, add the version to the end of the installation command. e.g., ver `1.0.0`:
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh) 0.0.1
+bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh) 1.0.0
 ```
 
 ## Uninstall S-UI
@@ -80,7 +80,7 @@ curl -fsSL https://get.docker.com | sh
 
 ```shell
 mkdir s-ui && cd s-ui
-wget -q https://raw.githubusercontent.com/alireza0/s-ui/refs/tags/1.0.0/docker-compose.yml
+wget -q https://raw.githubusercontent.com/alireza0/s-ui/master/docker-compose.yml
 docker compose up -d
 ```
 
@@ -104,7 +104,7 @@ docker build -t s-ui .
 
 </details>
 
-## Manual run + contribution
+## Manual run ( contribution )
 
 <details>
    <summary>Click for details</summary>
@@ -125,7 +125,7 @@ npm run dev
 ```
 > By this command it will run a `vite` web server on separate port `3000`, with backend proxy to `http://localhost:2095`. You can change it in `frontend/vite.config.mts`.
 
-To build fronend:
+To build frontend:
 ```shell
 cd frontend
 npm run build
@@ -133,7 +133,7 @@ npm run build
 
 ### - Backend
 Backend codes are in `backend` folder in the root of repository.
-> Please build fronend once before!
+> Please build frontend once before!
 
 To build backend:
 ```shell

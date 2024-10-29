@@ -174,6 +174,7 @@ export default {
       this.inbound = createInbound(this.inbound.type, this.inbound.type != this.inTypes.Tun ? prevConfig : { tag: tag })
       if (this.HasInData.includes(this.inbound.type)){
         if (this.inData.id == -1) this.inData.id = 0
+        this.inData.addrs = []
         this.inData.outJson = {}
         this.inData.tag = tag
       } else {
