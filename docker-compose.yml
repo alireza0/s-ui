@@ -6,8 +6,8 @@ services:
     hostname: "S-UI docker"
     volumes:
       - "singbox:/app/bin"
-      - "$PWD/db:/app/db"
-      - "$PWD/cert:/app/cert"
+      - "./db:/app/db"
+      - "./cert:/app/cert"
       - "logs:/logs"
     environment:
       SINGBOX_API: "sing-box:1080"
@@ -35,7 +35,7 @@ services:
     container_name: sing-box
     volumes:
       - "singbox:/app/"
-      - "$PWD/cert:/cert"
+      - "./cert:/cert"
     networks:
       - s-ui
     ports:
