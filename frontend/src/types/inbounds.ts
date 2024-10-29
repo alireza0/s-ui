@@ -171,7 +171,7 @@ export interface Tun extends InboundBasics {
   endpoint_independent_nat?: boolean
   udp_timeout?: string
   stack?: string
-  // auto_route?: boolean
+  auto_route?: boolean
   // gso?: boolean
   // strict_route?: boolean
   // iproute2_table_index?: number
@@ -252,7 +252,7 @@ const defaultValues: Record<InType, Inbound> = {
   tuic: <TUIC>{ type: InTypes.TUIC, users: <TuicUser[]>[], congestion_control: "cubic", tls: { enabled: true } },
   hysteria2: <Hysteria2>{ type: InTypes.Hysteria2, users: <NamePass[]>[], tls: { enabled: true } },
   vless: <VLESS>{ type: InTypes.VLESS, users: <VlessUser[]>[], tls: {}, multiplex: {}, transport: {} },
-  tun: <Tun>{ type: InTypes.Tun, mtu: 9000, stack: 'system', udp_timeout: '5m' },
+  tun: <Tun>{ type: InTypes.Tun, mtu: 9000, stack: 'system', udp_timeout: '5m', auto_route: false },
   redirect: <Redirect>{ type: InTypes.Redirect },
   tproxy: <TProxy>{ type: InTypes.TProxy },
 }
