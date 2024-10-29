@@ -1,8 +1,8 @@
-FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS singbox-builder
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS singbox-builder
 LABEL maintainer="Alireza <alireza7@gmail.com>"
 WORKDIR /app
 ARG TARGETOS TARGETARCH
-ARG SINGBOX_VER=v1.9.3
+ARG SINGBOX_VER=v1.10.1
 ARG SINGBOX_TAGS="with_quic,with_grpc,with_wireguard,with_ech,with_utls,with_reality_server,with_acme,with_v2ray_api,with_clash_api,with_gvisor"
 ARG GOPROXY=""
 ENV GOPROXY ${GOPROXY}

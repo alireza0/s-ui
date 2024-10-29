@@ -26,13 +26,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          cache: false
-          go-version: '1.22'
+          go-version-file: go.mod
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
           
       - name: Install dependencies
@@ -89,7 +88,7 @@ jobs:
           fi
 
           #### Build Sing-Box
-          export VERSION=v1.9.3
+          export VERSION=v1.10.1
           git clone -b $VERSION https://github.com/SagerNet/sing-box
           cd sing-box
           go build -tags with_quic,with_grpc,with_wireguard,with_ech,with_utls,with_reality_server,with_acme,with_v2ray_api,with_clash_api,with_gvisor \
