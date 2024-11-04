@@ -51,6 +51,8 @@ bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.s
 ## Uninstall S-UI
 
 ```sh
+sudo -i
+
 systemctl disable sing-box --now
 systemctl disable s-ui  --now
 
@@ -59,6 +61,8 @@ rm -f /etc/systemd/system/sing-box.service
 systemctl daemon-reload
 
 rm -fr /usr/local/s-ui
+rm /usr/bin/s-ui
+
 ```
 
 ## Install using Docker
