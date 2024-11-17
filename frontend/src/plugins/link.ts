@@ -179,7 +179,7 @@ export namespace LinkUtil {
         tfo: inbound.tcp_fast_open? 1 : 0,
         allowInsecure: tlsClient?.insecure ? 1 : null
       }
-      const uri = `http2://${utf8ToBase64(user + ":" + password + "@" + location.hostname + ":" + inbound.listen_port)}`
+      const uri = `http2://${utf8ToBase64(user.name + ":" + password + "@" + location.hostname + ":" + inbound.listen_port)}`
       const paramsArray = []
       for (const [key, value] of Object.entries(params)){
         if (value) {
