@@ -206,7 +206,7 @@
           <v-card-actions style="padding: 0;">
             <v-btn icon="mdi-account-edit" @click="showModal(item.id)">
               <v-icon />
-              <v-tooltip activator="parent" location="top" :text="$t('actions.edit') + item.id"></v-tooltip>
+              <v-tooltip activator="parent" location="top" :text="$t('actions.edit')"></v-tooltip>
             </v-btn>
             <v-btn style="margin-inline-start:0;" icon="mdi-account-minus" color="warning" @click="delOverlay[clients.findIndex(c => c.id == item.id)] = true">
               <v-icon />
