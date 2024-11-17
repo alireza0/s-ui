@@ -290,7 +290,7 @@ stop() {
         if [[ $? == 1 ]]; then
             LOGI "${1} stopped successfully"
         else
-            LOGE "Falied to stop ${1}, Probably because the stop time exceeds two seconds, Please check the log information later"
+            LOGE "Failed to stop ${1}, Probably because the stop time exceeds two seconds, Please check the log information later"
         fi
     fi
 

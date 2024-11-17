@@ -188,16 +188,16 @@ install_s-ui() {
         echo -e "Got s-ui latest version: ${last_version}, beginning the installation..."
         wget -N --no-check-certificate -O /tmp/s-ui-linux-$(arch).tar.gz https://github.com/alireza0/s-ui/releases/download/${last_version}/s-ui-linux-$(arch).tar.gz
         if [[ $? -ne 0 ]]; then
-            echo -e "${red}Dowanloading s-ui failed, please be sure that your server can access Github ${plain}"
+            echo -e "${red}Downloading s-ui failed, please be sure that your server can access Github ${plain}"
             exit 1
         fi
     else
         last_version=$1
         url="https://github.com/alireza0/s-ui/releases/download/${last_version}/s-ui-linux-$(arch).tar.gz"
-        echo -e "Begining to install s-ui v$1"
+        echo -e "Beginning the install s-ui v$1"
         wget -N --no-check-certificate -O /tmp/s-ui-linux-$(arch).tar.gz ${url}
         if [[ $? -ne 0 ]]; then
-            echo -e "${red}dowanload s-ui v$1 failed,please check the verison exists${plain}"
+            echo -e "${red}download s-ui v$1 failed,please check the version exists${plain}"
             exit 1
         fi
     fi
@@ -220,7 +220,7 @@ install_s-ui() {
     config_after_install
 
     systemctl daemon-reload
-    systemctl enable s-ui  --now
+    systemctl enable s-ui --now
     systemctl enable sing-box --now
 
     echo -e "${green}s-ui v${last_version}${plain} installation finished, it is up and running now..."
@@ -228,6 +228,6 @@ install_s-ui() {
     s-ui help
 }
 
-echo -e "${green}Excuting...${plain}"
+echo -e "${green}Executing...${plain}"
 install_base
 install_s-ui $1
