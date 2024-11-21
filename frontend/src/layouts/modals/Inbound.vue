@@ -126,6 +126,7 @@ export default {
       HasInData: [
         InTypes.SOCKS,
         InTypes.HTTP,
+        InTypes.Mixed,
         InTypes.Shadowsocks,
         InTypes.VMess,
         InTypes.ShadowTLS,

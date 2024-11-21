@@ -15,7 +15,7 @@ export function fillData(out: any, inbound: Inbound, tlsClient: any) {
   out.server = location.hostname
   out.server_port = inbound.listen_port
   switch(inbound.type){
-    case InTypes.HTTP || InTypes.SOCKS:
+    case InTypes.HTTP: case InTypes.SOCKS: case InTypes.Mixed:
       return
     case InTypes.Shadowsocks:
       shadowsocksOut(out, <Shadowsocks>inbound)

@@ -128,7 +128,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]mode
 		protocol, _ := outbound["type"].(string)
 		config, _ := configs[protocol].(map[string]interface{})
 		for key, value := range config {
-			if key != "alterId" && key != "name" && key != "username" {
+			if key != "alterId" && key != "name" {
 				outbound[key] = value
 			}
 		}
@@ -138,10 +138,16 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]mode
 		if err != nil {
 			return nil, nil, err
 		}
-		tag := outbound["tag"].(string)
+		tag, _ := outbound["tag"].(string)
 		if len(addrs) == 0 {
-			outTags = append(outTags, tag)
-			outbounds = append(outbounds, outbound)
+			// For mixed protocol, use separated socks and http
+			if protocol == "mixed" {
+				outbound["tag"] = tag
+				j.pushMixed(&outbounds, &outTags, outbound)
+			} else {
+				outTags = append(outTags, tag)
+				outbounds = append(outbounds, outbound)
+			}
 		} else {
 			for index, addr := range addrs {
 				// Copy original config
@@ -173,9 +179,14 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]mode
 				}
 				remark, _ := addr["remark"].(string)
 				newTag := fmt.Sprintf("%d.%s%s", index+1, tag, remark)
-				outTags = append(outTags, newTag)
 				newOut["tag"] = newTag
-				outbounds = append(outbounds, newOut)
+				// For mixed protocol, use separated socks and http
+				if protocol == "mixed" {
+					j.pushMixed(&outbounds, &outTags, newOut)
+				} else {
+					outTags = append(outTags, newTag)
+					outbounds = append(outbounds, newOut)
+				}
 			}
 		}
 	}
@@ -264,4 +275,21 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	(*jsonConfig)["route"] = route
 
 	return nil
+}
+
+func (j *JsonService) pushMixed(outbounds *[]map[string]interface{}, outTags *[]string, out map[string]interface{}) {
+	socksOut := make(map[string]interface{}, 1)
+	httpOut := make(map[string]interface{}, 1)
+	for key, value := range out {
+		socksOut[key] = value
+		httpOut[key] = value
+	}
+	socksTag := fmt.Sprintf("%s-socks", out["tag"])
+	httpTag := fmt.Sprintf("%s-http", out["tag"])
+	socksOut["type"] = "socks"
+	httpOut["type"] = "http"
+	socksOut["tag"] = socksTag
+	httpOut["tag"] = httpTag
+	*outbounds = append(*outbounds, socksOut, httpOut)
+	*outTags = append(*outTags, socksTag, httpTag)
 }
