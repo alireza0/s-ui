@@ -21,7 +21,7 @@
     "roboto-fontface": "^0.10.0",
     "vue": "^3.4.31",
     "vue-chartjs": "^5.3.1",
-    "vue-i18n": "^9.13.1",
+    "vue-i18n": "^9.14.2",
     "vue-router": "^4.4.0",
     "vue3-persian-datetime-picker": "^1.2.2",
     "vuetify": "^3.6.10"
