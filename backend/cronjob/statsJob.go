@@ -6,15 +6,15 @@ import (
 )
 
 type StatsJob struct {
-	service.SingBoxService
+	service.StatsService
 }
 
 func NewStatsJob() *StatsJob {
-	return new(StatsJob)
+	return &StatsJob{}
 }
 
 func (s *StatsJob) Run() {
-	err := s.SingBoxService.GetStats()
+	err := s.StatsService.SaveStats()
 	if err != nil {
 		logger.Warning("Get stats failed: ", err)
 		return

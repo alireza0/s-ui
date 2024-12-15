@@ -93,7 +93,10 @@ export default {
   methods: {
     async genECH(){
       this.loading = true
-      const msg = await HttpUtils.get('api/keypairs', { k: "ech", o: this.iTls.server_name?? "''" })
+      const msg = await HttpUtils.get('api/keypairs', {
+        k: "ech",
+        o: this.iTls.server_name?? "''" + "," + this.iTls.ech.pq_signature_schemes_enabled?? false
+      })
       this.loading = false
       if (msg.success && this.iTls.ech && this.oTls.ech) {
         this.iTls.ech.key_path=undefined

@@ -1,6 +1,7 @@
 package cronjob
 
 import (
+	"s-ui/core"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -8,10 +9,13 @@ import (
 
 type CronJob struct {
 	cron *cron.Cron
+	Core *core.Core
 }
 
-func NewCronJob() *CronJob {
-	return &CronJob{}
+func NewCronJob(c *core.Core) *CronJob {
+	return &CronJob{
+		Core: c,
+	}
 }
 
 func (c *CronJob) Start(loc *time.Location, trafficAge int) error {

@@ -4,23 +4,24 @@ import (
 	"encoding/json"
 	"os"
 	"s-ui/config"
+	"s-ui/core"
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/logger"
-	"s-ui/singbox"
 	"strconv"
 	"time"
 )
 
-var ApiAddr string
-var LastUpdate int64
-var IsSystemd bool
+var (
+	LastUpdate int64
+	IsSystemd  bool
+	corePtr    *core.Core
+)
 
 type ConfigService struct {
 	ClientService
 	TlsService
 	InDataService
-	singbox.Controller
 	SettingService
 }
 
@@ -34,7 +35,8 @@ type SingBoxConfig struct {
 	Experimental json.RawMessage   `json:"experimental"`
 }
 
-func NewConfigService() *ConfigService {
+func NewConfigService(core *core.Core) *ConfigService {
+	corePtr = core
 	return &ConfigService{}
 }
 
@@ -64,7 +66,7 @@ func (s *ConfigService) InitConfig() error {
 		return err
 	}
 
-	return s.RefreshApiAddr(&singboxConfig)
+	return nil
 }
 
 func (s *ConfigService) GetConfig() (*SingBoxConfig, error) {
@@ -149,6 +151,7 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 			return err
 		}
 	}
+	needRestart := false
 	if len(configChanges) > 0 {
 		singboxConfig, err := s.GetConfig()
 		if err != nil {
@@ -163,36 +166,114 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 				if err != nil {
 					return err
 				}
+				needRestart = true
 			case "log":
 				newConfig.Log = rawObject
+				needRestart = true
 			case "dns":
 				newConfig.Dns = rawObject
+				needRestart = true
 			case "ntp":
 				newConfig.Ntp = rawObject
+				needRestart = true
 			case "route":
 				newConfig.Route = rawObject
+				needRestart = true
 			case "experimental":
 				newConfig.Experimental = rawObject
+				needRestart = true
 			case "inbounds":
 				if change.Action == "edit" {
+					var object map[string]interface{}
+					err = json.Unmarshal(newConfig.Inbounds[change.Index], &object)
+					if err != nil {
+						return err
+					}
+					if tag, ok := object["tag"].(string); ok {
+						err = corePtr.RemoveInbound(tag)
+						if err == nil {
+							err = corePtr.AddInbound(rawObject)
+							if err != nil {
+								needRestart = true
+							}
+						} else {
+							needRestart = true
+						}
+					} else {
+						needRestart = true
+					}
 					newConfig.Inbounds[change.Index] = rawObject
 				} else if change.Action == "del" {
+					var object map[string]interface{}
+					err = json.Unmarshal(newConfig.Inbounds[change.Index], &object)
+					if err != nil {
+						return err
+					}
+					if tag, ok := object["tag"].(string); ok {
+						err = corePtr.RemoveInbound(tag)
+						if err != nil {
+							needRestart = true
+						}
+					} else {
+						needRestart = true
+					}
 					newConfig.Inbounds = append(newConfig.Inbounds[:change.Index], newConfig.Inbounds[change.Index+1:]...)
 				} else {
 					newConfig.Inbounds = append(newConfig.Inbounds, rawObject)
+					err = corePtr.AddInbound(rawObject)
+					if err != nil {
+						logger.Debug(err)
+						needRestart = true
+					}
 				}
 			case "outbounds":
 				if change.Action == "edit" {
+					var object map[string]interface{}
+					err = json.Unmarshal(newConfig.Outbounds[change.Index], &object)
+					if err != nil {
+						return err
+					}
+					if tag, ok := object["tag"].(string); ok {
+						err = corePtr.RemoveOutbound(tag)
+						if err == nil {
+							err = corePtr.AddOutbound(rawObject)
+							if err != nil {
+								needRestart = true
+							}
+						} else {
+							needRestart = true
+						}
+					} else {
+						needRestart = true
+					}
 					newConfig.Outbounds[change.Index] = rawObject
 				} else if change.Action == "del" {
+					var object map[string]interface{}
+					err = json.Unmarshal(newConfig.Outbounds[change.Index], &object)
+					if err != nil {
+						return err
+					}
+					if tag, ok := object["tag"].(string); ok {
+						err = corePtr.RemoveOutbound(tag)
+						if err != nil {
+							needRestart = true
+						}
+					} else {
+						needRestart = true
+					}
 					newConfig.Outbounds = append(newConfig.Outbounds[:change.Index], newConfig.Outbounds[change.Index+1:]...)
 				} else {
+					err = corePtr.AddOutbound(rawObject)
+					if err != nil {
+						logger.Debug(err)
+						needRestart = true
+					}
 					newConfig.Outbounds = append(newConfig.Outbounds, rawObject)
 				}
 			}
 		}
 
-		err = s.Save(&newConfig)
+		err = s.Save(&newConfig, needRestart)
 		if err != nil {
 			return err
 		}
@@ -238,7 +319,7 @@ func (s *ConfigService) CheckChanges(lu string) (bool, error) {
 	}
 }
 
-func (s *ConfigService) Save(singboxConfig *SingBoxConfig) error {
+func (s *ConfigService) Save(singboxConfig *SingBoxConfig, needRestart bool) error {
 	configPath := config.GetBinFolderPath()
 	_, err := os.Stat(configPath + "/config.json")
 	if os.IsNotExist(err) {
@@ -260,39 +341,14 @@ func (s *ConfigService) Save(singboxConfig *SingBoxConfig) error {
 		return err
 	}
 
-	s.RefreshApiAddr(singboxConfig)
-	s.Controller.Restart()
-
-	return nil
-}
-
-func (s *ConfigService) RefreshApiAddr(singboxConfig *SingBoxConfig) error {
-	Env_API := config.GetEnvApi()
-	if len(Env_API) > 0 {
-		ApiAddr = Env_API
-	} else {
-		var err error
-		if singboxConfig == nil {
-			singboxConfig, err = s.GetConfig()
-			if err != nil {
-				return err
-			}
-
-		}
-
-		var experimental struct {
-			V2rayApi struct {
-				Listen string      `json:"listen"`
-				Stats  interface{} `jaon:"stats"`
-			} `json:"v2ray_api"`
-		}
-		err = json.Unmarshal(singboxConfig.Experimental, &experimental)
+	if needRestart {
+		err = corePtr.Restart()
 		if err != nil {
 			return err
 		}
-
-		ApiAddr = experimental.V2rayApi.Listen
 	}
+	// s.Controller.Restart()
+
 	return nil
 }
 
@@ -348,7 +404,7 @@ func (s *ConfigService) DepleteClients() error {
 		singboxConfig.Inbounds[inbound_index] = modifiedInbound
 	}
 
-	err = s.Save(singboxConfig)
+	err = s.Save(singboxConfig, true)
 	if err != nil {
 		return err
 	}
@@ -380,4 +436,8 @@ func (s *ConfigService) GetChanges(actor string, chngKey string, count string) [
 		logger.Warning(err)
 	}
 	return chngs
+}
+
+func (s *ConfigService) RestartCore() error {
+	return corePtr.Restart()
 }

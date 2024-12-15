@@ -3,7 +3,6 @@ package api
 import (
 	"s-ui/logger"
 	"s-ui/service"
-	"s-ui/singbox"
 	"s-ui/util"
 	"strconv"
 	"strings"
@@ -21,7 +20,6 @@ type APIHandler struct {
 	service.PanelService
 	service.StatsService
 	service.ServerService
-	singbox.Controller
 }
 
 func NewAPIHandler(g *gin.RouterGroup) {
@@ -92,7 +90,7 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		err = a.PanelService.RestartPanel(3)
 		jsonMsg(c, "restartApp", err)
 	case "restartSb":
-		err = a.Controller.Restart()
+		err = a.ConfigService.RestartCore()
 		jsonMsg(c, "restartSb", err)
 	case "linkConvert":
 		link := c.Request.FormValue("link")
@@ -156,10 +154,9 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		onlines, err := a.StatsService.GetOnlines()
 		jsonObj(c, onlines, err)
 	case "logs":
-		service := c.Query("s")
 		count := c.Query("c")
 		level := c.Query("l")
-		logs := a.ServerService.GetLogs(service, count, level)
+		logs := a.ServerService.GetLogs(count, level)
 		jsonObj(c, logs, nil)
 	case "changes":
 		actor := c.Query("a")
@@ -188,7 +185,7 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 
 	sysInfo := a.ServerService.GetSingboxInfo()
 	if sysInfo["running"] == false {
-		logs := a.ServerService.GetLogs("sing-box", "1", "debug")
+		logs := a.ServerService.GetLogs("1", "debug")
 		if len(logs) > 0 {
 			data["lastLog"] = logs[0]
 		}

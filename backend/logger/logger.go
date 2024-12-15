@@ -43,6 +43,10 @@ func InitLogger(level logging.Level) {
 	logger = newLogger
 }
 
+func GetLogger() *logging.Logger {
+	return logger
+}
+
 func Debug(args ...interface{}) {
 	logger.Debug(args...)
 	addToBuffer("DEBUG", fmt.Sprint(args...))

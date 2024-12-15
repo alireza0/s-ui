@@ -19,18 +19,22 @@ var onlineResources = &onlines{}
 type StatsService struct {
 }
 
-func (s *StatsService) SaveStats(stats []*model.Stats) error {
-	var err error
+func (s *StatsService) SaveStats() error {
+	if !corePtr.IsRunning() {
+		return nil
+	}
+	stats := corePtr.GetInstance().ConnTracker().GetStats()
 
 	// Reset onlines
 	onlineResources.Inbound = nil
 	onlineResources.Outbound = nil
 	onlineResources.User = nil
 
-	if len(stats) == 0 {
+	if len(*stats) == 0 {
 		return nil
 	}
 
+	var err error
 	db := database.GetDB()
 	tx := db.Begin()
 	defer func() {
@@ -41,7 +45,7 @@ func (s *StatsService) SaveStats(stats []*model.Stats) error {
 		}
 	}()
 
-	for _, stat := range stats {
+	for _, stat := range *stats {
 		if stat.Resource == "user" {
 			if stat.Direction {
 				err = tx.Model(model.Client{}).Where("name = ?", stat.Tag).
