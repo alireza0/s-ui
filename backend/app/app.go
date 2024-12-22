@@ -37,6 +37,9 @@ func (a *APP) Init() error {
 		return err
 	}
 
+	// Init Setting
+	a.SettingService.GetAllSetting()
+
 	a.core = core.NewCore()
 
 	a.cronJob = cronjob.NewCronJob(a.core)

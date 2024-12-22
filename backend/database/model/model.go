@@ -9,18 +9,10 @@ type Setting struct {
 }
 
 type Tls struct {
-	Id       uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
-	Name     string          `json:"name" form:"name"`
-	Inbounds json.RawMessage `json:"inbounds" form:"inbounds"`
-	Server   json.RawMessage `json:"server" form:"server"`
-	Client   json.RawMessage `json:"client" form:"client"`
-}
-
-type InboundData struct {
-	Id      uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
-	Tag     string          `json:"tag" form:"tag"`
-	Addrs   json.RawMessage `json:"addrs" form:"addrs"`
-	OutJson json.RawMessage `json:"outJson" form:"outJson"`
+	Id     uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Name   string          `json:"name" form:"name"`
+	Server json.RawMessage `json:"server" form:"server"`
+	Client json.RawMessage `json:"client" form:"client"`
 }
 
 type User struct {

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"s-ui/cmd/migration"
 	"s-ui/config"
 )
 
@@ -72,7 +73,7 @@ func ParseCmd() {
 		}
 
 	case "migrate":
-		migrateDb()
+		migration.MigrateDb()
 
 	case "setting":
 		err := settingCmd.Parse(os.Args[2:])

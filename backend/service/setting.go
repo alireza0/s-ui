@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"os"
+	"s-ui/config"
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/logger"
@@ -13,6 +14,25 @@ import (
 
 	"gorm.io/gorm"
 )
+
+var defaultConfig = `{
+  "log": {
+    "level": "info"
+  },
+  "dns": {},
+  "route": {
+    "rules": [
+      {
+        "protocol": [
+          "dns"
+        ],
+        "outbound": "dns-out",
+        "action": "route"
+      }
+    ]
+  },
+  "experimental": {}
+}`
 
 var defaultValueMap = map[string]string{
 	"webListen":     "",
@@ -37,6 +57,8 @@ var defaultValueMap = map[string]string{
 	"subShowInfo":   "false",
 	"subURI":        "",
 	"subJsonExt":    "",
+	"config":        defaultConfig,
+	"version":       config.GetVersion(),
 }
 
 type SettingService struct {
@@ -67,6 +89,8 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 
 	// Due to security principles
 	delete(allSetting, "secret")
+	delete(allSetting, "config")
+	delete(allSetting, "version")
 
 	return &allSetting, nil
 }
@@ -309,6 +333,14 @@ func (s *SettingService) GetFinalSubURI(host string) (string, error) {
 		port = ""
 	}
 	return protocol + "://" + host + port + (*allSetting)["subPath"], nil
+}
+
+func (s *SettingService) GetConfig() (string, error) {
+	return s.getString("config")
+}
+
+func (s *SettingService) SetConfig(config string) error {
+	return s.setString("config", config)
 }
 
 func (s *SettingService) Save(tx *gorm.DB, changes []model.Changes) error {

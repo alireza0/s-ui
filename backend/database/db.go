@@ -1,6 +1,7 @@
 package database
 
 import (
+	"encoding/json"
 	"os"
 	"path"
 	"s-ui/config"
@@ -48,6 +49,10 @@ func OpenDB(dbPath string) error {
 		Logger: gormLogger,
 	}
 	db, err = gorm.Open(sqlite.Open(dbPath), c)
+
+	if config.IsDebug() {
+		db = db.Debug()
+	}
 	return err
 }
 
@@ -57,10 +62,22 @@ func InitDB(dbPath string) error {
 		return err
 	}
 
+	// Default Outbounds
+	if !db.Migrator().HasTable(&model.Outbound{}) {
+		db.Migrator().CreateTable(&model.Outbound{})
+		defaultOutbound := []model.Outbound{
+			{Type: "direct", Tag: "direct", Options: json.RawMessage(`{}`)},
+			{Type: "dns", Tag: "dns-out", Options: json.RawMessage(`{}`)},
+		}
+		db.Create(&defaultOutbound)
+	}
+
 	err = db.AutoMigrate(
 		&model.Setting{},
 		&model.Tls{},
-		&model.InboundData{},
+		&model.Inbound{},
+		&model.Outbound{},
+		&model.Endpoint{},
 		&model.User{},
 		&model.Stats{},
 		&model.Client{},
