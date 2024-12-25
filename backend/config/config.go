@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -59,7 +60,11 @@ func GetBinFolderPath() string {
 func GetDBFolderPath() string {
 	dbFolderPath := os.Getenv("SUI_DB_FOLDER")
 	if dbFolderPath == "" {
-		dbFolderPath = "/usr/local/s-ui/db"
+		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			dbFolderPath = "/usr/local/s-ui/db"
+		}
+		dbFolderPath = dir + "/db"
 	}
 	return dbFolderPath
 }

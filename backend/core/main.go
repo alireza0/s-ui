@@ -2,8 +2,6 @@ package core
 
 import (
 	"context"
-	"os"
-	"s-ui/config"
 	"s-ui/logger"
 
 	sb "github.com/sagernet/sing-box"
@@ -49,14 +47,9 @@ func (c *Core) GetInstance() *Box {
 	return c.instance
 }
 
-func (c *Core) Start() error {
-	filepath := config.GetBinFolderPath() + "/config.json"
-	configFile, err := os.ReadFile(filepath)
-	if err != nil {
-		return err
-	}
+func (c *Core) Start(sbConfig []byte) error {
 	var opt option.Options
-	err = opt.UnmarshalJSONContext(globalCtx, configFile)
+	err := opt.UnmarshalJSONContext(globalCtx, sbConfig)
 	if err != nil {
 		logger.Error("Unmarshal config err:", err.Error())
 	}
@@ -90,16 +83,6 @@ func (c *Core) Stop() error {
 		return c.instance.Close()
 	}
 	return nil
-}
-
-func (c *Core) Restart() error {
-	err := c.Stop()
-	if err != nil {
-		logger.Error("stop sing-box err:", err.Error())
-		return err
-	}
-	logger.Info("sing-box stopped")
-	return c.Start()
 }
 
 func (c *Core) IsRunning() bool {

@@ -16,7 +16,7 @@ type APIHandler struct {
 	service.ConfigService
 	service.ClientService
 	service.TlsService
-	service.InDataService
+	service.InboundService
 	service.PanelService
 	service.StatsService
 	service.ServerService
@@ -207,7 +207,7 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 		if err != nil {
 			return "", err
 		}
-		inData, err := a.InDataService.GetAll()
+		inbounds, err := a.InboundService.GetAll()
 		if err != nil {
 			return "", err
 		}
@@ -218,7 +218,7 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 		data["config"] = *config
 		data["clients"] = clients
 		data["tls"] = tlsConfigs
-		data["inData"] = inData
+		data["inbounds"] = inbounds
 		data["subURI"] = subURI
 		data["onlines"] = onlines
 	} else {

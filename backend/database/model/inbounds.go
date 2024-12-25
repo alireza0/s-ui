@@ -1,6 +1,8 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type Inbound struct {
 	Id   uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
@@ -58,7 +60,6 @@ func (i *Inbound) UnmarshalJSON(data []byte) error {
 func (i Inbound) MarshalJSON() ([]byte, error) {
 	// Combine fixed fields and dynamic fields into one map
 	combined := make(map[string]interface{})
-	combined["id"] = i.Id
 	combined["type"] = i.Type
 	combined["tag"] = i.Tag
 	if i.Tls != nil {

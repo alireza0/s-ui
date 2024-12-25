@@ -16,11 +16,12 @@ import (
 
 type APP struct {
 	service.SettingService
-	webServer *web.Server
-	subServer *sub.Server
-	cronJob   *cronjob.CronJob
-	logger    *logging.Logger
-	core      *core.Core
+	configService *service.ConfigService
+	webServer     *web.Server
+	subServer     *sub.Server
+	cronJob       *cronjob.CronJob
+	logger        *logging.Logger
+	core          *core.Core
 }
 
 func NewApp() *APP {
@@ -46,8 +47,8 @@ func (a *APP) Init() error {
 	a.webServer = web.NewServer()
 	a.subServer = sub.NewServer()
 
-	configService := service.NewConfigService(a.core)
-	err = configService.InitConfig()
+	a.configService = service.NewConfigService(a.core)
+	err = a.configService.InitConfig()
 	if err != nil {
 		return err
 	}
@@ -80,7 +81,7 @@ func (a *APP) Start() error {
 		return err
 	}
 
-	err = a.core.Start()
+	err = a.configService.StartCore()
 	if err != nil {
 		logger.Error(err)
 	}
@@ -97,6 +98,10 @@ func (a *APP) Stop() {
 	err = a.webServer.Stop()
 	if err != nil {
 		logger.Warning("stop Web Server err:", err)
+	}
+	err = a.configService.StopCore()
+	if err != nil {
+		logger.Warning("stop Core err:", err)
 	}
 }
 
