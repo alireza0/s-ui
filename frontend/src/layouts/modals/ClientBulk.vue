@@ -59,11 +59,6 @@
               ></v-combobox>
             </v-col>
           </v-row>
-          <v-row>
-            <v-col cols="auto">
-              <v-switch v-model="bulkData.clientStats" color="primary" :label="$t('stats.enable')" hide-details></v-switch>
-            </v-col>
-          </v-row>
         </v-container>
       </v-card-text>
       <v-card-actions>
@@ -109,7 +104,6 @@ export default {
         clientInbounds: [],
         expiry: 0,
         Volume: 0,
-        clientStats: false,
       },
       patterns: [
         { title: i18n.global.t("bulk.random"), value: "random" },
@@ -129,7 +123,6 @@ export default {
         clientInbounds: [],
         expiry: 0,
         Volume: 0,
-        clientStats: false,
       }
     },
     closeModal() {
@@ -157,7 +150,7 @@ export default {
           group: this.bulkData.group
         }))
       }
-      this.$emit('save', this.clients, this.bulkData.clientInbounds, this.bulkData.clientStats)
+      this.$emit('save', this.clients, this.bulkData.clientInbounds)
       this.resetData() // reset to default
       this.loading = false
     },

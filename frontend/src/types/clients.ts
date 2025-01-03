@@ -6,7 +6,7 @@ export interface Client {
 	enable: boolean
 	name: string
 	config: Config
-	inbounds: string[]
+	inbounds: number[]
   links: Link[]
 	volume: number
 	expiry: number

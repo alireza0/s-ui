@@ -87,27 +87,22 @@ func (j *JsonService) GetJson(subId string, format string) (*string, error) {
 	return &resultStr, nil
 }
 
-func (j *JsonService) getData(subId string) (*model.Client, *[]model.InboundData, error) {
+func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, error) {
 	db := database.GetDB()
 	client := &model.Client{}
 	err := db.Model(model.Client{}).Where("enable = true and name = ?", subId).First(client).Error
 	if err != nil {
 		return nil, nil, err
 	}
-	var inbounds []string
-	err = json.Unmarshal(client.Inbounds, &inbounds)
+	var inbounds []*model.Inbound
+	err = db.Model(model.Inbound{}).Where("tag in ?", client.Inbounds).Find(&inbounds).Error
 	if err != nil {
 		return nil, nil, err
 	}
-	inDatas := &[]model.InboundData{}
-	err = db.Model(model.InboundData{}).Where("tag in ?", inbounds).Find(&inDatas).Error
-	if err != nil {
-		return nil, nil, err
-	}
-	return client, inDatas, nil
+	return client, inbounds, nil
 }
 
-func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]model.InboundData) (*[]map[string]interface{}, *[]string, error) {
+func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*model.Inbound) (*[]map[string]interface{}, *[]string, error) {
 	var outbounds []map[string]interface{}
 	var configs map[string]interface{}
 	var outTags []string
@@ -116,7 +111,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]mode
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, inData := range *inDatas {
+	for _, inData := range inbounds {
 		if len(inData.OutJson) < 5 {
 			continue
 		}

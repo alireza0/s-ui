@@ -14,6 +14,8 @@
         :label="$t('in.port')"
         hide-details
         type="number"
+        min="1"
+        max="65535"
         required
         v-model.number="inbound.listen_port"></v-text-field>
       </v-col>

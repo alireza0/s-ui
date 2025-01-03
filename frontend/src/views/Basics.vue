@@ -1,4 +1,11 @@
 <template>
+  <v-row style="margin-bottom: 10px;">
+    <v-col cols="12" justify="center" align="center">
+      <v-btn variant="outlined" color="warning" @click="saveConfig" :loading="loading" :disabled="stateChange">
+        {{ $t('actions.save') }}
+      </v-btn>
+    </v-col>
+  </v-row>
   <v-expansion-panels>
     <v-expansion-panel :title="$t('basic.log.title')">
       <v-expansion-panel-text>
@@ -11,6 +18,8 @@
               hide-details
               :label="$t('basic.log.level')"
               :items="levels"
+              clearable
+              @click:clear="delete appConfig.log.level"
               v-model="appConfig.log.level">
             </v-select>
           </v-col>
@@ -215,128 +224,49 @@
               hide-details></v-switch>
           </v-col>
         </v-row>
-        Clash API
-        <v-divider></v-divider>
-        <v-row>
-          <v-col cols="12" sm="6" md="3" lg="2">
-            <v-switch v-model="enableClashApi" color="primary" :label="$t('enable')" hide-details></v-switch>
-          </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
-            <v-text-field
-              v-model="appConfig.experimental.clash_api.external_controller"
-              hide-details
-              label="External Controller"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
-            <v-text-field
-              v-model="appConfig.experimental.clash_api.external_ui"
-              hide-details
-              label="External UI"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
-            <v-text-field
-              v-model="appConfig.experimental.clash_api.external_ui_download_url"
-              hide-details
-              label="UI Download URL"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
-            <v-text-field
-              v-model="appConfig.experimental.clash_api.external_ui_download_detour"
-              hide-details
-              label="UI Download detour"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
-            <v-text-field
-              v-model="appConfig.experimental.clash_api.secret"
-              hide-details
-              label="Secret"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2" v-if="appConfig.experimental.clash_api">
-            <v-text-field
-              v-model="appConfig.experimental.clash_api.default_mode"
-              hide-details
-              label="Default Mode"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-        V2Ray API
-        <v-divider></v-divider>
-        <v-row>
-          <v-col cols="12" sm="6" md="3" lg="2">
-            <v-text-field
-              v-model="appConfig.experimental.v2ray_api.listen"
-              hide-details
-              :label="$t('objects.listen')"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6" md="3" lg="2">
-            <v-switch v-model="appConfig.experimental.v2ray_api.stats.enabled"
-              color="primary"
-              :label="$t('stats.enable')"
-              hide-details></v-switch>
-          </v-col>
-        </v-row>
-        <v-row v-if="appConfig.experimental.v2ray_api.stats.enabled">
-          <v-col cols="12" sm="6">
-            <v-select
-              hide-details
-              :label="$t('pages.inbounds')"
-              multiple chips closable-chips
-              :items="inboundTags"
-              v-model="appConfig.experimental.v2ray_api.stats.inbounds">
-            </v-select>
-          </v-col>
-          <v-col cols="12" sm="6">
-            <v-select
-              hide-details
-              :label="$t('pages.outbounds')"
-              multiple chips closable-chips
-              :items="outboundTags"
-              v-model="appConfig.experimental.v2ray_api.stats.outbounds">
-            </v-select>
-          </v-col>
-          <v-col cols="12" sm="6">
-            <v-select
-              hide-details
-              :label="$t('pages.clients')"
-              multiple chips closable-chips
-              :items="clientNames"
-              v-model="appConfig.experimental.v2ray_api.stats.users">
-            </v-select>
-          </v-col>
-        </v-row>
       </v-expansion-panel-text>
     </v-expansion-panel>
   </v-expansion-panels>
 </template>
 
 <script lang="ts" setup>
-import Data from '@/store/modules/data';
-import Dial from '@/components/Dial.vue';
-import { computed } from 'vue';
-import { Config, Ntp } from '@/types/config';
-import { Client } from '@/types/clients';
+import Data from '@/store/modules/data'
+import Dial from '@/components/Dial.vue'
+import { computed, ref, onMounted } from 'vue'
+import { Config, Ntp } from '@/types/config'
+import { Client } from '@/types/clients'
+import { FindDiff } from '@/plugins/utils'
+
+const oldConfig = ref({})
+const loading = ref(false)
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
 })
 
-const inboundTags = computed((): string[] => {
-  return appConfig.value.inbounds.map(i => i.tag)
+onMounted(async () => {
+  oldConfig.value = JSON.parse(JSON.stringify(Data().config))
 })
 
+const stateChange = computed(() => {
+  return FindDiff.deepCompare(appConfig.value,oldConfig.value)
+})
+
+const saveConfig = async () => {
+  loading.value = true
+  const success = await Data().save("config", "set", appConfig.value)
+  if (success) {
+    oldConfig.value = JSON.parse(JSON.stringify(Data().config))
+    loading.value = false
+  }
+}
+
 const outboundTags = computed((): string[] => {
-  return appConfig.value.outbounds.map(o => o.tag)
+  return [...Data().outbounds?.map((o:any) => o.tag), ...Data().endpoints?.map((e:any) => e.tag)]
 })
 
 const clientNames = computed((): string[] => {
-  const clients = <Client[]>Data().clients
-  return clients?.map(c => c.name)
+  return Data().clients.map((c:any) => c.name)
 })
 
 const levels = ["trace", "debug", "info", "warn", "error", "fatal", "panic"]
@@ -384,8 +314,4 @@ const enableCacheFile = computed({
   }
 })
 
-const enableClashApi = computed({
-  get() { return appConfig.value.experimental.clash_api != undefined },
-  set(v:boolean) { v ? appConfig.value.experimental.clash_api = {} : delete appConfig.value.experimental.clash_api }
-})
 </script>

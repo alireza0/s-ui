@@ -298,11 +298,11 @@ import { push } from 'notivue'
 import { i18n } from '@/locales'
 import RandomUtil from '@/plugins/randomUtil'
 export default {
-  props: ['visible', 'data', 'index'],
+  props: ['visible', 'data', 'id'],
   emits: ['close', 'save'],
   data() {
     return {
-      tls: { id: -1, name: '', inbounds: [], server: <iTls>{ enabled: true }, client: <oTls>{} },
+      tls: { id: 0, name: '', server: <iTls>{ enabled: true }, client: <oTls>{} },
       title: "add",
       loading: false,
       menu: false,
@@ -354,15 +354,17 @@ export default {
   },
   methods: {
     updateData() {
-      if (this.$props.index != -1) {
+      if (this.$props.id > 0) {
         const newData = JSON.parse(this.$props.data)
         this.tls = newData
+        if (this.tls.server == null) this.tls.server = {}
+        if (this.tls.client == null) this.tls.client = {}
         this.tlsType = newData.server?.reality == undefined ? 0 : 1
         this.usePath = newData.server?.key == undefined ? 0 : 1
         this.title = "edit"
       }
       else {
-        this.tls = { id: 0, name: '', inbounds: [], server: {enabled: true}, client: {} }
+        this.tls = { id: 0, name: '', server: {enabled: true}, client: {} }
         this.tlsType = 0
         this.usePath = 0
         this.title = "add"
@@ -461,10 +463,10 @@ export default {
   },
   computed: {
     inTls(): iTls {
-      return <iTls> this.tls.server
+      return this.tls.server
     },
     outTls(): oTls {
-      return <oTls> this.tls.client
+      return this.tls.client
     },
     certText: {
       get(): string { return this.inTls.certificate ? this.inTls.certificate.join('\n') : '' },
@@ -476,11 +478,11 @@ export default {
     },
     disableSni: {
       get() { return this.outTls.disable_sni ?? false },
-      set(v: boolean) { this.outTls.disable_sni = v ? true : undefined }
+      set(v: boolean) { this.tls.client.disable_sni = v ? true : undefined }
     },
     insecure: {
       get() { return this.outTls.insecure ?? false },
-      set(v: boolean) { this.outTls.insecure = v ? true : undefined }
+      set(v: boolean) { this.tls.client.insecure = v ? true : undefined }
     },
     server_port: {
       get() { return this.inTls.reality?.handshake?.server_port ? this.inTls.reality.handshake.server_port : 443 },

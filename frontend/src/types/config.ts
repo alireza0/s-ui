@@ -83,8 +83,6 @@ interface RouteRuleSet {
 
 interface Experimental {
   cache_file?: CacheFile
-  clash_api?: ClashApi
-  v2ray_api: V2rayApi
 }
 
 interface CacheFile {
@@ -92,27 +90,6 @@ interface CacheFile {
   path?: string
   cache_id?: string
   store_fakeip?: boolean
-}
-
-interface V2rayApi {
-  listen: string
-  stats: V2rayApiStats
-}
-
-export interface V2rayApiStats {
-  enabled: boolean
-  inbounds: string[]
-  outbounds: string[]
-  users: string[]
-}
-
-interface ClashApi {
-  external_controller?: string
-  external_ui?: string
-  external_ui_download_url?: string
-  external_ui_download_detour?: string
-  secret?: string
-  default_mode?: string
 }
 
 export interface Config {

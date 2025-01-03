@@ -3,50 +3,49 @@ import { iTls } from "@/types/inTls"
 import { oTls } from "@/types/outTls"
 import RandomUtil from "./randomUtil"
 
-export function fillData(out: any, inbound: Inbound, tlsClient: any) {
-  if (Object.hasOwn(inbound, 'tls')) {
-    const inb = <any>inbound
-    addTls(out,inb.tls,tlsClient)
+export function fillData(inbound: Inbound, tls: any | null = null) {
+  if (tls != null) {
+    addTls(inbound.out_json, tls.server, tls.client)
   } else {
-    delete out.tls
+    delete inbound.out_json.tls
   }
-  out.type = inbound.type
-  out.tag = inbound.tag
-  out.server = location.hostname
-  out.server_port = inbound.listen_port
+  inbound.out_json.type = inbound.type
+  inbound.out_json.tag = inbound.tag
+  inbound.out_json.server = location.hostname
+  inbound.out_json.server_port = inbound.listen_port
   switch(inbound.type){
     case InTypes.HTTP: case InTypes.SOCKS: case InTypes.Mixed:
       return
     case InTypes.Shadowsocks:
-      shadowsocksOut(out, <Shadowsocks>inbound)
+      shadowsocksOut(inbound.out_json, <Shadowsocks>inbound)
       return
     case InTypes.ShadowTLS:
-      shadowTlsOut(out, <ShadowTLS>inbound)
+      shadowTlsOut(inbound.out_json, <ShadowTLS>inbound)
       return
     case InTypes.Hysteria:
-      hysteriaOut(out, <Hysteria>inbound)
+      hysteriaOut(inbound.out_json, <Hysteria>inbound)
       return
     case InTypes.Hysteria2:
-      hysteria2Out(out, <Hysteria2>inbound)
+      hysteria2Out(inbound.out_json, <Hysteria2>inbound)
       return
     case InTypes.TUIC:
-      tuicOut(out, <TUIC>inbound)
+      tuicOut(inbound.out_json, <TUIC>inbound)
       return
     case InTypes.VLESS:
-      vlessOut(out, <VLESS>inbound)
+      vlessOut(inbound.out_json, <VLESS>inbound)
       return
     case InTypes.Trojan:
-      trojanOut(out, <Trojan>inbound)
+      trojanOut(inbound.out_json, <Trojan>inbound)
       return
     case InTypes.VMess:
-      vmessOut(out, <VMess>inbound)
+      vmessOut(inbound.out_json, <VMess>inbound)
       return
   }
-  Object.keys(out).forEach(key => delete out[key])
+  Object.keys(inbound.out_json).forEach(key => delete inbound.out_json[key])
 }
 
 function addTls(out: any, tls: iTls, tlsClient: oTls){
-  out.tls = tlsClient
+  out.tls = tlsClient?? {}
   if(tls.enabled) out.tls.enabled = tls.enabled
   if(tls.server_name) out.tls.server_name = tls.server_name
   if(tls.alpn) out.tls.alpn = tls.alpn

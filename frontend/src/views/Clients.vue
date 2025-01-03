@@ -3,10 +3,9 @@
   <ClientModal 
     v-model="modal.visible"
     :visible="modal.visible"
-    :index="modal.index"
+    :id="modal.id"
     :data="modal.data"
     :groups="groups"
-    :stats="modal.stats"
     :inboundTags="inboundTags"
     @close="closeModal"
     @save="saveModal"
@@ -34,7 +33,7 @@
   />
   <v-row justify="center" align="center">
     <v-col cols="auto">
-      <v-btn color="primary" @click="showModal(-1)">{{ $t('actions.add') }}</v-btn>
+      <v-btn color="primary" @click="showModal(0)">{{ $t('actions.add') }}</v-btn>
     </v-col>
     <v-col cols="auto">
       <v-menu v-model="actionMenu" :close-on-content-click="false" location="bottom center">
@@ -147,7 +146,6 @@
               <v-col cols="auto">
                 <v-switch color="primary"
                 v-model="item.enable"
-                @update:model-value="buildInboundsUsers(item.inbounds)"
                 hideDetails density="compact" />
               </v-col>
             </v-row>
@@ -162,7 +160,7 @@
               <v-col>{{ $t('pages.inbounds') }}</v-col>
               <v-col dir="ltr">
                 <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="item.inbounds != ''">
-                  <span v-for="i in item.inbounds">{{ i }}<br /></span>
+                  <span v-for="i in item.inbounds">{{ inbounds.find(inb => inb.id == i)?.tag }}<br /></span>
                 </v-tooltip>
                 {{ item.inbounds.length }}
               </v-col>
@@ -230,7 +228,7 @@
               <v-icon />
               <v-tooltip activator="parent" location="top" text="QR-Code"></v-tooltip>
             </v-btn>
-            <v-btn icon="mdi-chart-line" @click="showStats(item.name)" v-if="v2rayStats.users.includes(item.name)">
+            <v-btn icon="mdi-chart-line" @click="showStats(item.name)">
               <v-icon />
               <v-tooltip activator="parent" location="top" :text="$t('stats.graphTitle')"></v-tooltip>
             </v-btn>
@@ -324,7 +322,7 @@
         >
           mdi-qrcode
         </v-icon>
-        <v-icon icon="mdi-chart-line" @click="showStats(item.name)" v-if="v2rayStats.users.includes(item.name)">
+        <v-icon icon="mdi-chart-line" @click="showStats(item.name)">
           <v-tooltip activator="parent" location="top" :text="$t('stats.graphTitle')"></v-tooltip>
         </v-icon>
       </template>
@@ -349,8 +347,7 @@ import QrCode from '@/layouts/modals/QrCode.vue'
 import Stats from '@/layouts/modals/Stats.vue'
 import { Client, createClient } from '@/types/clients'
 import { computed, ref } from 'vue'
-import { Config, V2rayApiStats } from '@/types/config'
-import { InTypes, Inbound,InboundWithUser, ShadowTLS, VLESS } from '@/types/inbounds'
+import { Inbound, inboundWithUsers } from '@/types/inbounds'
 import { Link, LinkUtil } from '@/plugins/link'
 import { HumanReadable } from '@/plugins/utils'
 import { i18n } from '@/locales'
@@ -367,21 +364,13 @@ const isOnline = (cname: string) => computed(() => {
   return Data().onlines?.user ? Data().onlines.user.includes(cname) : false
 })
 
-const appConfig = computed((): Config => {
-  return <Config> Data().config
-})
-
-const v2rayStats = computed((): V2rayApiStats => {
-  return <V2rayApiStats> appConfig.value.experimental.v2ray_api.stats
-})
-
 const inbounds = computed((): Inbound[] => {
-  return <Inbound[]> appConfig.value?.inbounds
+  return <Inbound[]> Data().inbounds?? []
 })
 
-const inboundTags = computed((): string[] => {
+const inboundTags = computed((): any[] => {
   if (!inbounds.value) return []
-  return inbounds.value?.filter(i => i.tag != "" && Object.hasOwn(i,'users')).map(i => i.tag)
+  return inbounds.value?.filter(i => i.tag != "" && inboundWithUsers.includes(i.type)).map(i => { return { title: i.tag, value: i.id } })
 })
 
 const groups = computed((): string[] => {
@@ -430,102 +419,44 @@ const groupBy = [
 
 const modal = ref({
   visible: false,
-  index: -1,
+  id: 0,
   data: "",
-  stats: false,
 })
 
 const delOverlay = ref(new Array<boolean>(clients.value.length).fill(false))
 
-const showModal = (id: number) => {
-  const index = id == -1 ? -1 : clients.value.findIndex(c => c.id == id)
-  modal.value.index = index
-  modal.value.data = index == -1 ? '' : JSON.stringify(clients.value[index])
-  modal.value.stats = index == -1 ? false : v2rayStats.value.users.includes(clients.value[index].name)
+const showModal = async (id: number) => {
+  modal.value.id = id
+  modal.value.data = id == 0 ? '' : JSON.stringify(clients.value.findLast(o => o.id == id))
   modal.value.visible = true
 }
 const closeModal = () => {
   modal.value.visible = false
 }
-const saveModal = (data:any, stats:boolean) => {
+const saveModal = async (data:any) => {
   // Check duplicate name
-  const oldName = modal.value.index != -1 ? clients.value[modal.value.index].name : null
+  const oldName = modal.value.id > 0 ? clients.value.findLast(i => i.id == modal.value.id)?.name : null
   if (data.name != oldName && clients.value.findIndex(c => c.name == data.name) != -1) {
     push.error({
       message: i18n.global.t('error.dplData') + ": " + i18n.global.t('client.name')
     })
     return
   }
-  if(modal.value.index == -1) {
-    clients.value.push(data)
-  } else {
-    clients.value[modal.value.index] = data
-  }
-
-  // Rebuild affected inbounds
-  buildInboundsUsers(data.inbounds)
 
   // Rebuild links
-  data.links = updateLinks(data)
+  const clientInbounds = data.inbounds.length == 0 ? [] : await Data().loadInbounds(data.inbounds)
+  data.links = updateLinks(data, clientInbounds)
 
-  // Set Client Stats
-  const sIndex = v2rayStats.value.users.findIndex(i => i == data.name) // Find if new user exists
-
-  if (oldName != data.name) {
-    v2rayStats.value.users = v2rayStats.value.users.filter(item => item != oldName)
-  }
-
-  if (stats) {
-    // Add if dos not exist
-    if (data.name.length>0 && sIndex == -1) v2rayStats.value.users.push(data.name)
-  } else {
-    // Delete if exists
-    if (sIndex != -1) v2rayStats.value.users.splice(sIndex,1)
-  }
-
-  modal.value.visible = false
+  // save data
+  const success = await Data().save("clients", modal.value.id == 0 ? "new" : "edit", data)
+  if (success) modal.value.visible = false
 }
-const buildInboundsUsers = (inboundTags:string[]) => {
-    inboundTags.forEach(tag => {
-      const inbound_index = inbounds.value.findIndex(i => i.tag == tag)
-      if (inbound_index != -1){
-        const users = <any>[]
-        const newInbound = <InboundWithUser>inbounds.value[inbound_index]
-        const inboundClients = clients.value.filter(c => c.enable && c.inbounds.includes(tag))
-        inboundClients.forEach(c => {
-          // Remove flow in non tls VLESS
-          if (newInbound.type == InTypes.VLESS) {
-            const vlessInbound = <VLESS>newInbound
-            if (!vlessInbound.tls?.enabled || vlessInbound.transport?.type) delete(c.config?.vless?.flow)
-          }
-          users.push(c.config[newInbound.type])
-        })
-        newInbound.users = users
 
-        // Exceptions for Naive and ShadowTLSv3
-        if (users.length == 0){
-          if (newInbound.type == InTypes.Naive) {
-            newInbound.users = <any>[{}]
-          } else {
-            if (newInbound.type == InTypes.ShadowTLS){
-              const ssTls = <ShadowTLS>newInbound
-              if (ssTls.version == 3) newInbound.users = <any>[{}]
-            }
-          }
-        }
-
-        inbounds.value[inbound_index] = newInbound
-      }
-    })
-}
-const updateLinks = (c:Client):Link[] => {
-  const clientInbounds = <Inbound[]>inbounds.value.filter(i => c.inbounds.includes(i.tag))
+const updateLinks = (c:Client, clientInbounds:Inbound[]):Link[] => {
   const newLinks = <Link[]>[]
   clientInbounds.forEach(i =>{
-    const tlsConfig = <any>Data().tlsConfigs?.findLast((t:any) => t.inbounds.includes(i.tag))
-    const cData = <any>Data().inData?.findLast((d:any) => d.tag == i.tag)
-    const addrs = cData ? <any[]>cData.addrs : []
-    const uris = LinkUtil.linkGenerator(c,i, tlsConfig?.client?? {}, addrs)
+    const tls = i.tls_id && i.tls_id>0 ? Data().tlsConfigs?.findLast((t:any) => t.id == i.tls_id) : undefined
+    const uris = LinkUtil.linkGenerator(c,i, tls, i.addrs)
     if (uris.length>0){
       uris.forEach(uri => {
         newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
@@ -537,21 +468,10 @@ const updateLinks = (c:Client):Link[] => {
 
   return links
 }
-const delClient = (id: number) => {
-  const clientIndex = clients.value.findIndex(c => c.id === id)
-  const oldData = createClient(clients.value[clientIndex])
-
-  // Delete stats if exists and will be orphaned
-  const tagCounts = clients.value.filter(i => i.name == oldData.name).length
-  const sIndex = v2rayStats.value.users.findIndex(i => i == oldData.name)
-  if (tagCounts == 1 && sIndex != -1){
-    v2rayStats.value.users.splice(sIndex,1)
-  }
-
-  clients.value.splice(clientIndex,1)
-  buildInboundsUsers(oldData.inbounds)
-  if (id>0) Data().delClient(id)
-  delOverlay.value[clientIndex] = false
+const delClient = async (id: number) => {
+  const index = clients.value.findIndex(c => c.id === id)
+  const success = await Data().save("clients", "del", id)
+  if (success) delOverlay.value[index] = false
 }
 
 const qrcode = ref({
@@ -636,14 +556,12 @@ const closeBulk = () => {
   addBulkModal.value = false
 }
 
-const saveBulk = (bulkClients: Client[], clientInbounds: string[], clientStats: boolean) => {
+const saveBulk = async (bulkClients: Client[], clientInbounds: number[]) => {
+  const inboundData = clientInbounds.length == 0 ? [] : await Data().loadInbounds(clientInbounds)
   bulkClients.forEach((c,c_index) => {
-    bulkClients[c_index].links = updateLinks(c)
+    bulkClients[c_index].links = updateLinks(c, inboundData)
   })
   clients.value.push(...bulkClients)
-  buildInboundsUsers(clientInbounds)
-  // Stats
-  if (clientStats) v2rayStats.value.users.push(...bulkClients.map(bc => bc.name))
   closeBulk()
 }
 </script>

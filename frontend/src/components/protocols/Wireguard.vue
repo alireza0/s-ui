@@ -2,22 +2,40 @@
   <v-card subtitle="Wireguard">
     <v-row>
       <v-col cols="12" sm="8">
-        <v-text-field v-model="data.private_key" :label="$t('types.wg.privKey')" hide-details></v-text-field>
+        <v-text-field
+          v-model="data.private_key"
+          :label="$t('types.wg.privKey')"
+          append-icon="mdi-key-star"
+          @click:append="newKey()"
+          hide-details>
+        </v-text-field>
       </v-col>
       <v-col cols="12" sm="8">
-        <v-text-field v-model="data.peer_public_key" :label="$t('types.wg.pubKey')" hide-details></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="8" v-if="data.pre_shared_key != undefined">
-        <v-text-field v-model="data.pre_shared_key" :label="$t('types.wg.psk')" hide-details></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="8">
-        <v-text-field v-model="local_ips" :label="$t('types.wg.localIp') + ' ' + $t('commaSeparated')" hide-details></v-text-field>
+        <v-text-field v-model="address" :label="$t('types.wg.localIp') + ' ' + $t('commaSeparated')" hide-details></v-text-field>
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12" sm="6" md="4" v-if="data.reserved != undefined">
-        <v-text-field v-model="reserved" :label="'Reserved ' + $t('commaSeparated')" hide-details></v-text-field>
+      <v-col cols="12" sm="6" md="4">
+        <v-text-field
+          :label="$t('in.port')"
+          hide-details
+          type="number"
+          min=1
+          v-model.number="data.listen_port">
+        </v-text-field>
       </v-col>
+      <v-col cols="12" sm="6" md="4" v-if="data.udp_timeout != undefined">
+        <v-text-field
+          label="UDP Timeout"
+          hide-details
+          type="number"
+          min=0
+          :suffix="$t('date.m')"
+          v-model.number="udp_timeout">
+        </v-text-field>
+      </v-col>
+    </v-row>
+    <v-row>
       <v-col cols="12" sm="6" md="4" v-if="data.workers != undefined">
         <v-text-field
         :label="$t('types.wg.worker')"
@@ -39,22 +57,14 @@
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" md="4">
-        <Network :data="data" />
+        <v-switch v-model="data.system" color="primary" :label="$t('types.wg.sysIf')" hide-details></v-switch>
       </v-col>
-      <v-col cols="12" sm="6" md="4" v-if="data.interface_name != undefined">
+      <v-col cols="12" sm="6" md="4" v-if="data.name != undefined">
         <v-text-field
           :label="$t('types.wg.ifName')"
           hide-details
-          v-model.number="data.interface_name">
+          v-model="data.name">
         </v-text-field>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="data.system_interface" color="primary" :label="$t('types.wg.sysIf')" hide-details></v-switch>
-      </v-col>
-      <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="data.gso" color="primary" :label="$t('types.wg.gso')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-card-actions>
@@ -66,10 +76,7 @@
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionPsk" color="primary" :label="$t('types.wg.psk')" hide-details></v-switch>
-            </v-list-item>
-            <v-list-item>
-              <v-switch v-model="optionRsrv" color="primary" label="Reserved" hide-details></v-switch>
+              <v-switch v-model="optionUdp" color="primary" label="UDP Timeout" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionWorker" color="primary" :label="$t('types.wg.worker')" hide-details></v-switch>
@@ -79,9 +86,6 @@
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionInterface" color="primary" :label="$t('types.wg.ifName')" hide-details></v-switch>
-            </v-list-item>
-            <v-list-item>
-              <v-switch v-model="optionPeers" color="primary" :label="$t('types.wg.multiPeer')" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>
@@ -95,7 +99,7 @@
     <template v-for="(p, index) in data.peers">
       <v-card style="margin-top: 1rem;">
         <v-card-subtitle>
-          {{ $t('types.wg.peer') + ' ' + (index+1) }} <v-icon icon="mdi-delete" @click="data.peers.splice(index,1)" />
+          {{ $t('types.wg.peer') + ' ' + (index+1) }} <v-icon icon="mdi-delete" @click="data.peers.splice(index,1)" v-if="data.peers.length > 1" />
         </v-card-subtitle>
         <Peer :data="p" />
       </v-card>
@@ -104,9 +108,8 @@
 </template>
 
 <script lang="ts">
-import Network from '@/components/Network.vue'
 import Peer from '@/components/WgPeer.vue'
-import { WgPeer } from '@/types/outbounds'
+import WgUtil from '@/plugins/wgUtil'
 
 export default {
   props: ['data'],
@@ -117,13 +120,19 @@ export default {
   },
   methods: {
     addPeer() { 
-      this.$props.data.peers.push({server: '', port: ''})
+      this.$props.data.peers.push({
+        address: '',
+        port: this.$props.data.listen_port
+      })
+    },
+    newKey() {
+      this.$props.data.private_key = WgUtil.generateKeypair().privateKey
     }
   },
   computed: {
-    optionPsk: {
-      get(): boolean { return this.$props.data.pre_shared_key != undefined },
-      set(v:boolean) { this.$props.data.pre_shared_key = v ? "" : undefined }
+    optionUdp: {
+      get(): boolean { return this.$props.data.udp_timeout != undefined },
+      set(v:boolean) { this.$props.data.udp_timeout = v ? "5m" : undefined }
     },
     optionRsrv: {
       get(): boolean { return this.$props.data.reserved != undefined },
@@ -138,16 +147,12 @@ export default {
       set(v:boolean) { this.$props.data.mtu = v ? 1408 : undefined }
     },
     optionInterface: {
-      get(): boolean { return this.$props.data.interface_name != undefined },
-      set(v:boolean) { this.$props.data.interface_name = v ? "" : undefined }
+      get(): boolean { return this.$props.data.name != undefined },
+      set(v:boolean) { this.$props.data.name = v ? "" : undefined }
     },
-    optionPeers: {
-      get(): boolean { return this.$props.data.peers != undefined },
-      set(v:boolean) { this.$props.data.peers = v ? <WgPeer[]>[] : undefined }
-    },
-    local_ips: {
-      get() { return this.$props.data.local_address?.join(',') },
-      set(v:string) { this.$props.data.local_address = v.length > 0 ? v.split(',') : undefined }
+    address: {
+      get() { return this.$props.data.address?.join(',') },
+      set(v:string) { this.$props.data.address = v.length > 0 ? v.split(',') : undefined }
     },
     reserved: {
       get() { return this.$props.data.reserved?.join(',') },
@@ -157,7 +162,11 @@ export default {
         }
       }
     },
+    udp_timeout: {
+      get() { return this.$props.data.udp_timeout ? parseInt(this.$props.data.udp_timeout.replace('m','')) : 5 },
+      set(v:number) { this.$props.data.udp_timeout = v > 0 ? v + 'm' : '5m' }
+    }
   },
-  components: { Network, Peer }
+  components: { Peer }
 }
 </script>

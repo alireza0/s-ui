@@ -1,10 +1,10 @@
 <template>
-  <OutboundVue 
+  <EndpointVue 
     v-model="modal.visible"
     :visible="modal.visible"
     :id="modal.id"
     :data="modal.data"
-    :tags="outboundTags"
+    :tags="endpointTags"
     @close="closeModal"
     @save="saveModal"
   />
@@ -21,7 +21,7 @@
     </v-col>
   </v-row>
   <v-row>
-    <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>outbounds" :key="item.tag">
+    <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>endpoints" :key="item.tag">
       <v-card rounded="xl" elevation="5" min-width="200" :title="item.tag">
         <v-card-subtitle style="margin-top: -20px;">
           <v-row>
@@ -32,19 +32,19 @@
           <v-row>
             <v-col>{{ $t('in.addr') }}</v-col>
             <v-col dir="ltr">
-              {{ item.server?? '-' }}
+              {{ item.address?.length>0 ? item.address[0] : '-' }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('in.port') }}</v-col>
             <v-col dir="ltr">
-              {{ item.server_port?? '-' }}
+              {{ item.listen_port?? '-' }}
             </v-col>
           </v-row>
           <v-row>
-            <v-col>{{ $t('objects.tls') }}</v-col>
+            <v-col>{{ $t('types.wg.peers') }}</v-col>
             <v-col dir="ltr">
-              {{ Object.hasOwn(item,'tls') ? $t(item.tls?.enabled ? 'enable' : 'disable') : '-'  }}
+              {{ item.peers.length?? '-'  }}
             </v-col>
           </v-row>
           <v-row>
@@ -76,7 +76,7 @@
               <v-divider></v-divider>
               <v-card-text>{{ $t('confirm') }}</v-card-text>
               <v-card-actions>
-                <v-btn color="error" variant="outlined" @click="delOutbound(item.tag)">{{ $t('yes') }}</v-btn>
+                <v-btn color="error" variant="outlined" @click="delEndpoint(item.tag)">{{ $t('yes') }}</v-btn>
                 <v-btn color="success" variant="outlined" @click="delOverlay[index] = false">{{ $t('no') }}</v-btn>
               </v-card-actions>
             </v-card>
@@ -93,23 +93,23 @@
 
 <script lang="ts" setup>
 import Data from '@/store/modules/data'
-import OutboundVue from '@/layouts/modals/Outbound.vue'
+import EndpointVue from '@/layouts/modals/Endpoint.vue'
 import Stats from '@/layouts/modals/Stats.vue'
-import { Outbound } from '@/types/outbounds';
+import { Endpoint } from '@/types/endpoints';
 import { computed, ref } from 'vue'
 import { i18n } from '@/locales';
 import { push } from 'notivue';
 
-const outbounds = computed((): Outbound[] => {
-  return <Outbound[]> Data().outbounds
+const endpoints = computed((): Endpoint[] => {
+  return <Endpoint[]> Data().endpoints
 })
 
-const outboundTags = computed((): any[] => {
-  return outbounds.value?.map((o:Outbound) => o.tag)
+const endpointTags = computed((): any[] => {
+  return endpoints.value?.map((o:Endpoint) => o.tag)
 })
 
 const onlines = computed(() => {
-  return Data().onlines.outbound?? []
+  return [...Data().onlines.inbound?? [], ...Data().onlines.outbound??[] ]
 })
 
 const modal = ref({
@@ -122,17 +122,17 @@ let delOverlay = ref(new Array<boolean>)
 
 const showModal = (id: number) => {
   modal.value.id = id
-  modal.value.data = id == 0 ? '' : JSON.stringify(outbounds.value.findLast(o => o.id == id))
+  modal.value.data = id == 0 ? '' : JSON.stringify(endpoints.value.findLast(o => o.id == id))
   modal.value.visible = true
 }
 
 const closeModal = () => {
   modal.value.visible = false
 }
-const saveModal = async (data:Outbound) => {
+const saveModal = async (data:Endpoint) => {
   // Check duplicate tag
-  const oldTag = modal.value.id > 0 ? outbounds.value.findLast(i => i.id == modal.value.id)?.tag : null
-  if (data.tag != oldTag && outboundTags.value.includes(data.tag)) {
+  const oldTag = modal.value.id > 0  ? endpoints.value.findLast(i => i.id == modal.value.id)?.tag : null
+  if (data.tag != oldTag && endpointTags.value.includes(data.tag)) {
     push.error({
       message: i18n.global.t('error.dplData') + ": " + i18n.global.t('objects.tag')
     })
@@ -140,23 +140,19 @@ const saveModal = async (data:Outbound) => {
   }
 
   // save data
-  const success = await Data().save("outbounds", modal.value.id == 0 ? "new" : "edit", data)
-  if (!success) {
-    return
-  }
-
-  modal.value.visible = false
+  const success = await Data().save("endpoints", modal.value.id == 0 ? "new" : "edit", data)
+  if (success) modal.value.visible = false
 }
 
 const stats = ref({
   visible: false,
-  resource: "outbound",
+  resource: "endpoint",
   tag: "",
 })
 
-const delOutbound = async (tag: string) => {
-  const index = outbounds.value.findIndex(i => i.tag == tag)
-  const success = await Data().save("outbounds", "del", tag)
+const delEndpoint = async (tag: string) => {
+  const index = endpoints.value.findIndex(i => i.tag == tag)
+  const success = await Data().save("endpoints", "del", tag)
   if (success) delOverlay.value[index] = false
 }
 
@@ -166,9 +162,5 @@ const showStats = (tag: string) => {
 }
 const closeStats = () => {
   stats.value.visible = false
-}
-
-function awaitData() {
-  throw new Error('Function not implemented.');
 }
 </script>

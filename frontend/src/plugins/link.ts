@@ -15,24 +15,24 @@ function utf8ToBase64(utf8String: string): string {
 }
 
 export namespace LinkUtil {
-  export function linkGenerator(user: Client, inbound: Inbound, tlsClient: any = {}, addrs: any[] = []): string[] {
+  export function linkGenerator(user: Client, inbound: Inbound, tls: any = {}, addrs: any[] = []): string[] {
     switch(inbound.type){
       case InTypes.Shadowsocks:
         return shadowsocksLink(user,<Shadowsocks>inbound, addrs)
       case InTypes.Naive:
-        return naiveLink(user,<Naive>inbound, addrs, tlsClient)
+        return naiveLink(user,<Naive>inbound, addrs, tls)
       case InTypes.Hysteria:
-        return hysteriaLink(user,<Hysteria>inbound, addrs, tlsClient)
+        return hysteriaLink(user,<Hysteria>inbound, addrs, tls)
       case InTypes.Hysteria2:
-        return hysteria2Link(user,<Hysteria2>inbound, addrs, tlsClient)
+        return hysteria2Link(user,<Hysteria2>inbound, addrs, tls)
       case InTypes.TUIC:
-        return tuicLink(user,<TUIC>inbound, addrs, tlsClient)
+        return tuicLink(user,<TUIC>inbound, addrs, tls)
       case InTypes.VLESS:
-        return vlessLink(user,<VLESS>inbound, addrs, tlsClient)
+        return vlessLink(user,<VLESS>inbound, addrs, tls)
       case InTypes.Trojan:
-        return trojanLink(user,<Trojan>inbound, addrs, tlsClient)
+        return trojanLink(user,<Trojan>inbound, addrs, tls)
       case InTypes.VMess:
-        return vmessLink(user,<VMess>inbound, addrs, tlsClient)
+        return vmessLink(user,<VMess>inbound, addrs, tls)
     }
     return []
   }
@@ -71,17 +71,17 @@ export namespace LinkUtil {
     return links
   }
 
-  function hysteriaLink(user: Client, inbound: Hysteria, addrs: any[], tlsClient: any): string[] {
+  function hysteriaLink(user: Client, inbound: Hysteria, addrs: any[], tls: any): string[] {
     const auth = user.config.hysteria.auth_str
     const params = {
       upmbps: inbound.up_mbps?? null,
       downmbps: inbound.down_mbps?? null,
       auth: auth?? null,
-      peer: inbound.tls.server_name?? null,
-      alpn: inbound.tls.alpn?.join(',')?? null,
+      peer: tls?.server?.server_name?? null,
+      alpn: tls?.server?.alpn?.join(',')?? null,
       obfsParam: inbound.obfs?? null,
       fastopen: inbound.tcp_fast_open? 1 : 0,
-      insecure: tlsClient?.insecure ? 1 : null
+      insecure: tls?.client?.insecure ? 1 : null
     }
 
     let links = <string[]>[]
@@ -105,12 +105,12 @@ export namespace LinkUtil {
         if (a.server_name?.length>0) {
           uri.searchParams.set('peer', a.server_name)
         } else {
-          inbound.tls.server_name ? uri.searchParams.set('peer', inbound.tls.server_name) : uri.searchParams.delete('peer')
+          tls?.server?.server_name ? uri.searchParams.set('peer', tls?.server?.server_name) : uri.searchParams.delete('peer')
         }
         if (a.insecure) {
           uri.searchParams.set('insecure', '1')
         } else {
-          tlsClient.insecure ? uri.searchParams.set('insecure', '1') : uri.searchParams.delete('insecure')
+          tls?.client?.insecure ? uri.searchParams.set('insecure', '1') : uri.searchParams.delete('insecure')
         }
         uri.hash = encodeURIComponent(a.remark ? inbound.tag + a.remark : inbound.tag)
         links.push(uri.toString())
@@ -119,17 +119,17 @@ export namespace LinkUtil {
     return links
   }
 
-  function hysteria2Link(user: Client, inbound: Hysteria2, addrs: any[], tlsClient: any): string[] {
+  function hysteria2Link(user: Client, inbound: Hysteria2, addrs: any[], tls: any): string[] {
     const password = user.config.hysteria2.password
     const params = {
       upmbps: inbound.up_mbps?? null,
       downmbps: inbound.down_mbps?? null,
-      sni: inbound.tls.server_name?? null,
-      alpn: inbound.tls.alpn?.join(',')?? null,
+      sni: tls?.server?.server_name?? null,
+      alpn: tls?.server?.alpn?.join(',')?? null,
       obfs: inbound.obfs?.type?? null,
       'obfs-password': inbound.obfs?.password?? null,
       fastopen: inbound.tcp_fast_open? 1 : 0,
-      insecure: tlsClient?.insecure ? 1 : null
+      insecure: tls?.client?.insecure ? 1 : null
     }
 
     let links = <string[]>[]
@@ -153,12 +153,12 @@ export namespace LinkUtil {
         if (a.server_name?.length>0) {
           uri.searchParams.set('sni', a.server_name)
         } else {
-          inbound.tls.server_name ? uri.searchParams.set('sni', inbound.tls.server_name) : uri.searchParams.delete('sni')
+          tls?.server?.server_name ? uri.searchParams.set('sni', tls?.server?.server_name) : uri.searchParams.delete('sni')
         }
         if (a.insecure) {
           uri.searchParams.set('insecure', '1')
         } else {
-          tlsClient.insecure ? uri.searchParams.set('insecure', '1') : uri.searchParams.delete('insecure')
+          tls?.client?.insecure ? uri.searchParams.set('insecure', '1') : uri.searchParams.delete('insecure')
         }
         uri.hash = encodeURIComponent(a.remark ? inbound.tag + a.remark : inbound.tag)
         links.push(uri.toString())
@@ -167,17 +167,17 @@ export namespace LinkUtil {
     return links
   }
 
-  function naiveLink(user: Client, inbound: Naive, addrs: any[], tlsClient: any): string[] {
+  function naiveLink(user: Client, inbound: Naive, addrs: any[], tls: any): string[] {
     const password = user.config.naive.password
 
     let links = <string[]>[]
     if (addrs.length == 0) {
       const params = {
         padding: 1,
-        peer: inbound.tls.server_name?? null,
-        alpn: inbound.tls.alpn?.join(',')?? null,
+        peer: tls?.server?.server_name?? null,
+        alpn: tls?.server?.alpn?.join(',')?? null,
         tfo: inbound.tcp_fast_open? 1 : 0,
-        allowInsecure: tlsClient?.insecure ? 1 : null
+        allowInsecure: tls?.client?.insecure ? 1 : null
       }
       const uri = `http2://${utf8ToBase64(user.name + ":" + password + "@" + location.hostname + ":" + inbound.listen_port)}`
       const paramsArray = []
@@ -191,10 +191,10 @@ export namespace LinkUtil {
       addrs.forEach(a => {
         const params = {
           padding: 1,
-          peer: a.server_name?.length>0 ? a.server_name : inbound.tls.server_name?? null,
-          alpn: inbound.tls.alpn?.join(',')?? null,
+          peer: a.server_name?.length>0 ? a.server_name : tls?.server?.server_name?? null,
+          alpn: tls?.server?.alpn?.join(',')?? null,
           tfo: inbound.tcp_fast_open? 1 : 0,
-          allowInsecure: a.insecure ? 1 : tlsClient?.insecure ? 1 : null
+          allowInsecure: a.insecure ? 1 : tls?.client?.insecure ? 1 : null
         }
         const uri = `http2://${utf8ToBase64(user + ":" + password + "@" + a.server + ":" + a.server_port)}`
         const paramsArray = []
@@ -209,14 +209,14 @@ export namespace LinkUtil {
     return links
   }
 
-  function tuicLink(user: Client, inbound: TUIC, addrs: any[], tlsClient: any): string[] {
+  function tuicLink(user: Client, inbound: TUIC, addrs: any[], tls: any): string[] {
     const u = user.config.tuic
     const params = {
-      sni: inbound.tls.server_name?? null,
-      alpn: inbound.tls.alpn?.join(',')?? null,
+      sni: tls?.server?.server_name?? null,
+      alpn: tls?.server?.alpn?.join(',')?? null,
       congestion_control: inbound.congestion_control?? null,
-      allowInsecure: tlsClient?.insecure ? 1 : null,
-      disable_sni: tlsClient?.disable_sni ? 1 : null
+      allowInsecure: tls?.client?.insecure ? 1 : null,
+      disable_sni: tls?.client?.disable_sni ? 1 : null
     }
 
     let links = <string[]>[]
@@ -240,12 +240,12 @@ export namespace LinkUtil {
         if (a.server_name?.length>0) {
           uri.searchParams.set('sni', a.server_name)
         } else {
-          inbound.tls.server_name ? uri.searchParams.set('sni', inbound.tls.server_name) : uri.searchParams.delete('sni')
+          tls?.server?.server_name ? uri.searchParams.set('sni', tls?.server?.server_name) : uri.searchParams.delete('sni')
         }
         if (a.insecure) {
           uri.searchParams.set('allowInsecure', '1')
         } else {
-          tlsClient.insecure ? uri.searchParams.set('allowInsecure', '1') : uri.searchParams.delete('allowInsecure')
+          tls?.client?.insecure ? uri.searchParams.set('allowInsecure', '1') : uri.searchParams.delete('allowInsecure')
         }
         uri.hash = encodeURIComponent(a.remark ? inbound.tag + a.remark : inbound.tag)
         links.push(uri.toString())
@@ -287,7 +287,7 @@ export namespace LinkUtil {
     return params
   }
 
-  function vlessLink(user: Client, inbound: VLESS, addrs: any[], tlsClient: any): string[] {
+  function vlessLink(user: Client, inbound: VLESS, addrs: any[], tls: any): string[] {
     const u = user.config.vless
     const transport = <Transport>inbound.transport
 
@@ -295,14 +295,14 @@ export namespace LinkUtil {
 
     const params = {
       type: transport?.type?? 'tcp',
-      security: inbound.tls?.enabled? inbound.tls?.reality?.enabled ? 'reality' : 'tls' : null,
-      alpn: inbound.tls?.alpn?.join(',')?? null,
-      sni: inbound.tls?.server_name?? null,
-      flow: inbound.tls?.enabled ? u?.flow?? null : null,
-      allowInsecure: tlsClient?.insecure ? 1 : null,
-      fp: tlsClient?.utls?.enabled ? tlsClient.utls.fingerprint : null,
-      pbk: tlsClient?.reality?.public_key?? null,
-      sid: inbound.tls?.reality?.enabled ? (inbound.tls?.reality?.short_id?.length>0 ?  inbound.tls.reality.short_id[RandomUtil.randomInt(inbound.tls.reality.short_id.length)] : null) : null
+      security: tls?.server?.enabled? tls?.server?.reality?.enabled ? 'reality' : 'tls' : null,
+      alpn: tls?.server?.alpn?.join(',')?? null,
+      sni: tls?.server?.server_name?? null,
+      flow: tls?.server?.enabled ? u?.flow?? null : null,
+      allowInsecure: tls?.client?.insecure ? 1 : null,
+      fp: tls?.client?.utls?.enabled ? tls.client.utls.fingerprint : null,
+      pbk: tls?.client?.reality?.public_key?? null,
+      sid: tls?.server?.reality?.enabled ? (tls?.server?.reality?.short_id?.length>0 ?  tls.server.reality.short_id[RandomUtil.randomInt(tls.server.reality.short_id.length)] : null) : null
     }
     let links = <string[]>[]
     if (addrs.length == 0) {
@@ -335,12 +335,12 @@ export namespace LinkUtil {
         if (a.server_name?.length>0) {
           uri.searchParams.set('sni', a.server_name)
         } else {
-          inbound.tls?.server_name ? uri.searchParams.set('sni', inbound.tls.server_name) : uri.searchParams.delete('sni')
+          tls?.server?.server_name ? uri.searchParams.set('sni', tls?.server?.server_name) : uri.searchParams.delete('sni')
         }
         if (a.insecure) {
           uri.searchParams.set('allowInsecure', '1')
         } else {
-          tlsClient.insecure ? uri.searchParams.set('allowInsecure', '1') : uri.searchParams.delete('allowInsecure')
+          tls?.client?.insecure ? uri.searchParams.set('allowInsecure', '1') : uri.searchParams.delete('allowInsecure')
         }
         uri.hash = encodeURIComponent(a.remark ? inbound.tag + a.remark : inbound.tag)
         links.push(uri.toString())
@@ -349,7 +349,7 @@ export namespace LinkUtil {
     return links
   }
 
-  function trojanLink(user: Client, inbound: Trojan, addrs: any[], tlsClient: any): string[] {
+  function trojanLink(user: Client, inbound: Trojan, addrs: any[], tls: any): string[] {
     const u = user.config.trojan
     const transport = <Transport>inbound.transport
 
@@ -357,13 +357,13 @@ export namespace LinkUtil {
 
     const params = {
       type: transport?.type?? 'tcp',
-      security: inbound.tls?.enabled? inbound.tls?.reality?.enabled ? 'reality' : 'tls' : null,
-      alpn: inbound.tls?.alpn?.join(',')?? null,
-      sni: inbound.tls?.server_name?? null,
-      allowInsecure: tlsClient?.insecure ? 1 : null,
-      fp: tlsClient?.utls?.enabled ? tlsClient.utls.fingerprint : null,
-      pbk: tlsClient?.reality?.public_key?? null,
-      sid: inbound.tls?.reality?.enabled ? (inbound.tls?.reality?.short_id?.length>0 ?  inbound.tls.reality.short_id[RandomUtil.randomInt(inbound.tls.reality.short_id.length)] : null) : null
+      security: tls?.server?.enabled? tls?.server?.reality?.enabled ? 'reality' : 'tls' : null,
+      alpn: tls?.server?.alpn?.join(',')?? null,
+      sni: tls?.server?.server_name?? null,
+      allowInsecure: tls?.client?.insecure ? 1 : null,
+      fp: tls?.client?.utls?.enabled ? tls.client.utls.fingerprint : null,
+      pbk: tls?.client?.reality?.public_key?? null,
+      sid: tls?.server?.reality?.enabled ? (tls?.server?.reality?.short_id?.length>0 ?  tls?.server?.reality.short_id[RandomUtil.randomInt(tls?.server?.reality.short_id.length)] : null) : null
     }
 
     let links = <string[]>[]
@@ -397,12 +397,12 @@ export namespace LinkUtil {
         if (a.server_name?.length>0) {
           uri.searchParams.set('sni', a.server_name)
         } else {
-          inbound.tls?.server_name ? uri.searchParams.set('sni', inbound.tls.server_name) : uri.searchParams.delete('sni')
+          tls?.server?.server_name ? uri.searchParams.set('sni', tls?.server?.server_name) : uri.searchParams.delete('sni')
         }
         if (a.insecure) {
           uri.searchParams.set('allowInsecure', '1')
         } else {
-          tlsClient.insecure ? uri.searchParams.set('allowInsecure', '1') : uri.searchParams.delete('allowInsecure')
+          tls?.client?.insecure ? uri.searchParams.set('allowInsecure', '1') : uri.searchParams.delete('allowInsecure')
         }
         uri.hash = encodeURIComponent(a.remark ? inbound.tag + a.remark : inbound.tag)
         links.push(uri.toString())
@@ -411,7 +411,7 @@ export namespace LinkUtil {
     return links
   }
 
-  function vmessLink(user: Client, inbound: VMess, addrs: any[], tlsClient: any): string[] {
+  function vmessLink(user: Client, inbound: VMess, addrs: any[], tls: any): string[] {
     const u = user.config.vmess
     const transport = <Transport>inbound.transport
 
@@ -429,9 +429,9 @@ export namespace LinkUtil {
       path:	tParams.path?? undefined,
       port:	inbound.listen_port,
       ps:	inbound.tag,
-      sni: inbound.tls.server_name?? undefined,
-      tls: Object.keys(inbound.tls).length>0? 'tls' : 'none',
-      allowInsecure: tlsClient?.insecure ? 1 : undefined
+      sni: tls?.server?.server_name?? undefined,
+      tls: tls?.server && Object.keys(tls.server).length>0? 'tls' : 'none',
+      allowInsecure: tls?.client?.insecure ? 1 : undefined
     }
     let links = <string[]>[]
     if (addrs.length == 0) {

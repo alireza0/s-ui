@@ -7,8 +7,8 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sagernet/sing v0.6.0-beta.8
-	github.com/sagernet/sing-box v1.11.0-beta.11
+	github.com/sagernet/sing v0.6.0-beta.9
+	github.com/sagernet/sing-box v1.11.0-beta.19
 	github.com/sagernet/sing-dns v0.4.0-beta.1
 	github.com/shirou/gopsutil/v3 v3.24.5
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
@@ -88,11 +88,11 @@ require (
 	github.com/sagernet/quic-go v0.48.2-beta.1 // indirect
 	github.com/sagernet/reality v0.0.0-20230406110435-ee17307e7691 // indirect
 	github.com/sagernet/sing-mux v0.3.0-alpha.1 // indirect
-	github.com/sagernet/sing-quic v0.4.0-alpha.4 // indirect
+	github.com/sagernet/sing-quic v0.4.0-beta.2 // indirect
 	github.com/sagernet/sing-shadowsocks v0.2.7 // indirect
 	github.com/sagernet/sing-shadowsocks2 v0.2.0 // indirect
 	github.com/sagernet/sing-shadowtls v0.2.0-alpha.2 // indirect
-	github.com/sagernet/sing-tun v0.6.0-beta.6 // indirect
+	github.com/sagernet/sing-tun v0.6.0-beta.7.0.20241229131914-aa9d9c62966f // indirect
 	github.com/sagernet/sing-vmess v0.2.0-beta.1 // indirect
 	github.com/sagernet/smux v0.0.0-20231208180855-7041f6ea79e7 // indirect
 	github.com/sagernet/utls v1.6.7 // indirect
@@ -110,13 +110,13 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/arch v0.11.0 // indirect
-	golang.org/x/crypto v0.29.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.31.0 // indirect
-	golang.org/x/sync v0.9.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect

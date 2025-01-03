@@ -1,3 +1,5 @@
+import { config } from "process";
+
 export default {
   message: "Добро пожаловать",
   success: "успех",
@@ -37,6 +39,7 @@ export default {
     home: "Главная",
     inbounds: "Входящие",
     outbounds: "Исходящие",
+    endpoints: "Эндпоинты",
     clients: "Клиенты",
     rules: "Правила",
     tls: "Настройки TLS",
@@ -75,6 +78,8 @@ export default {
     inbound: "Входящий",
     client: "Клиент",
     outbound: "Исходящий",
+    endpoint: "Точка входа",
+    config: "Настройки",
     rule: "Правило",
     user: "Пользователь",
     tag: "Тег",
@@ -228,7 +233,6 @@ export default {
       worker: "Работники",
       ifName: "Имя интерфейса",
       sysIf: "Системный интерфейс",
-      gso: "Отключение сегментации",
       options: "Параметры Wireguard",
       multiPeer: "Множественный пир",
       allowedIp: "Разрешенные IP",
@@ -394,7 +398,6 @@ export default {
     download: "Скачивание",
     volume: "Объем",
     usage: "Использование",
-    enable: "Включить статистику",
     graphTitle: "График трафика",
     B: "Б",
     KB: "КБ",
