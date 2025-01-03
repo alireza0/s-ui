@@ -1,3 +1,5 @@
+import { config } from "process";
+
 export default {
   message: "خوش آمدید",
   success: "موفق",
@@ -37,6 +39,7 @@ export default {
     home: "خانه",
     inbounds: "ورودی‌ها",
     outbounds: "خروجی‌ها",
+    endpoints: "درگاه‌ها",
     clients: "کاربران",
     rules: "قوانین",
     tls: "رمزنگاری‌ها",
@@ -75,6 +78,8 @@ export default {
     inbound: "ورودی‌",
     client: "کاربر",
     outbound: "خروجی‌",
+    endpoint: "درگاه",
+    config: "پیکربندی",
     rule: "قانون",
     user: "کاربر",
     tag: "برچسب",
@@ -227,7 +232,6 @@ export default {
       worker: "عملگرها",
       ifName: "نام اینترفیس",
       sysIf: "استفاده از اینترفیس سیستم",
-      gso: "بارگذاری تقسیم‌بندی عمومی",
       options: "گزینه‌های Wireguard",
       multiPeer: "چند همتایی",
       allowedIp: "آدرس‌های مجاز",
@@ -393,7 +397,6 @@ export default {
     download: "دانلود",
     volume: "حجم",
     usage: "استفاده",
-    enable: "فعال سازی کنترل ترافیک",
     graphTitle: "نمودار ترافیک",
     B: "ب",
     KB: "ک‌ب",

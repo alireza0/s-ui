@@ -53,6 +53,7 @@ const menu = [
   { title: 'pages.inbounds', icon: 'mdi-cloud-download',  path: '/inbounds' },
   { title: 'pages.clients', icon: 'mdi-account-multiple',  path: '/clients' },
   { title: 'pages.outbounds', icon: 'mdi-cloud-upload',  path: '/outbounds' },
+  { title: 'pages.endpoints', icon: 'mdi-cloud-tags',  path: '/endpoints' },
   { title: 'pages.rules', icon: 'mdi-routes',  path: '/rules' },
   { title: 'pages.tls', icon: 'mdi-certificate',  path: '/tls' },
   { title: 'pages.basics', icon: 'mdi-application-cog',  path: '/basics' },

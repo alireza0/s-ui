@@ -26,7 +26,7 @@ func InitLogger(level logging.Level) {
 
 	backend, err = logging.NewSyslogBackend("")
 	if err != nil {
-		println("Unable to use syslog: " + err.Error())
+		fmt.Println("Unable to use syslog: " + err.Error())
 		backend = logging.NewLogBackend(os.Stderr, "", 0)
 	}
 	if config.IsSystemd() && err != nil {

@@ -58,7 +58,7 @@ func (c *Core) AddOutbound(config []byte) error {
 		factory.NewLogger("outbound/"+outbound_config.Type+"["+outbound_config.Tag+"]"),
 		outbound_config.Tag,
 		outbound_config.Type,
-		outbound_config)
+		outbound_config.Options)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (c *Core) AddEndpoint(config []byte) error {
 		factory.NewLogger("endpoint/"+endpoint_config.Type+"["+endpoint_config.Tag+"]"),
 		endpoint_config.Tag,
 		endpoint_config.Type,
-		endpoint_config)
+		endpoint_config.Options)
 	if err != nil {
 		return err
 	}

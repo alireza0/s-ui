@@ -343,6 +343,14 @@ func (s *SettingService) SetConfig(config string) error {
 	return s.setString("config", config)
 }
 
+func (s *SettingService) SaveConfig(tx *gorm.DB, config json.RawMessage) error {
+	configs, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+	return tx.Model(model.Setting{}).Where("key = ?", "config").Update("value", string(configs)).Error
+}
+
 func (s *SettingService) Save(tx *gorm.DB, changes []model.Changes) error {
 	var err error
 	for _, change := range changes {

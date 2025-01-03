@@ -6,7 +6,7 @@ import (
 )
 
 type DepleteJob struct {
-	service.ConfigService
+	service.ClientService
 }
 
 func NewDepleteJob() *DepleteJob {
@@ -14,7 +14,7 @@ func NewDepleteJob() *DepleteJob {
 }
 
 func (s *DepleteJob) Run() {
-	err := s.ConfigService.DepleteClients()
+	err := s.ClientService.DepleteClients()
 	if err != nil {
 		logger.Warning("Disable depleted users failed: ", err)
 		return

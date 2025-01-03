@@ -1,3 +1,5 @@
+import { en } from "vuetify/lib/locale/index.mjs";
+
 export default {
   message: "Welcome",
   success: "success",
@@ -37,6 +39,7 @@ export default {
     home: "Home",
     inbounds: "Inbounds",
     outbounds: "Outbounds",
+    endpoints: "Endpoints",
     clients: "Clients",
     rules: "Rules",
     tls: "TLS Settings",
@@ -75,6 +78,8 @@ export default {
     inbound: "Inbound",
     client: "Client",
     outbound: "Outbound",
+    endpoint: "Endpoint",
+    config: "Config",
     rule: "Rule",
     user: "User",
     tag: "Tag",
@@ -228,7 +233,6 @@ export default {
       worker: "Workers",
       ifName: "Interface Name",
       sysIf: "System Interface",
-      gso: "Segmentation Offload",
       options: "Wireguard Options",
       multiPeer: "Multi Peer",
       allowedIp: "Allowed IPs",
@@ -394,7 +398,6 @@ export default {
     download: "Download",
     volume: "Volume",
     usage: "Usage",
-    enable: "Enable Statistics",
     graphTitle: "Traffic Chart",
     B: "B",
     KB: "KB",

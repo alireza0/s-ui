@@ -60,9 +60,22 @@ func moveJsonToDb(db *gorm.DB) error {
 			} else {
 				tls_server, _ := json.MarshalIndent(tlsObj, "", "  ")
 				if len(tls_server) > 5 {
+					tlsObject := tlsObj.(map[string]interface{})
+					tlsClientObj := map[string]interface{}{}
+					if enabled, ok := tlsObject["enabled"]; ok {
+						tlsClientObj["enabled"] = enabled
+					}
+					if alpn, ok := tlsObject["alpn"]; ok {
+						tlsClientObj["alpn"] = alpn
+					}
+					if sni, ok := tlsObject["server_name"]; ok {
+						tlsClientObj["server_name"] = sni
+					}
+					tls_client, _ := json.MarshalIndent(tlsClientObj, "", "  ")
 					newTls := &model.Tls{
 						Name:   tag,
 						Server: tls_server,
+						Client: tls_client,
 					}
 					err = db.Create(newTls).Error
 					if err != nil {
@@ -76,10 +89,10 @@ func moveJsonToDb(db *gorm.DB) error {
 		var inbData InboundData
 		db.Raw("select id,addrs,out_json from inbound_data where tag = ?", tag).Find(&inbData)
 		if inbData.Id > 0 {
-			inbObj["outJson"] = inbData.OutJson
+			inbObj["out_json"] = inbData.OutJson
 			inbObj["addrs"] = inbData.Addrs
 		} else {
-			inbObj["outJson"] = json.RawMessage("{}")
+			inbObj["out_json"] = json.RawMessage("{}")
 			inbObj["addrs"] = json.RawMessage("[]")
 		}
 		inbJson, _ := json.Marshal(inbObj)

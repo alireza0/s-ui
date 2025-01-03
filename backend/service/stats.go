@@ -74,7 +74,7 @@ func (s *StatsService) SaveStats() error {
 	return err
 }
 
-func (s *StatsService) GetStats(resorce string, tag string, limit int) ([]model.Stats, error) {
+func (s *StatsService) GetStats(resource string, tag string, limit int) ([]model.Stats, error) {
 	var err error
 	var result []model.Stats
 
@@ -82,7 +82,11 @@ func (s *StatsService) GetStats(resorce string, tag string, limit int) ([]model.
 	timeDiff := currentTime - (int64(limit) * 3600)
 
 	db := database.GetDB()
-	err = db.Model(model.Stats{}).Where("resource = ? AND tag = ? AND date_time > ?", resorce, tag, timeDiff).Scan(&result).Error
+	resources := []string{resource}
+	if resource == "endpoint" {
+		resources = []string{"inbound", "outbound"}
+	}
+	err = db.Model(model.Stats{}).Where("resource in ? AND tag = ? AND date_time > ?", resources, tag, timeDiff).Scan(&result).Error
 	if err != nil {
 		return nil, err
 	}

@@ -10,7 +10,6 @@ export const OutTypes = {
   Shadowsocks: 'shadowsocks',
   VMess: 'vmess',
   Trojan: 'trojan',
-  Wireguard: 'wireguard',
   Hysteria: 'hysteria',
   VLESS: 'vless',
   ShadowTLS: 'shadowtls',
@@ -41,6 +40,7 @@ export interface Dial {
 }
 
 interface OutboundBasics {
+  id: number
   type: OutType
   tag: string
 }
@@ -122,23 +122,6 @@ export interface Trojan extends OutboundBasics, Dial {
   tls?: oTls
   multiplex?: oMultiplex
   transport?: Transport
-}
-
-export interface WireGuard extends OutboundBasics, Dial {
-  server?: string
-  server_port?: number
-  system_interface?: boolean
-  gso?: boolean
-  interface_name?: string
-  local_address: string[]
-  private_key: string
-  peers?: WgPeer[]
-  peer_public_key?: string
-  pre_shared_key?: string
-  reserved?: number[]
-  workers?: number
-  mtu?: number
-  network?: "udp" | "tcp"
 }
 
 export interface Hysteria extends OutboundBasics, Dial {
@@ -263,7 +246,6 @@ const defaultValues: Record<OutType, Outbound> = {
   shadowsocks: { type: OutTypes.Shadowsocks, method: 'none', multiplex: {} },
   vmess: { type: OutTypes.VMess, tls: {}, multiplex: {}, transport: {}, security: 'auto', global_padding: false },
   trojan: { type: OutTypes.Trojan, tls: {}, multiplex: {}, transport: {} },
-  wireguard: { type: OutTypes.Wireguard, local_address: ['10.0.0.2/32','fe80::2/128'], private_key: '' },
   hysteria: { type: OutTypes.Hysteria, up_mbps: 100, down_mbps: 100, tls: { enabled: true } },
   shadowtls: { type: OutTypes.ShadowTLS, version: 3, tls: { enabled: true } },
   vless: { type: OutTypes.VLESS, tls: {}, multiplex: {}, transport: {} },

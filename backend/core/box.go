@@ -109,20 +109,16 @@ func NewBox(options Options) (*Box, error) {
 		defaultLogWriter = io.Discard
 	}
 	var logFactory log.Factory
-	if factory == nil {
-		logFactory, err = NewFactory(log.Options{
-			Context:       ctx,
-			Options:       sbCommon.PtrValueOrDefault(options.Log),
-			DefaultWriter: defaultLogWriter,
-			BaseTime:      createdAt,
-		})
-		if err != nil {
-			return nil, common.NewError("create log factory", err)
-		}
-		factory = logFactory
-	} else {
-		logFactory = factory
+	logFactory, err = NewFactory(log.Options{
+		Context:       ctx,
+		Options:       sbCommon.PtrValueOrDefault(options.Log),
+		DefaultWriter: defaultLogWriter,
+		BaseTime:      createdAt,
+	})
+	if err != nil {
+		return nil, common.NewError("create log factory", err)
 	}
+	factory = logFactory
 
 	routeOptions := sbCommon.PtrValueOrDefault(options.Route)
 	endpointManager := endpoint.NewManager(logFactory.NewLogger("endpoint"), endpointRegistry)
@@ -158,7 +154,7 @@ func NewBox(options Options) (*Box, error) {
 			endpointOptions.Options,
 		)
 		if err != nil {
-			return nil, common.NewError("initialize endpoint["+string(i)+"] "+tag, err)
+			return nil, common.NewError("initialize endpoint["+F.ToString(i)+"] "+tag, err)
 		}
 	}
 	for i, inboundOptions := range options.Inbounds {
@@ -202,7 +198,7 @@ func NewBox(options Options) (*Box, error) {
 			outboundOptions.Options,
 		)
 		if err != nil {
-			return nil, common.NewError("initialize outbound["+string(i)+"] "+tag, err)
+			return nil, common.NewError("initialize outbound["+F.ToString(i)+"] "+tag, err)
 		}
 	}
 	outboundManager.Initialize(sbCommon.Must1(
@@ -368,7 +364,7 @@ func (s *Box) Close() error {
 		close(s.done)
 	}
 	err := sbCommon.Close(
-		s.inbound, s.outbound, s.router, s.connection, s.network,
+		s.endpoint, s.inbound, s.outbound, s.router, s.connection, s.network,
 	)
 	for _, lifecycleService := range s.services {
 		err1 := lifecycleService.Close()

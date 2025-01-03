@@ -5,7 +5,7 @@ import "encoding/json"
 type Outbound struct {
 	Id      uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
 	Type    string          `json:"type" form:"type"`
-	Tag     string          `json:"tag" form:"tag"`
+	Tag     string          `json:"tag" form:"tag" gorm:"unique"`
 	Options json.RawMessage `json:"-" form:"-"`
 }
 
@@ -17,10 +17,10 @@ func (o *Outbound) UnmarshalJSON(data []byte) error {
 	}
 
 	// Extract fixed fields and store the rest in Options
-	if val, exists := raw["id"]; exists {
-		o.Id = val.(uint)
-		delete(raw, "id")
+	if val, exists := raw["id"].(float64); exists {
+		o.Id = uint(val)
 	}
+	delete(raw, "id")
 	o.Type, _ = raw["type"].(string)
 	delete(raw, "type")
 	o.Tag = raw["tag"].(string)

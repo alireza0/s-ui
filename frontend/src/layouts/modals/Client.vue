@@ -41,7 +41,7 @@
                   <DatePick :expiry="expDate" @submit="setDate" />
                 </v-col>
               </v-row>
-              <v-row v-if="index != -1">
+              <v-row v-if="id > 0">
                 <v-col cols="12" sm="6" md="4" class="d-flex flex-column">
                   <div class="d-flex justify-space-between align-center">
                     <div>
@@ -78,11 +78,6 @@
                     chips
                     hide-details
                   ></v-combobox>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="auto">
-                  <v-switch v-model="clientStats" color="primary" :label="$t('stats.enable')" hide-details></v-switch>
                 </v-col>
               </v-row>
             </v-window-item>
@@ -189,7 +184,7 @@ import DatePick from '@/components/DateTime.vue'
 import { HumanReadable } from '@/plugins/utils'
 
 export default {
-  props: ['visible', 'data', 'index', 'inboundTags', 'groups', 'stats'],
+  props: ['visible', 'data', 'id', 'inboundTags', 'groups'],
   emits: ['close', 'save'],
   data() {
     return {
@@ -206,7 +201,7 @@ export default {
   },
   methods: {
     updateData() {
-      if (this.$props.index != -1) {
+      if (this.$props.id > 0) {
         const newData = JSON.parse(this.$props.data)
         this.client = createClient(newData)
         this.title = "edit"
@@ -217,7 +212,6 @@ export default {
         this.title = "add"
         this.clientConfig = randomConfigs('client')
       }
-      this.clientStats = this.$props.stats
       this.links = this.client.links.filter(l => l.type == 'local')
       this.extLinks = this.client.links.filter(l => l.type == 'external')
       this.subLinks = this.client.links.filter(l => l.type == 'sub')
@@ -243,8 +237,8 @@ export default {
   },
   computed: {
     clientInbounds: {
-      get() { return this.client.inbounds.length>0 ? this.client.inbounds.filter(i => this.inboundTags.includes(i)) : [] },
-      set(newValue:string[]) { this.client.inbounds = newValue.length == 0 ?  [] : newValue }
+      get() { return this.client.inbounds.length>0 ? this.client.inbounds : [] },
+      set(v:any[]) { this.client.inbounds = v.length == 0 ?  [] : v.map(i => i.value) }
     },
     expDate: {
       get() { return this.client.expiry},

@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"s-ui/database"
 	"s-ui/database/model"
+	"s-ui/util/common"
 
 	"gorm.io/gorm"
 )
 
 type TlsService struct {
+	InboundService
 }
 
 func (s *TlsService) GetAll() ([]model.Tls, error) {
@@ -22,25 +24,45 @@ func (s *TlsService) GetAll() ([]model.Tls, error) {
 	return tlsConfig, nil
 }
 
-func (s *TlsService) Save(tx *gorm.DB, changes []model.Changes) error {
+func (s *TlsService) Save(tx *gorm.DB, action string, data json.RawMessage) ([]uint, error) {
 	var err error
-	for _, change := range changes {
-		tlsConfig := model.Tls{}
-		err = json.Unmarshal(change.Obj, &tlsConfig)
+	var inboundIds []uint
+
+	switch action {
+	case "new", "edit":
+		var tls model.Tls
+		err = json.Unmarshal(data, &tls)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		switch change.Action {
-		case "new":
-			err = tx.Create(&tlsConfig).Error
-		case "del":
-			err = tx.Where("id = ?", change.Index).Delete(model.Tls{}).Error
-		default:
-			err = tx.Save(tlsConfig).Error
-		}
+		err = tx.Save(&tls).Error
 		if err != nil {
-			return err
+			return nil, err
+		}
+		err = tx.Model(model.Inbound{}).Select("id").Where("tls_id = ?", tls.Id).Scan(&inboundIds).Error
+		if err != nil {
+			return nil, err
+		}
+		return inboundIds, nil
+	case "del":
+		var id uint
+		err = json.Unmarshal(data, &id)
+		if err != nil {
+			return nil, err
+		}
+		var inboundCount int64
+		err = tx.Model(model.Inbound{}).Where("tls_id = ?", id).Count(&inboundCount).Error
+		if err != nil {
+			return nil, err
+		}
+		if inboundCount > 0 {
+			return nil, common.NewError("tls in use")
+		}
+		err = tx.Where("id = ?", id).Delete(model.Tls{}).Error
+		if err != nil {
+			return nil, err
 		}
 	}
-	return err
+
+	return nil, nil
 }

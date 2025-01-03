@@ -24,6 +24,9 @@
     <v-col cols="12" justify="center" align="center">
       <v-btn color="primary" @click="showRuleModal(-1)" style="margin: 0 5px;">{{ $t('rule.add') }}</v-btn>
       <v-btn color="primary" @click="showRulesetModal(-1)" style="margin: 0 5px;">{{ $t('ruleset.add') }}</v-btn>
+      <v-btn variant="outlined" color="warning" @click="saveConfig" :loading="loading" :disabled="stateChange">
+        {{ $t('actions.save') }}
+      </v-btn>
     </v-col>
   </v-row>
   <v-row>
@@ -144,15 +147,36 @@
 
 <script lang="ts" setup>
 import Data from '@/store/modules/data'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import RuleVue from '@/layouts/modals/Rule.vue'
 import RulesetVue from '@/layouts/modals/Ruleset.vue'
 import { Config } from '@/types/config'
 import { logicalRule, ruleset } from '@/types/rules'
+import { FindDiff } from '@/plugins/utils'
+
+const oldConfig = ref({})
+const loading = ref(false)
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
 })
+
+onMounted(async () => {
+  oldConfig.value = JSON.parse(JSON.stringify(Data().config))
+})
+
+const stateChange = computed(() => {
+  return FindDiff.deepCompare(appConfig.value,oldConfig.value)
+})
+
+const saveConfig = async () => {
+  loading.value = true
+  const success = await Data().save("config", "set", appConfig.value)
+  if (success) {
+    oldConfig.value = JSON.parse(JSON.stringify(Data().config))
+    loading.value = false
+  }
+}
 
 const clients = computed((): string[] => {
   return Data().clients.map((c:any) => c.name)
@@ -189,11 +213,11 @@ const rulesetTags = computed((): any[] => {
 })
 
 const outboundTags = computed((): string[] => {
-  return appConfig.value.outbounds?.map((o:any) => o.tag)
+  return [...Data().outbounds?.map((o:any) => o.tag), ...Data().endpoints?.map((e:any) => e.tag)]
 })
 
 const inboundTags = computed((): string[] => {
-  return appConfig.value.inbounds?.map((i:any) => i.tag)
+  return [...Data().inbounds?.map((o:any) => o.tag), ...Data().endpoints?.map((e:any) => e.tag)]
 })
 
 let delRuleOverlay = ref(new Array<boolean>)
@@ -268,7 +292,7 @@ const draggedItemIndex = ref(null);
 
 const onDragStart = (index: any) => {
   draggedItemIndex.value = index;
-};
+}
 
 const onDrop = (index: any) => {
   if (draggedItemIndex.value !== null) {
@@ -278,5 +302,5 @@ const onDrop = (index: any) => {
     rules.value.splice(index, 0, draggedItem);
     draggedItemIndex.value = null;
   }
-};
+}
 </script>

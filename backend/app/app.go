@@ -43,7 +43,7 @@ func (a *APP) Init() error {
 
 	a.core = core.NewCore()
 
-	a.cronJob = cronjob.NewCronJob(a.core)
+	a.cronJob = cronjob.NewCronJob()
 	a.webServer = web.NewServer()
 	a.subServer = sub.NewServer()
 
@@ -81,7 +81,7 @@ func (a *APP) Start() error {
 		return err
 	}
 
-	err = a.configService.StartCore()
+	err = a.configService.StartCore("")
 	if err != nil {
 		logger.Error(err)
 	}
