@@ -115,7 +115,6 @@ import { Client } from '@/types/clients'
 import { Link, LinkUtil } from '@/plugins/link'
 import { i18n } from '@/locales'
 import { push } from 'notivue'
-import { fillData } from '@/plugins/outJson'
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
@@ -167,11 +166,6 @@ const saveModal = async (data:Inbound) => {
       message: i18n.global.t('error.dplData') + ": " + i18n.global.t('objects.tag')
     })
     return
-  }
-
-  // Fill outjson
-  if (data.out_json){
-    fillData(data, data.tls_id > 0 ? tlsConfigs?.value.findLast((t:any) => t.id == data.tls_id) : null)
   }
   
   let userLinkDiff = []

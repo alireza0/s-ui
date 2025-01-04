@@ -5,6 +5,7 @@ import (
 	"os"
 	"s-ui/database"
 	"s-ui/database/model"
+	"s-ui/util"
 	"strings"
 
 	"gorm.io/gorm"
@@ -75,7 +76,7 @@ func (s *InboundService) FromIds(ids []uint) ([]*model.Inbound, error) {
 	return inbounds, nil
 }
 
-func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage) error {
+func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, hostname string) error {
 	var err error
 
 	switch act {
@@ -85,17 +86,17 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage) err
 		if err != nil {
 			return err
 		}
+		if inbound.TlsId > 0 {
+			err = tx.Model(model.Tls{}).Where("id = ?", inbound.TlsId).Find(&inbound.Tls).Error
+			if err != nil {
+				return err
+			}
+		}
+
 		if corePtr.IsRunning() {
 			if act == "edit" {
 				err = corePtr.RemoveInbound(inbound.Tag)
 				if err != nil && err != os.ErrInvalid {
-					return err
-				}
-			}
-
-			if inbound.TlsId > 0 {
-				err = tx.Model(model.Tls{}).Where("id = ?", inbound.TlsId).Find(&inbound.Tls).Error
-				if err != nil {
 					return err
 				}
 			}
@@ -114,6 +115,11 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage) err
 			if err != nil {
 				return err
 			}
+		}
+
+		err = util.FillOutJson(&inbound, hostname)
+		if err != nil {
+			return err
 		}
 
 		err = tx.Save(&inbound).Error
@@ -140,20 +146,18 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage) err
 	return nil
 }
 
-func (s *InboundService) UpdateOutJsons(tx *gorm.DB, data json.RawMessage) error {
-	var outJsons []interface{}
-	err := json.Unmarshal(data, &outJsons)
+func (s *InboundService) UpdateOutJsons(tx *gorm.DB, inboundIds []uint, hostname string) error {
+	var inbounds []model.Inbound
+	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ?", inboundIds).Find(&inbounds).Error
 	if err != nil {
 		return err
 	}
-	for _, outJson := range outJsons {
-		outJsonData := outJson.(map[string]interface{})
-		tag := outJsonData["tag"].(string)
-		outJson, err := json.MarshalIndent(outJsonData["out_json"], "", "  ")
+	for _, inbound := range inbounds {
+		err = util.FillOutJson(&inbound, hostname)
 		if err != nil {
 			return err
 		}
-		err = tx.Model(model.Inbound{}).Where("tag = ?", tag).Update("out_json", outJson).Error
+		err = tx.Model(model.Inbound{}).Where("tag = ?", inbound.Tag).Update("out_json", inbound.OutJson).Error
 		if err != nil {
 			return err
 		}

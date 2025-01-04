@@ -91,7 +91,6 @@ import { computed, ref } from 'vue'
 import { Inbound, inboundWithUsers } from '@/types/inbounds'
 import { Client } from '@/types/clients'
 import { Link, LinkUtil } from '@/plugins/link'
-import { fillData } from '@/plugins/outJson'
 
 const tlsConfigs = computed((): any[] => {
   return Data().tlsConfigs
@@ -134,7 +133,6 @@ const closeModal = () => {
   modal.value.visible = false
 }
 const saveModal = async (data:any) => {
-  let outJsons = <any[]>[]
   let userLinks = <any[]>[]
   // New or Edit
   if (modal.value.id > 0) {
@@ -142,11 +140,6 @@ const saveModal = async (data:any) => {
     if (inboundIds.length > 0) {
       const tlsInbounds = inboundIds.length == 0 ? [] : await Data().loadInbounds(inboundIds)
       for (const inbound of tlsInbounds) {
-        // Fill outjson
-        if (inbound.out_json) {
-          fillData(inbound, data)
-        }
-        outJsons.push({tag: inbound.tag,out_jsons: inbound.out_json})
         // Update links
         const diff = updateLinks(inbound)
         diff.forEach((d: any) => {
@@ -161,7 +154,7 @@ const saveModal = async (data:any) => {
     }
 
   }
-  const success = await Data().save("tls", data.id == 0 ? "new" : "edit", data, userLinks.length > 0 ? null: userLinks, outJsons.length > 0 ? null: outJsons)
+  const success = await Data().save("tls", data.id == 0 ? "new" : "edit", data, userLinks.length > 0 ? null: userLinks)
   if (success) modal.value.visible = false
 }
 

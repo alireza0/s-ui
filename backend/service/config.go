@@ -123,7 +123,7 @@ func (s *ConfigService) StopCore() error {
 	return nil
 }
 
-func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userLinks json.RawMessage, outJsons json.RawMessage, loginUser string) error {
+func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userLinks json.RawMessage, loginUser string, hostname string) ([]string, error) {
 	var err error
 	var inboundIds []uint
 
@@ -132,16 +132,6 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userL
 	defer func() {
 		if err == nil {
 			tx.Commit()
-			if len(inboundIds) > 0 && corePtr.IsRunning() {
-				err1 := s.InboundService.RestartInbounds(tx, inboundIds)
-				if err1 != nil {
-					logger.Error("unable to restart inbounds: ", err1)
-				}
-			}
-			// Try to start core if it is not running
-			if !corePtr.IsRunning() {
-				s.StartCore("")
-			}
 		} else {
 			tx.Rollback()
 		}
@@ -153,7 +143,7 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userL
 	case "tls":
 		inboundIds, err = s.TlsService.Save(tx, act, data)
 	case "inbounds":
-		err = s.InboundService.Save(tx, act, data)
+		err = s.InboundService.Save(tx, act, data, hostname)
 	case "outbounds":
 		err = s.OutboundService.Save(tx, act, data)
 	case "endpoints":
@@ -161,27 +151,20 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userL
 	case "config":
 		err = s.SettingService.SaveConfig(tx, data)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		err = s.restartCoreWithConfig(data)
 	default:
-		return common.NewError("unknown object: ", obj)
+		return nil, common.NewError("unknown object: ", obj)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(userLinks) > 0 {
 		err = s.ClientService.UpdateLinks(tx, userLinks)
 		if err != nil {
-			return err
-		}
-	}
-
-	if len(outJsons) > 0 {
-		err = s.InboundService.UpdateOutJsons(tx, outJsons)
-		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -194,11 +177,46 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userL
 		Obj:      data,
 	}).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
+	// Commit changes so far
+	tx.Commit()
 	LastUpdate = time.Now().Unix()
+	var objs []string = []string{obj}
+	tx = db.Begin()
 
-	return nil
+	// Update side changes
+
+	// Update client links
+	if len(userLinks) > 0 {
+		err = s.ClientService.UpdateLinks(tx, userLinks)
+		if err != nil {
+			return nil, err
+		}
+		objs = append(objs, "clients")
+	}
+
+	// Update out_json of inbounds when tls is changed
+	if obj == "tls" && len(inboundIds) > 0 {
+		err = s.InboundService.UpdateOutJsons(tx, inboundIds, hostname)
+		if err != nil {
+			return nil, common.NewError("unable to update out_json of inbounds: ", err.Error())
+		}
+		objs = append(objs, "inbounds")
+	}
+
+	if len(inboundIds) > 0 && corePtr.IsRunning() {
+		err1 := s.InboundService.RestartInbounds(tx, inboundIds)
+		if err1 != nil {
+			logger.Error("unable to restart inbounds: ", err1)
+		}
+	}
+	// Try to start core if it is not running
+	if !corePtr.IsRunning() {
+		s.StartCore("")
+	}
+
+	return objs, nil
 }
 
 func (s *ConfigService) CheckChanges(lu string) (bool, error) {

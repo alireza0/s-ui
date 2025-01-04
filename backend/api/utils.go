@@ -27,6 +27,14 @@ func getRemoteIp(c *gin.Context) string {
 	}
 }
 
+func getHostname(c *gin.Context) string {
+	host := c.Request.Host
+	if colonIndex := strings.LastIndex(host, ":"); colonIndex != -1 {
+		host, _, _ = net.SplitHostPort(c.Request.Host)
+	}
+	return host
+}
+
 func jsonMsg(c *gin.Context, msg string, err error) {
 	jsonMsgObj(c, msg, nil, err)
 }

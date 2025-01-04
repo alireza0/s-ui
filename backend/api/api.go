@@ -48,6 +48,7 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 	action := c.Param("postAction")
 	remoteIP := getRemoteIp(c)
 	loginUser := GetLoginUser(c)
+	hostname := getHostname(c)
 
 	switch action {
 	case "login":
@@ -88,13 +89,12 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		act := c.Request.FormValue("action")
 		data := c.Request.FormValue("data")
 		userLinks := c.Request.FormValue("userLinks")
-		outJsons := c.Request.FormValue("outJsons")
-		err = a.ConfigService.Save(obj, act, json.RawMessage(data), json.RawMessage(userLinks), json.RawMessage(outJsons), loginUser)
+		objs, err := a.ConfigService.Save(obj, act, json.RawMessage(data), json.RawMessage(userLinks), loginUser, hostname)
 		if err != nil {
 			jsonMsg(c, "save", err)
 			return
 		}
-		err = a.loadPartialData(c, obj, len(outJsons) > 5, len(userLinks) > 5)
+		err = a.loadPartialData(c, objs)
 		if err != nil {
 			jsonMsg(c, obj, err)
 		}
@@ -133,7 +133,7 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		}
 		jsonObj(c, data, nil)
 	case "inbounds", "outbounds", "endpoints", "tls", "clients", "config":
-		err := a.loadPartialData(c, action, false, false)
+		err := a.loadPartialData(c, []string{action})
 		if err != nil {
 			jsonMsg(c, action, err)
 		}
@@ -257,62 +257,51 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 	return data, nil
 }
 
-func (a *APIHandler) loadPartialData(c *gin.Context, obj string, plusInbounds bool, plusClients bool) error {
+func (a *APIHandler) loadPartialData(c *gin.Context, objs []string) error {
 	data := make(map[string]interface{}, 0)
-	switch obj {
-	case "inbounds":
-		id := c.Query("id")
-		inbounds, err := a.InboundService.Get(id)
-		if err != nil {
-			return err
+
+	for _, obj := range objs {
+		switch obj {
+		case "inbounds":
+			id := c.Query("id")
+			inbounds, err := a.InboundService.Get(id)
+			if err != nil {
+				return err
+			}
+			data[obj] = inbounds
+		case "outbounds":
+			outbounds, err := a.OutboundService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = outbounds
+		case "endpoints":
+			endpoints, err := a.EndpointService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = endpoints
+		case "tls":
+			tlsConfigs, err := a.TlsService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = tlsConfigs
+		case "clients":
+			clients, err := a.ClientService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = clients
+		case "config":
+			config, err := a.SettingService.GetConfig()
+			if err != nil {
+				return err
+			}
+			data[obj] = json.RawMessage(config)
 		}
-		data[obj] = inbounds
-	case "outbounds":
-		outbounds, err := a.OutboundService.GetAll()
-		if err != nil {
-			return err
-		}
-		data[obj] = outbounds
-	case "endpoints":
-		endpoints, err := a.EndpointService.GetAll()
-		if err != nil {
-			return err
-		}
-		data[obj] = endpoints
-	case "tls":
-		tlsConfigs, err := a.TlsService.GetAll()
-		if err != nil {
-			return err
-		}
-		data[obj] = tlsConfigs
-	case "clients":
-		clients, err := a.ClientService.GetAll()
-		if err != nil {
-			return err
-		}
-		data[obj] = clients
-	case "config":
-		config, err := a.SettingService.GetConfig()
-		if err != nil {
-			return err
-		}
-		data[obj] = json.RawMessage(config)
 	}
 
-	if plusInbounds {
-		inbounds, err := a.InboundService.GetAll()
-		if err != nil {
-			return err
-		}
-		data["inbounds"] = inbounds
-	}
-	if plusClients {
-		clients, err := a.ClientService.GetAll()
-		if err != nil {
-			return err
-		}
-		data["clients"] = clients
-	}
 	jsonObj(c, data, nil)
 	return nil
 }
