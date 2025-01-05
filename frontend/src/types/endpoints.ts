@@ -6,8 +6,6 @@ export const EpTypes = {
 
 type EpType = typeof EpTypes[keyof typeof EpTypes]
 
-
-
 interface EndpointBasics {
   id: number
   type: EpType

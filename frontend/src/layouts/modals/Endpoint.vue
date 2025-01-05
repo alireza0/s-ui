@@ -6,45 +6,22 @@
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text style="padding: 0 16px; overflow-y: scroll;">
-        <v-container style="padding: 0;">
-          <v-tabs
-            v-model="tab"
-            align-tabs="center"
-          >
-            <v-tab value="t1">{{ $t('client.basics') }}</v-tab>
-            <v-tab value="t2">{{ $t('client.external') }}</v-tab>
-          </v-tabs>
-          <v-window v-model="tab">
-            <v-window-item value="t1">
-              <v-row>
-                <v-col cols="12" sm="6" md="4">
-                  <v-select
-                  hide-details
-                  :label="$t('type')"
-                  :items="Object.keys(epTypes).map((key,index) => ({title: key, value: Object.values(epTypes)[index]}))"
-                  v-model="endpoint.type"
-                  @update:modelValue="changeType">
-                  </v-select>
-                </v-col>
-                <v-col cols="12" sm="6" md="4">
-                  <v-text-field v-model="endpoint.tag" :label="$t('objects.tag')" hide-details></v-text-field>
-                </v-col>
-              </v-row>
-              <Wireguard v-if="endpoint.type == epTypes.Wireguard" :data="endpoint" />
-              <Dial :dial="endpoint" :outTags="tags" />
-            </v-window-item>
-            <v-window-item value="t2">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field v-model="link" :label="$t('client.external')" hide-details />
-                </v-col>
-                <v-col cols="12" align="center">
-                  <v-btn hide-details variant="tonal" :loading="loading" @click="linkConvert">{{ $t('submit') }}</v-btn>
-                </v-col>
-              </v-row>
-            </v-window-item>
-          </v-window>
-        </v-container>
+        <v-row>
+          <v-col cols="12" sm="6" md="4">
+            <v-select
+            hide-details
+            :label="$t('type')"
+            :items="Object.keys(epTypes).map((key,index) => ({title: key, value: Object.values(epTypes)[index]}))"
+            v-model="endpoint.type"
+            @update:modelValue="changeType">
+            </v-select>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field v-model="endpoint.tag" :label="$t('objects.tag')" hide-details></v-text-field>
+          </v-col>
+        </v-row>
+        <Wireguard v-if="endpoint.type == epTypes.Wireguard" :data="endpoint" @newWgKey="newWgKey" />
+        <Dial :dial="endpoint" :outTags="tags" />
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -74,7 +51,8 @@ import RandomUtil from '@/plugins/randomUtil'
 import Dial from '@/components/Dial.vue'
 import Wireguard from '@/components/protocols/Wireguard.vue'
 import HttpUtils from '@/plugins/httputil'
-import WgUtil from '@/plugins/wgUtil'
+import { push } from 'notivue'
+import { i18n } from '@/locales'
 export default {
   props: ['visible', 'data', 'id', 'tags'],
   emits: ['close', 'save'],
@@ -89,7 +67,7 @@ export default {
     }
   },
   methods: {
-    updateData() {
+    async updateData() {
       if (this.$props.id > 0) {
         const newData = JSON.parse(this.$props.data)
         this.endpoint = createEndpoint(newData.type, newData)
@@ -102,9 +80,9 @@ export default {
           tag: "wireguard-" + RandomUtil.randomSeq(3),
           address: ['10.0.0.'+ randomIPoctet.toString() +'/32','fe80::'+ randomIPoctet.toString(16) +'/128'],
           listen_port: port,
-          private_key: WgUtil.generateKeypair().privateKey,
+          private_key: (await this.genWgKey()).private_key,
           peers: [{
-            public_key: WgUtil.generateKeypair().publicKey,
+            public_key: (await this.genWgKey()).public_key,
             allowed_ips: ['0.0.0.0/0', '::/0']
           }]
         })
@@ -128,17 +106,30 @@ export default {
       this.$emit('save', this.endpoint)
       this.loading = false
     },
-    async linkConvert() {
-      if (this.link.length>0){
-        this.loading = true
-        const msg = await HttpUtils.post('api/linkConvert', { link: this.link })
-        this.loading = false
-        if (msg.success) {
-          this.endpoint = msg.obj
-          this.tab = "t1"
-          this.link = ""
-        }
+    async genWgKey(){
+      this.loading = true
+      const msg = await HttpUtils.get('api/keypairs', { k: "wireguard" })
+      this.loading = false
+      let result = { private_key: "", public_key: "" }
+      if (msg.success) {
+        msg.obj.forEach((line:string) => {
+          if (line.startsWith("PrivateKey")){
+            result.private_key = line.substring(12)
+          }
+          if (line.startsWith("PublicKey")){
+            result.public_key = line.substring(11)
+          }
+        })
+      } else {
+        push.error({
+          message: i18n.global.t('error') + ": " + msg.obj
+        })
       }
+      return result
+    },
+    async newWgKey(){
+      const newKeys = await this.genWgKey()
+      this.endpoint.private_key = newKeys.private_key
     }
   },
   watch: {

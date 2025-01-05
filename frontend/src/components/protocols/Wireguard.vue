@@ -109,10 +109,10 @@
 
 <script lang="ts">
 import Peer from '@/components/WgPeer.vue'
-import WgUtil from '@/plugins/wgUtil'
 
 export default {
   props: ['data'],
+  emits: ["newWgKey"],
   data() {
     return {
       menu: false,
@@ -120,14 +120,11 @@ export default {
   },
   methods: {
     addPeer() { 
-      this.$props.data.peers.push({
-        address: '',
-        port: this.$props.data.listen_port
-      })
+      this.$props.data.peers.push(this.$props.data.peers[0])
     },
     newKey() {
-      this.$props.data.private_key = WgUtil.generateKeypair().privateKey
-    }
+      this.$emit('newWgKey')
+    },
   },
   computed: {
     optionUdp: {
