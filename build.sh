@@ -12,4 +12,4 @@ mkdir -p web/html
 rm -fr web/html/*
 cp -R ../frontend/dist/* web/html/
 
-go build -o ../sui main.go
+go build -tags "with_quic,with_grpc,with_ech,with_utls,with_reality_server,with_acme,with_gvisor" -o ../sui main.go

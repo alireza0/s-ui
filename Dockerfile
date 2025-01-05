@@ -12,7 +12,7 @@ ENV GOARCH=$TARGETARCH
 RUN apk update && apk --no-cache --update add build-base gcc wget unzip
 COPY backend/ ./
 COPY --from=front-builder  /app/dist/ /app/web/html/
-RUN go build -ldflags="-w -s" -o sui main.go
+RUN go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_ech,with_utls,with_reality_server,with_acme,with_gvisor" -o sui main.go
 
 FROM --platform=$TARGETPLATFORM alpine
 LABEL org.opencontainers.image.authors="alireza7@gmail.com"
