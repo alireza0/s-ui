@@ -132,29 +132,8 @@ const clone = (obj: any) => {
 const closeModal = () => {
   modal.value.visible = false
 }
-const saveModal = async (data:any) => {
-  let userLinks = <any[]>[]
-  // New or Edit
-  if (modal.value.id > 0) {
-    const inboundIds = inbounds.value.filter(i => i.tls_id == modal.value.id).map(i => i.id)
-    if (inboundIds.length > 0) {
-      const tlsInbounds = inboundIds.length == 0 ? [] : await Data().loadInbounds(inboundIds)
-      for (const inbound of tlsInbounds) {
-        // Update links
-        const diff = updateLinks(inbound)
-        diff.forEach((d: any) => {
-          if (userLinks.findIndex(l => l.id == d.id) == -1) {
-            userLinks.push(d)
-          } else {
-            const index = userLinks.findIndex(l => l.id == d.id)
-            userLinks[index].links = d.links
-          }
-        })
-      }
-    }
-
-  }
-  const success = await Data().save("tls", data.id == 0 ? "new" : "edit", data, userLinks.length > 0 ? null: userLinks)
+const saveModal = async (data:tls) => {
+  const success = await Data().save("tls", data.id == 0 ? "new" : "edit", data)
   if (success) modal.value.visible = false
 }
 
@@ -162,31 +141,6 @@ const delTls = async (id: number) => {
   const index = tlsConfigs.value.findIndex(t => t.id == id)
   const success = await Data().save("tls", "del", id)
   if (success) delOverlay.value[index] = false
-}
-
-const updateLinks = (i: Inbound): any[] => {
-  let diff = <any[]>[]
-  if(inboundWithUsers.includes(i.type) && i.id != 0){
-    const uClients = clients.value.filter(c => c.inbounds.includes(i.id))
-    const tlsClient = tlsConfigs?.value.findLast((t:any) => t.id == i.tls_id)
-    uClients.forEach((u:Client) => {
-      const otherLocalLinks = u.links.filter(l => l.type == 'local' && l.remark != i.tag)
-      const uris = LinkUtil.linkGenerator(u,i, tlsClient, i.addrs)
-      let newLinks = <Link[]>[]
-      if (uris.length>0){
-        uris.forEach(uri => {
-          newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
-        })
-      }
-      let links = u.links && u.links.length>0? u.links : <Link[]>[]
-      links = [...otherLocalLinks, ...newLinks, ...links.filter(l => l.type != 'local')]
-
-      u.links = links
-      diff.push({ id: u.id, links: links })
-    })
-  }
-
-  return diff
 }
 
 </script>

@@ -1,5 +1,10 @@
-import { Link } from "@/plugins/link"
 import RandomUtil from "@/plugins/randomUtil"
+
+export interface Link {
+  type: "local" | "external" | "sub"
+  remark?: string
+  uri: string
+}
 
 export interface Client {
   id?: number

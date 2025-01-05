@@ -60,9 +60,8 @@ const Data = defineStore('Data', {
       let postData = {
         object: object,
         action: action,
-        data: JSON.stringify(data),
+        data: JSON.stringify(data, null, 2),
         userLinks: userLinks == null ? undefined : JSON.stringify(userLinks),
-        outJsons: outJsons == null ? undefined : JSON.stringify(outJsons),
       }
       if (userLinks == null) {
         delete postData.userLinks

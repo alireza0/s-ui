@@ -112,7 +112,6 @@ import { Config } from '@/types/config'
 import { computed, onMounted, ref } from 'vue'
 import { Inbound, inboundWithUsers } from '@/types/inbounds'
 import { Client } from '@/types/clients'
-import { Link, LinkUtil } from '@/plugins/link'
 import { i18n } from '@/locales'
 import { push } from 'notivue'
 
@@ -167,68 +166,17 @@ const saveModal = async (data:Inbound) => {
     })
     return
   }
-  
-  let userLinkDiff = []
-  // Update links
-  if (data.id > 0 && oldInbound != null) {
-    userLinkDiff = updateLinks(data,oldInbound)
-  }
 
   // save data
-  const success = await Data().save("inbounds", modal.value.id == 0 ? "new" : "edit", data, userLinkDiff)
+  const success = await Data().save("inbounds", modal.value.id == 0 ? "new" : "edit", data)
   if (success) modal.value.visible = false
 }
-const updateLinks = (i: Inbound, o: Inbound): any[] => {
-  let diff = <any[]>[]
-  const uClients = clients.value.filter(c => c.inbounds.includes(i.id))
-  if (uClients.length == 0) return diff
 
-  if (inboundWithUsers.includes(o.type) && !inboundWithUsers.includes(i.type)){
-    // Remove old inbound links if new type does not support users
-    uClients.forEach((u:Client) => {
-      u.inbounds = u.inbounds.filter(i => i != o.id)
-      const otherLocalLinks = u.links.filter(l => l.type == 'local' && l.remark != o.tag)
-      let links = u.links && u.links.length>0? u.links : <Link[]>[]
-      links = [...otherLocalLinks, ...links.filter(l => l.type != 'local')]
-
-      diff.push({ id: u.id, links: links, inbounds: u.inbounds })
-    })
-  } else if(inboundWithUsers.includes(i.type)){
-    // Add new inbound links if new type supports users
-    const tls = tlsConfigs?.value.findLast((t:any) => t.id == i.tls_id)
-    uClients.forEach((u:Client) => {
-      const otherLocalLinks = u.links.filter(l => l.type == 'local' && l.remark != i.tag)
-      const uris = LinkUtil.linkGenerator(u,i, tls, i.addrs)
-      let newLinks = <Link[]>[]
-      if (uris.length>0){
-        uris.forEach(uri => {
-          newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
-        })
-      }
-      let links = u.links && u.links.length>0? u.links : <Link[]>[]
-      links = [...otherLocalLinks, ...newLinks, ...links.filter(l => l.type != 'local')]
-
-      diff.push({ id: u.id, links: links, inbounds: u.inbounds })
-    })
-  }
-
-  return diff
-}
 const delInbound = async (id: number) => {
   const index = inbounds.value.findIndex(i => i.id == id)
-  const inb = inbounds.value[index]
-  const tag = inb.tag
+  const tag = inbounds.value[index].tag
 
-  let diff = <any[]>[]
-  // delete inbound in client table
-  const inboundClients = clients.value.filter(c => c.inbounds.includes(id))
-  inboundClients.forEach((c:Client) => {
-    c.inbounds = c.inbounds.filter((x:number) => x!=id)
-    c.links = c.links.filter((x:any) => x.remark!=tag)
-    diff.push({ id: c.id, links: c.links, inbounds: c.inbounds })
-  })
-
-  const success = await Data().save("inbounds", "del", tag, diff)
+  const success = await Data().save("inbounds", "del", tag)
   if (success) delOverlay.value[index] = false
 }
 

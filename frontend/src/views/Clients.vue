@@ -345,10 +345,9 @@ import ClientModal from '@/layouts/modals/Client.vue'
 import ClientBulk from '@/layouts/modals/ClientBulk.vue'
 import QrCode from '@/layouts/modals/QrCode.vue'
 import Stats from '@/layouts/modals/Stats.vue'
-import { Client, createClient } from '@/types/clients'
+import { Client } from '@/types/clients'
 import { computed, ref } from 'vue'
 import { Inbound, inboundWithUsers } from '@/types/inbounds'
-import { Link, LinkUtil } from '@/plugins/link'
 import { HumanReadable } from '@/plugins/utils'
 import { i18n } from '@/locales'
 import { push } from 'notivue'
@@ -443,31 +442,11 @@ const saveModal = async (data:any) => {
     return
   }
 
-  // Rebuild links
-  const clientInbounds = data.inbounds.length == 0 ? [] : await Data().loadInbounds(data.inbounds)
-  data.links = updateLinks(data, clientInbounds)
-
   // save data
   const success = await Data().save("clients", modal.value.id == 0 ? "new" : "edit", data)
   if (success) modal.value.visible = false
 }
 
-const updateLinks = (c:Client, clientInbounds:Inbound[]):Link[] => {
-  const newLinks = <Link[]>[]
-  clientInbounds.forEach(i =>{
-    const tls = i.tls_id && i.tls_id>0 ? Data().tlsConfigs?.findLast((t:any) => t.id == i.tls_id) : undefined
-    const uris = LinkUtil.linkGenerator(c,i, tls, i.addrs)
-    if (uris.length>0){
-      uris.forEach(uri => {
-        newLinks.push(<Link>{ type: 'local', remark: i.tag, uri: uri })
-      })
-    }
-  })
-  let links = c.links && c.links.length>0? c.links : <Link[]>[]
-  links = [...newLinks, ...links.filter(l => l.type != 'local')]
-
-  return links
-}
 const delClient = async (id: number) => {
   const index = clients.value.findIndex(c => c.id === id)
   const success = await Data().save("clients", "del", id)
@@ -557,10 +536,6 @@ const closeBulk = () => {
 }
 
 const saveBulk = async (bulkClients: Client[], clientInbounds: number[]) => {
-  const inboundData = clientInbounds.length == 0 ? [] : await Data().loadInbounds(clientInbounds)
-  bulkClients.forEach((c,c_index) => {
-    bulkClients[c_index].links = updateLinks(c, inboundData)
-  })
   clients.value.push(...bulkClients)
   closeBulk()
 }

@@ -90,7 +90,25 @@ func moveJsonToDb(db *gorm.DB) error {
 		db.Raw("select id,addrs,out_json from inbound_data where tag = ?", tag).Find(&inbData)
 		if inbData.Id > 0 {
 			inbObj["out_json"] = inbData.OutJson
-			inbObj["addrs"] = inbData.Addrs
+			var addrs []map[string]interface{}
+			json.Unmarshal(inbData.Addrs, &addrs)
+			for index, addr := range addrs {
+				if tlsEnable, ok := addr["tls"].(bool); ok {
+					newTls := map[string]interface{}{
+						"enabled": tlsEnable,
+					}
+					if insecure, ok := addr["insecure"].(bool); ok {
+						newTls["insecure"] = insecure
+						delete(addrs[index], "insecure")
+					}
+					if sni, ok := addr["server_name"].(string); ok {
+						newTls["server_name"] = sni
+						delete(addrs[index], "server_name")
+					}
+					addrs[index]["tls"] = newTls
+				}
+			}
+			inbObj["addrs"] = addrs
 		} else {
 			inbObj["out_json"] = json.RawMessage("{}")
 			inbObj["addrs"] = json.RawMessage("[]")

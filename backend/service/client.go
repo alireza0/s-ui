@@ -5,6 +5,7 @@ import (
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/logger"
+	"s-ui/util"
 	"time"
 
 	"gorm.io/gorm"
@@ -24,7 +25,7 @@ func (s *ClientService) GetAll() ([]model.Client, error) {
 	return clients, nil
 }
 
-func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage) ([]uint, error) {
+func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, hostname string) ([]uint, error) {
 	var err error
 	var inboundIds []uint
 
@@ -36,6 +37,10 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage) ([]u
 			return nil, err
 		}
 		err = json.Unmarshal(client.Inbounds, &inboundIds)
+		if err != nil {
+			return nil, err
+		}
+		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, inboundIds, hostname)
 		if err != nil {
 			return nil, err
 		}
@@ -67,32 +72,127 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage) ([]u
 	return inboundIds, nil
 }
 
-func (s *ClientService) UpdateLinks(tx *gorm.DB, links json.RawMessage) error {
-	var userLinks []interface{}
-	err := json.Unmarshal(links, &userLinks)
+func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*model.Client, inbounIds []uint, hostname string) error {
+	var err error
+	var inbounds []model.Inbound
+
+	// Zero inbounds means removing local links only
+	if len(inbounIds) > 0 {
+		err = tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inbounIds, util.InboundTypeWithLink).Find(&inbounds).Error
+		if err != nil {
+			return err
+		}
+	}
+	for index, client := range clients {
+		var clientLinks, newClientLinks []map[string]string
+		json.Unmarshal(client.Links, &clientLinks)
+
+		for _, inbound := range inbounds {
+			newLinks := util.LinkGenerator(client.Config, &inbound, hostname)
+			for _, newLink := range newLinks {
+				newClientLinks = append(newClientLinks, map[string]string{
+					"remark": inbound.Tag,
+					"type":   "local",
+					"uri":    newLink,
+				})
+			}
+		}
+
+		// Add no local links
+		for _, clientLink := range clientLinks {
+			if clientLink["type"] != "local" {
+				newClientLinks = append(newClientLinks, clientLink)
+			}
+		}
+
+		clients[index].Links, err = json.MarshalIndent(newClientLinks, "", "  ")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *ClientService) UpdateClientsOnInboundDelete(tx *gorm.DB, id uint, tag string) error {
+	var clients []model.Client
+	err := tx.Table("clients").
+		Where("EXISTS (SELECT 1 FROM json_each(clients.inbounds) WHERE json_each.value = ?)", id).
+		Find(&clients).Error
 	if err != nil {
 		return err
 	}
-	for _, userLink := range userLinks {
-		userLinkData, _ := userLink.(map[string]interface{})
-		userId, _ := userLinkData["id"].(float64)
-		links, err := json.MarshalIndent(userLinkData["links"], "", "  ")
+	for _, client := range clients {
+		// Delete inbounds
+		var clientInbounds, newClientInbounds []uint
+		json.Unmarshal(client.Inbounds, &clientInbounds)
+		for _, clientInbound := range clientInbounds {
+			if clientInbound != id {
+				newClientInbounds = append(newClientInbounds, clientInbound)
+			}
+		}
+		client.Inbounds, err = json.MarshalIndent(newClientInbounds, "", "  ")
 		if err != nil {
 			return err
 		}
-		if inbounds, ok := userLinkData["inbounds"]; ok {
-			inbounds, err := json.MarshalIndent(inbounds, "", "  ")
-			if err != nil {
-				return err
-			}
-			err = tx.Model(model.Client{}).Where("id = ?", uint(userId)).Update("inbounds", inbounds).Error
-			if err != nil {
-				return err
+		// Delete links
+		var clientLinks, newClientLinks []map[string]string
+		json.Unmarshal(client.Links, &clientLinks)
+		for _, clientLink := range clientLinks {
+			if clientLink["remark"] != tag {
+				newClientLinks = append(newClientLinks, clientLink)
 			}
 		}
-		err = tx.Model(model.Client{}).Where("id = ?", uint(userId)).Update("links", links).Error
+		client.Links, err = json.MarshalIndent(newClientLinks, "", "  ")
 		if err != nil {
 			return err
+		}
+		err = tx.Save(&client).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounIds []uint, hostname string) error {
+	var inbounds []model.Inbound
+	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inbounIds, util.InboundTypeWithLink).Find(&inbounds).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return err
+	}
+	for _, inbound := range inbounds {
+		var clients []model.Client
+		err = tx.Table("clients").
+			Where("EXISTS (SELECT 1 FROM json_each(clients.inbounds) WHERE json_each.value = ?)", inbound.Id).
+			Find(&clients).Error
+		if err != nil {
+			return err
+		}
+		for _, client := range clients {
+			var clientLinks, newClientLinks []map[string]string
+			json.Unmarshal(client.Links, &clientLinks)
+			newLinks := util.LinkGenerator(client.Config, &inbound, hostname)
+			for _, newLink := range newLinks {
+				newClientLinks = append(newClientLinks, map[string]string{
+					"remark": inbound.Tag,
+					"type":   "local",
+					"uri":    newLink,
+				})
+			}
+			for _, clientLink := range clientLinks {
+				if clientLink["remark"] != inbound.Tag {
+					newClientLinks = append(newClientLinks, clientLink)
+				}
+			}
+
+			client.Links, err = json.MarshalIndent(newClientLinks, "", "  ")
+			if err != nil {
+				return err
+			}
+			err = tx.Save(&client).Error
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

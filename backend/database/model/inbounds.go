@@ -90,7 +90,7 @@ func (i Inbound) MarshalFull() (*map[string]interface{}, error) {
 	combined["out_json"] = i.OutJson
 
 	if i.Options != nil {
-		var restFields map[string]json.RawMessage
+		var restFields map[string]interface{}
 		if err := json.Unmarshal(i.Options, &restFields); err != nil {
 			return nil, err
 		}

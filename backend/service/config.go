@@ -123,9 +123,10 @@ func (s *ConfigService) StopCore() error {
 	return nil
 }
 
-func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userLinks json.RawMessage, loginUser string, hostname string) ([]string, error) {
+func (s *ConfigService) Save(obj string, act string, data json.RawMessage, loginUser string, hostname string) ([]string, error) {
 	var err error
 	var inboundIds []uint
+	var inboundId uint
 
 	db := database.GetDB()
 	tx := db.Begin()
@@ -139,11 +140,11 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userL
 
 	switch obj {
 	case "clients":
-		inboundIds, err = s.ClientService.Save(tx, act, data)
+		inboundIds, err = s.ClientService.Save(tx, act, data, hostname)
 	case "tls":
 		inboundIds, err = s.TlsService.Save(tx, act, data)
 	case "inbounds":
-		err = s.InboundService.Save(tx, act, data, hostname)
+		inboundId, err = s.InboundService.Save(tx, act, data, hostname)
 	case "outbounds":
 		err = s.OutboundService.Save(tx, act, data)
 	case "endpoints":
@@ -159,13 +160,6 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userL
 	}
 	if err != nil {
 		return nil, err
-	}
-
-	if len(userLinks) > 0 {
-		err = s.ClientService.UpdateLinks(tx, userLinks)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	dt := time.Now().Unix()
@@ -188,8 +182,25 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, userL
 	// Update side changes
 
 	// Update client links
-	if len(userLinks) > 0 {
-		err = s.ClientService.UpdateLinks(tx, userLinks)
+	if obj == "tls" && len(inboundIds) > 0 {
+		err = s.ClientService.UpdateLinksByInboundChange(tx, inboundIds, hostname)
+		if err != nil {
+			return nil, err
+		}
+		objs = append(objs, "clients")
+	}
+	if obj == "inbounds" && act != "add" {
+		switch act {
+		case "edit":
+			err = s.ClientService.UpdateLinksByInboundChange(tx, []uint{inboundId}, hostname)
+		case "del":
+			var tag string
+			err = json.Unmarshal(data, &tag)
+			if err != nil {
+				return nil, err
+			}
+			err = s.ClientService.UpdateClientsOnInboundDelete(tx, inboundId, tag)
+		}
 		if err != nil {
 			return nil, err
 		}

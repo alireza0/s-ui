@@ -178,8 +178,7 @@
 </template>
 
 <script lang="ts">
-import { Link } from '@/plugins/link'
-import { createClient, randomConfigs, updateConfigs } from '@/types/clients'
+import { createClient, randomConfigs, updateConfigs, Link } from '@/types/clients'
 import DatePick from '@/components/DateTime.vue'
 import { HumanReadable } from '@/plugins/utils'
 
@@ -225,7 +224,6 @@ export default {
       this.loading = true
       this.client.config = updateConfigs(this.clientConfig, this.client.name)
       this.client.links = [
-                        ...this.links,
                         ...this.extLinks.filter(l => l.uri != ''),
                         ...this.subLinks.filter(l => l.uri != '')]
       this.$emit('save', this.client, this.clientStats)
