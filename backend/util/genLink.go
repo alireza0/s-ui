@@ -29,7 +29,6 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 
 	var Addrs []map[string]interface{}
 	json.Unmarshal(i.Addrs, &Addrs)
-	fmt.Printf("AddrsArray: %+v\n", Addrs)
 	if len(Addrs) == 0 {
 		Addrs = append(Addrs, map[string]interface{}{
 			"server":      hostname,

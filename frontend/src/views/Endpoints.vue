@@ -31,25 +31,25 @@
         <v-card-text>
           <v-row>
             <v-col>{{ $t('in.addr') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.address?.length>0 ? item.address[0] : '-' }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('in.port') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.listen_port?? '-' }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('types.wg.peers') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.peers.length?? '-'  }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('online') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               <template v-if="onlines.includes(item.tag)">
                 <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
               </template>

@@ -1,4 +1,4 @@
-import { oTls } from "./outTls"
+import { oTls } from "./tls"
 import { oMultiplex } from "./multiplex"
 import { Transport } from "./transport"
 

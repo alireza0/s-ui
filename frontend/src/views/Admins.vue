@@ -27,19 +27,19 @@
         <v-card-text>
           <v-row>
             <v-col>{{ $t('admin.date') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.loginDate }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('admin.time') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.loginTime }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>IP</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.ip }}
             </v-col>
           </v-row>

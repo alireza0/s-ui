@@ -21,7 +21,7 @@
         <v-card-text>
           <v-row>
             <v-col>{{ $t('pages.inbounds') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               <template v-if="tlsInbounds(item.id).length>0">
                 <v-tooltip activator="parent" dir="ltr" location="bottom">
                   <span v-for="i in tlsInbounds(item.id)">{{ i }}<br /></span>
@@ -33,19 +33,19 @@
           </v-row>
           <v-row>
             <v-col>ACME</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ $t(item.server?.acme == undefined ? 'no' : 'yes') }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>ECH</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ $t(item.server?.ech == undefined ? 'no' : 'yes') }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>Reality</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ $t(item.server?.reality == undefined ? 'no' : 'yes') }}
             </v-col>
           </v-row>

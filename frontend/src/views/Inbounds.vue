@@ -32,25 +32,25 @@
         <v-card-text>
           <v-row>
             <v-col>{{ $t('in.addr') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.listen }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('in.port') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.listen_port }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('objects.tls') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.tls_id > 0 ? $t('enable') : $t('disable') }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('pages.clients') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               <template v-if="inboundWithUsers.includes(item.type)">
                 <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="findInboundUsers(item).length > 0">
                   <span v-for="u in findInboundUsers(item)">{{ u }}<br /></span>
@@ -62,7 +62,7 @@
           </v-row>
           <v-row>
             <v-col>{{ $t('online') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               <template v-if="onlines.includes(item.tag)">
                 <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
               </template>

@@ -158,7 +158,7 @@
           <v-card-text>
             <v-row>
               <v-col>{{ $t('pages.inbounds') }}</v-col>
-              <v-col dir="ltr">
+              <v-col>
                 <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="item.inbounds != ''">
                   <span v-for="i in item.inbounds">{{ inbounds.find(inb => inb.id == i)?.tag }}<br /></span>
                 </v-tooltip>
@@ -167,19 +167,19 @@
             </v-row>
             <v-row>
               <v-col>{{ $t('stats.volume') }}</v-col>
-              <v-col dir="ltr">
+              <v-col>
                 {{ item.volume == 0 ? $t('unlimited') : HumanReadable.sizeFormat(item.volume) }}
               </v-col>
             </v-row>
             <v-row>
               <v-col>{{ $t('date.expiry') }}</v-col>
-              <v-col dir="ltr">
-                {{ item.expiry == 0 ? $t('unlimited') : HumanReadable.remainedDays(item.expiry)?? $t('date.expired') }}
+              <v-col>
+                {{ HumanReadable.remainedDays(item.expiry) }}
               </v-col>
             </v-row>
             <v-row>
               <v-col>{{ $t('stats.usage') }}</v-col>
-              <v-col dir="ltr">
+              <v-col>
                 <v-tooltip activator="parent" location="bottom">
                   {{ $t('stats.upload') }}:{{ HumanReadable.sizeFormat(item.up) }}<br />
                   {{ $t('stats.download') }}:{{ HumanReadable.sizeFormat(item.down) }}<br />
@@ -192,7 +192,7 @@
             </v-row>
             <v-row>
               <v-col>{{ $t('online') }}</v-col>
-              <v-col dir="ltr">
+              <v-col>
                 <template v-if="isOnline(item.name).value">
                   <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
                 </template>
@@ -275,7 +275,7 @@
             <v-chip
               size="small"
               label
-            >{{ item.expiry == 0 ? $t('unlimited') : HumanReadable.remainedDays(item.expiry)?? $t('date.expired') }}</v-chip>
+            >{{ HumanReadable.remainedDays(item.expiry) }}</v-chip>
           </div>
         </template>
         <template v-slot:item.online="{ item }">
@@ -502,7 +502,7 @@ const doFilter = () => {
       filteredClients = filteredClients.filter(c => c.enable == false)
       break
     case "expired":
-      filteredClients = filteredClients.filter(c => HumanReadable.remainedDays(c.expiry) == null)
+      filteredClients = filteredClients.filter(c => c.expiry > 0 && c.expiry < (Date.now()/1000) )
       break
     case "online":
       filteredClients = filteredClients.filter(c => Data().onlines?.user?.includes(c.name))

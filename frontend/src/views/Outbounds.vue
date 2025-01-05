@@ -31,25 +31,25 @@
         <v-card-text>
           <v-row>
             <v-col>{{ $t('in.addr') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.server?? '-' }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('in.port') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.server_port?? '-' }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('objects.tls') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ Object.hasOwn(item,'tls') ? $t(item.tls?.enabled ? 'enable' : 'disable') : '-'  }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('online') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               <template v-if="onlines.includes(item.tag)">
                 <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
               </template>

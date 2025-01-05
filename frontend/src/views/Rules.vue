@@ -41,13 +41,13 @@
         <v-card-text>
           <v-row>
             <v-col>{{ $t('ruleset.format') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.format }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('actions.update') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.update_interval?? '-' }}
             </v-col>
           </v-row>
@@ -98,19 +98,19 @@
         <v-card-text>
           <v-row>
             <v-col>{{ $t('objects.outbound') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.outbound }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('pages.rules') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.rules ? item.rules.length : Object.keys(item).filter(r => !["rule_set_ipcidr_match_source","invert","outbound"].includes(r)).length }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('rule.invert') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ $t( (item.invert?? false)? 'yes' : 'no') }}
             </v-col>
           </v-row>
