@@ -5,6 +5,7 @@ import (
 	"os"
 	"s-ui/database"
 	"s-ui/database/model"
+	"s-ui/util/common"
 
 	"gorm.io/gorm"
 )
@@ -56,10 +57,10 @@ func (o *OutboundService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 	return outboundsJson, nil
 }
 
-func (s *OutboundService) Save(tx *gorm.DB, action string, data json.RawMessage) error {
+func (s *OutboundService) Save(tx *gorm.DB, act string, data json.RawMessage) error {
 	var err error
 
-	switch action {
+	switch act {
 	case "new", "edit":
 		var outbound model.Outbound
 		err = outbound.UnmarshalJSON(data)
@@ -72,7 +73,7 @@ func (s *OutboundService) Save(tx *gorm.DB, action string, data json.RawMessage)
 			if err != nil {
 				return err
 			}
-			if action == "edit" {
+			if act == "edit" {
 				var oldTag string
 				err = tx.Model(model.Outbound{}).Select("tag").Where("id = ?", outbound.Id).Find(&oldTag).Error
 				if err != nil {
@@ -109,6 +110,8 @@ func (s *OutboundService) Save(tx *gorm.DB, action string, data json.RawMessage)
 		if err != nil {
 			return err
 		}
+	default:
+		return common.NewErrorf("unknown action: %s", act)
 	}
 	return nil
 }

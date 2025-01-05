@@ -6,6 +6,7 @@ import (
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/util"
+	"s-ui/util/common"
 	"strings"
 
 	"gorm.io/gorm"
@@ -153,6 +154,8 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, hos
 		if err != nil {
 			return 0, err
 		}
+	default:
+		return 0, common.NewErrorf("unknown action: %s", act)
 	}
 	return id, nil
 }

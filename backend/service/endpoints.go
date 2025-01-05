@@ -5,6 +5,7 @@ import (
 	"os"
 	"s-ui/database"
 	"s-ui/database/model"
+	"s-ui/util/common"
 
 	"gorm.io/gorm"
 )
@@ -56,10 +57,10 @@ func (o *EndpointService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 	return endpointsJson, nil
 }
 
-func (s *EndpointService) Save(tx *gorm.DB, action string, data json.RawMessage) error {
+func (s *EndpointService) Save(tx *gorm.DB, act string, data json.RawMessage) error {
 	var err error
 
-	switch action {
+	switch act {
 	case "new", "edit":
 		var endpoint model.Endpoint
 		err = endpoint.UnmarshalJSON(data)
@@ -72,7 +73,7 @@ func (s *EndpointService) Save(tx *gorm.DB, action string, data json.RawMessage)
 			if err != nil {
 				return err
 			}
-			if action == "edit" {
+			if act == "edit" {
 				var oldTag string
 				err = tx.Model(model.Endpoint{}).Select("tag").Where("id = ?", endpoint.Id).Find(&oldTag).Error
 				if err != nil {
@@ -109,6 +110,8 @@ func (s *EndpointService) Save(tx *gorm.DB, action string, data json.RawMessage)
 		if err != nil {
 			return err
 		}
+	default:
+		return common.NewErrorf("unknown action: %s", act)
 	}
 	return nil
 }
