@@ -161,7 +161,7 @@
 </template>
 
 <script lang="ts">
-import { acme } from '@/types/inTls'
+import { acme } from '@/types/tls'
 
 export default {
   props: ['tls'],

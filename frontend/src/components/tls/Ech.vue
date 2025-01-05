@@ -79,7 +79,7 @@
 <script lang="ts">
 import { i18n } from '@/locales'
 import HttpUtils from '@/plugins/httputil'
-import { ech } from '@/types/inTls'
+import { ech } from '@/types/tls'
 import { push } from 'notivue'
 
 export default {

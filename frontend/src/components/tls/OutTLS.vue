@@ -216,7 +216,7 @@
 </template>
 
 <script lang="ts">
-import { oTls, defaultOutTls } from '@/types/outTls'
+import { oTls, defaultOutTls } from '@/types/tls'
 export default {
   props: ['outbound'],
   data() {
@@ -275,7 +275,7 @@ export default {
     },
     tlsEnable: {
       get() { return Object.hasOwn(this.tls, 'enabled') ? this.tls.enabled : false },
-      set(newValue: boolean) { this.$props.outbound.tls = newValue ? { enabled: true } : {} }
+      set(newValue: boolean) { this.$props.outbound.tls = newValue ? { enabled: true } : { enabled: false } }
     },
     disable_sni: {
       get() { return this.tls.disable_sni ?? false },

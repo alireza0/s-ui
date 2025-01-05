@@ -289,8 +289,7 @@
 </template>
 
 <script lang="ts">
-import { iTls, defaultInTls } from '@/types/inTls'
-import { oTls, defaultOutTls } from '@/types/outTls'
+import { tls, iTls, defaultInTls, oTls, defaultOutTls } from '@/types/tls'
 import AcmeVue from '@/components/tls/Acme.vue'
 import EchVue from '@/components/tls/Ech.vue'
 import HttpUtils from '@/plugins/httputil'
@@ -302,7 +301,7 @@ export default {
   emits: ['close', 'save'],
   data() {
     return {
-      tls: { id: 0, name: '', server: <iTls>{ enabled: true }, client: <oTls>{} },
+      tls: <tls>{ id: 0, name: '', server: <iTls>{ enabled: true }, client: <oTls>{} },
       title: "add",
       loading: false,
       menu: false,
@@ -355,7 +354,7 @@ export default {
   methods: {
     updateData() {
       if (this.$props.id > 0) {
-        const newData = JSON.parse(this.$props.data)
+        const newData = <tls>JSON.parse(this.$props.data)
         this.tls = newData
         if (this.tls.server == null) this.tls.server = {}
         if (this.tls.client == null) this.tls.client = {}
@@ -364,7 +363,7 @@ export default {
         this.title = "edit"
       }
       else {
-        this.tls = { id: 0, name: '', server: {enabled: true}, client: {} }
+        this.tls = <tls>{ id: 0, name: '', server: {enabled: true}, client: {} }
         this.tlsType = 0
         this.usePath = 0
         this.title = "add"

@@ -64,7 +64,7 @@
                 <template v-for="addr,index in inbound.addrs">
                   {{ $t('in.addr') }} #{{ (index+1) }} <v-icon icon="mdi-delete" @click="inbound.addrs?.splice(index,1)" />
                   <v-divider></v-divider>
-                  <AddrVue :addr="addr" :hasTls="Object.hasOwn(inbound,'tls')" />
+                  <AddrVue :addr="addr" :hasTls="HasTls.includes(inbound.type)" />
                 </template>
               </v-card>
             </v-window-item>

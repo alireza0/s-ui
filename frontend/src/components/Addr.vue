@@ -24,30 +24,7 @@
       </v-text-field>
     </v-col>
   </v-row>
-  <v-row>
-    <v-col cols="12" sm="6" md="4" v-if="optionTLS">
-      <v-switch
-      :label="$t('tls.enable')"
-      color="primary"
-      hide-details
-      @update:model-value="updateTls($event)"
-      v-model="addr.tls" />
-    </v-col>
-    <v-col cols="12" sm="6" md="4" v-if="optionSNI">
-      <v-text-field
-      label="SNI"
-      hide-details
-      v-model="addr.server_name">
-      </v-text-field>
-    </v-col>
-    <v-col cols="12" sm="6" md="4" v-if="optionInsecure">
-      <v-switch
-      :label="$t('tls.insecure')"
-      hide-details
-      color="primary"
-      v-model="addr.insecure" />
-    </v-col>
-  </v-row>
+  <OutTLS :outbound="addr" v-if="optionTLS" />
   <v-row>
     <v-spacer></v-spacer>
     <v-col cols="auto" align="end" justify="center">
@@ -63,12 +40,6 @@
             <v-list-item v-if="hasTls">
               <v-switch v-model="optionTLS" color="primary" :label="$t('objects.tls')" hide-details></v-switch>
             </v-list-item>
-            <v-list-item v-if="addr.tls">
-              <v-switch v-model="optionSNI" color="primary" label="SNI" hide-details></v-switch>
-            </v-list-item>
-            <v-list-item v-if="addr.tls">
-              <v-switch v-model="optionInsecure" color="primary" :label="$t('tls.insecure')" hide-details></v-switch>
-            </v-list-item>
           </v-list>
         </v-card>
       </v-menu>
@@ -77,6 +48,7 @@
 </template>
 
 <script lang="ts">
+import OutTLS from '@/components/tls/OutTLS.vue'
 export default {
   props: ['addr', 'hasTls'],
   data() {
@@ -87,28 +59,15 @@ export default {
   computed: {
     optionTLS: {
       get(): boolean { return this.$props.addr.tls != undefined },
-      set(v:boolean) { this.$props.addr.tls = v ? true : undefined; this.updateTls(v) }
-    },
-    optionSNI: {
-      get(): boolean { return this.$props.addr.server_name != undefined },
-      set(v:boolean) { this.$props.addr.server_name = v ? '' : undefined }
+      set(v:boolean) { this.$props.addr.tls = v ? { enabled: true } : undefined; }
     },
     optionRemark: {
       get(): boolean { return this.$props.addr.remark != undefined },
       set(v:boolean) { this.$props.addr.remark = v ? '' : undefined }
-    },
-    optionInsecure: {
-      get(): boolean { return this.$props.addr.insecure != undefined },
-      set(v:boolean) { this.$props.addr.insecure = v ? false : undefined }
     }
   },
-  methods: {
-    updateTls(v:boolean) {
-      if (!v) {
-        delete this.$props.addr.insecure
-        delete this.$props.addr.server_name
-      }
-    }
+  components: {
+    OutTLS
   }
 }
 </script>

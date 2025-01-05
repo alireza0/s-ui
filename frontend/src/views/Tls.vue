@@ -88,9 +88,9 @@
 import TlsVue from '@/layouts/modals/Tls.vue'
 import Data from '@/store/modules/data'
 import { computed, ref } from 'vue'
-import { Inbound, inboundWithUsers } from '@/types/inbounds'
+import { Inbound } from '@/types/inbounds'
 import { Client } from '@/types/clients'
-import { Link, LinkUtil } from '@/plugins/link'
+import { tls } from '@/types/tls'
 
 const tlsConfigs = computed((): any[] => {
   return Data().tlsConfigs

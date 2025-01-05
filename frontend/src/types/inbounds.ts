@@ -1,5 +1,5 @@
 import { iMultiplex } from "./multiplex"
-import { iTls } from "./inTls"
+import { iTls } from "./tls"
 import { Dial } from "./outbounds"
 import { Transport } from "./transport"
 
