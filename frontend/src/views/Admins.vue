@@ -6,7 +6,7 @@
     @close="closeEditModal"
     @save="saveEditModal"
   />
-  <ChngModal
+  <ChangeModal 
     v-model="changesModal.visible"
     :visible="changesModal.visible"
     :admins="users.map((u:any) => u.username)"
@@ -62,7 +62,7 @@
 
 <script lang="ts" setup>
 import AdminModal from '@/layouts/modals/Admin.vue'
-import ChngModal from '@/layouts/modals/Changes.vue'
+import ChangeModal  from '@/layouts/modals/Changes.vue'
 import { i18n } from '@/locales'
 import HttpUtils from '@/plugins/httputil'
 import { Ref, ref, inject, onMounted } from 'vue'

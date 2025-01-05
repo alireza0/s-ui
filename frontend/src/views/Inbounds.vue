@@ -51,11 +51,11 @@
           <v-row>
             <v-col>{{ $t('pages.clients') }}</v-col>
             <v-col dir="ltr">
-              <template v-if="inboundWithUsers.includes(item.tag)">
-                <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="findInboundUsers(item.tag).length > 0">
-                  <span v-for="u in findInboundUsers(item.tag)">{{ u }}<br /></span>
+              <template v-if="inboundWithUsers.includes(item.type)">
+                <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="findInboundUsers(item).length > 0">
+                  <span v-for="u in findInboundUsers(item)">{{ u }}<br /></span>
                 </v-tooltip>
-                {{ findInboundUsers(item.tag).length }}
+                {{ findInboundUsers(item).length }}
               </template>
               <template v-else>-</template>
             </v-col>
@@ -109,7 +109,7 @@ import Data from '@/store/modules/data'
 import InboundVue from '@/layouts/modals/Inbound.vue'
 import Stats from '@/layouts/modals/Stats.vue'
 import { Config } from '@/types/config'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Inbound, inboundWithUsers } from '@/types/inbounds'
 import { Client } from '@/types/clients'
 import { i18n } from '@/locales'
