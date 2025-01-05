@@ -48,10 +48,7 @@ func (a *APP) Init() error {
 	a.subServer = sub.NewServer()
 
 	a.configService = service.NewConfigService(a.core)
-	err = a.configService.InitConfig()
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 

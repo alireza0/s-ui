@@ -14,9 +14,6 @@ var version string
 //go:embed name
 var name string
 
-//go:embed config.json
-var defaultConfig string
-
 type LogLevel string
 
 const (
@@ -71,25 +68,4 @@ func GetDBFolderPath() string {
 
 func GetDBPath() string {
 	return fmt.Sprintf("%s/%s.db", GetDBFolderPath(), GetName())
-}
-
-func GetDefaultConfig() string {
-	apiEnv := GetEnvApi()
-	if len(apiEnv) > 0 {
-		return strings.Replace(defaultConfig, "127.0.0.1:1080", apiEnv, 1)
-	}
-	return defaultConfig
-}
-
-func GetEnvApi() string {
-	return os.Getenv("SINGBOX_API")
-}
-
-func IsSystemd() bool {
-	pid := os.Getppid()
-	cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/comm", pid))
-	if err != nil {
-		return false
-	}
-	return string(cmdline) == "systemd\n"
 }

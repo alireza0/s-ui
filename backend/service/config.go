@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"s-ui/config"
 	"s-ui/core"
 	"s-ui/database"
 	"s-ui/database/model"
@@ -14,7 +13,6 @@ import (
 
 var (
 	LastUpdate int64
-	IsSystemd  bool
 	corePtr    *core.Core
 )
 
@@ -41,11 +39,6 @@ type SingBoxConfig struct {
 func NewConfigService(core *core.Core) *ConfigService {
 	corePtr = core
 	return &ConfigService{}
-}
-
-func (s *ConfigService) InitConfig() error {
-	IsSystemd = config.IsSystemd()
-	return nil
 }
 
 func (s *ConfigService) GetConfig(data string) (*SingBoxConfig, error) {
