@@ -95,6 +95,7 @@ export default {
   actions: {
     action: "操作",
     add: "添加",
+    addbulk: "批量添加",
     new: "新建",
     edit: "編輯",
     del: "刪除",
@@ -172,7 +173,6 @@ export default {
     sub: "外部訂閱",
   },
   bulk: {
-    add: "批量添加",
     order: "排序",
     random: "隨機",
   },

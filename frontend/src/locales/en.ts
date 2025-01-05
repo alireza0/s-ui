@@ -96,6 +96,7 @@ export default {
   actions: {
     action: "Action",
     add: "Add",
+    addbulk: "Add Bulk",
     new: "New",
     edit: "Edit",
     del: "Delete",
@@ -173,7 +174,6 @@ export default {
     sub: "External Subscription",
   },
   bulk: {
-    add: "Add Bulk",
     order: "Order",
     random: "Random",
   },

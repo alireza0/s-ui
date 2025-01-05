@@ -94,6 +94,7 @@ export default {
   actions: {
     action: "操作",
     add: "添加",
+    addbulk: "批量添加",
     new: "新建",
     edit: "编辑",
     del: "删除",
@@ -171,7 +172,6 @@ export default {
     sub: "外部订阅",
   },
   bulk: {
-    add: "批量添加",
     order: "排序",
     random: "随机",
   },

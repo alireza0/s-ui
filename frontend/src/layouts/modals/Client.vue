@@ -74,6 +74,7 @@
                     v-model="clientInbounds"
                     :items="inboundTags"
                     :label="$t('client.inboundTags')"
+                    :return-object="false"
                     multiple
                     chips
                     hide-details
@@ -236,7 +237,7 @@ export default {
   computed: {
     clientInbounds: {
       get() { return this.client.inbounds.length>0 ? this.client.inbounds : [] },
-      set(v:any[]) { this.client.inbounds = v.length == 0 ?  [] : v.map(i => i.value) }
+      set(v:number[]) { this.client.inbounds = v.length == 0 ?  [] : v }
     },
     expDate: {
       get() { return this.client.expiry},

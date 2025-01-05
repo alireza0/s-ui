@@ -96,6 +96,7 @@ export default {
   actions: {
     action: "Действие",
     add: "Добавить",
+    addbulk: "Добавить пакетно",
     new: "Новый",
     edit: "Редактировать",
     del: "Удалить",
@@ -173,7 +174,6 @@ export default {
     sub: "Внешняя подписка",
   },
   bulk: {
-    add: "Добавить пакетно",
     order: "Порядок",
     random: "Случайный",
   },

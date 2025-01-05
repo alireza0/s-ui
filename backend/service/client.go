@@ -48,6 +48,24 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+	case "addbulk":
+		var clients []*model.Client
+		err = json.Unmarshal(data, &clients)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(clients[0].Inbounds, &inboundIds)
+		if err != nil {
+			return nil, err
+		}
+		err = s.updateLinksWithFixedInbounds(tx, clients, inboundIds, hostname)
+		if err != nil {
+			return nil, err
+		}
+		err = tx.Save(clients).Error
+		if err != nil {
+			return nil, err
+		}
 	case "del":
 		var id uint
 		err = json.Unmarshal(data, &id)

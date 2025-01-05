@@ -94,6 +94,7 @@ export default {
   actions: {
     action: "Hành động",
     add: "Thêm",
+    addbulk: "Thêm Hàng loạt",
     new: "Mới",
     edit: "Chỉnh sửa",
     del: "Xóa",
@@ -171,7 +172,6 @@ export default {
     sub: "Đăng ký bên ngoài",
   },
   bulk: {
-    add: "Thêm Hàng loạt",
     order: "Sắp xếp",
     random: "Ngẫu nhiên",
   },

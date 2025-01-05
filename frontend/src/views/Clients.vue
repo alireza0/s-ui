@@ -47,7 +47,7 @@
             <template v-slot:prepend>
               <v-icon icon="mdi-account-multiple-plus"></v-icon>
             </template>
-            <v-list-item-title v-text="$t('bulk.add')"></v-list-item-title>
+            <v-list-item-title v-text="$t('actions.addbulk')"></v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -535,8 +535,20 @@ const closeBulk = () => {
   addBulkModal.value = false
 }
 
-const saveBulk = async (bulkClients: Client[], clientInbounds: number[]) => {
-  clients.value.push(...bulkClients)
-  closeBulk()
+const saveBulk = async (bulkClients: Client[]) => {
+  // Check duplicate name
+  const oldNames = new Set(clients.value.map(c => c.name))
+  const newNames = new Set(bulkClients.map(c => c.name))
+  const allNames = new Set([...clients.value.map(c => c.name), ...bulkClients.map(c => c.name)])
+  if (newNames.size != bulkClients.length || oldNames.size + newNames.size != allNames.size) {
+    push.error({
+      message: i18n.global.t('error.dplData') + ": " + i18n.global.t('client.name')
+    })
+    return
+  }
+
+  // save data
+  const success = await Data().save("clients", "addbulk", bulkClients)
+  if (success) closeBulk()
 }
 </script>

@@ -95,6 +95,7 @@ export default {
   actions: {
     action: "فرمان",
     add: "ایجاد",
+    addbulk: "ایجاد انبوه",
     new: "جدید",
     edit: "ویرایش",
     del: "حذف",
@@ -172,7 +173,6 @@ export default {
     sub: "سابسکریپشن خارجی",
   },
   bulk: {
-    add: "ایجاد انبوه",
     order: "ترتیب",
     random: "تصادفی",
   },
