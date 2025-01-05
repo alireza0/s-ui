@@ -41,6 +41,7 @@ func ParseCmd() {
 		fmt.Println()
 		fmt.Println("Commands:")
 		fmt.Println("    admin          set/reset/show first admin credentials")
+		fmt.Println("    uri            Show panel URI")
 		fmt.Println("    migrate        migrate form older version")
 		fmt.Println("    setting        set/reset/show settings")
 		fmt.Println()
@@ -71,6 +72,9 @@ func ParseCmd() {
 			updateAdmin(username, password)
 			showAdmin()
 		}
+
+	case "uri":
+		getPanelURI()
 
 	case "migrate":
 		migration.MigrateDb()
