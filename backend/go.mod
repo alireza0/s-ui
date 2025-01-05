@@ -16,7 +16,10 @@ require (
 	gorm.io/gorm v1.25.12
 )
 
-require google.golang.org/grpc v1.67.1 // indirect
+require (
+	github.com/ebitengine/purego v0.8.1 // indirect
+	google.golang.org/grpc v1.67.1 // indirect
+)
 
 require (
 	github.com/ajg/form v1.5.1 // indirect
@@ -98,6 +101,7 @@ require (
 	github.com/sagernet/utls v1.6.7 // indirect
 	github.com/sagernet/wireguard-go v0.0.1-beta.5 // indirect
 	github.com/sagernet/ws v0.0.0-20231204124109-acfe8907c854 // indirect
+	github.com/shirou/gopsutil/v4 v4.24.12
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.14 // indirect
 	github.com/tklauser/numcpus v0.9.0 // indirect
