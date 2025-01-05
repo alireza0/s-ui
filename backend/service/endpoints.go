@@ -73,7 +73,12 @@ func (s *EndpointService) Save(tx *gorm.DB, action string, data json.RawMessage)
 				return err
 			}
 			if action == "edit" {
-				err = corePtr.RemoveEndpoint(endpoint.Tag)
+				var oldTag string
+				err = tx.Model(model.Endpoint{}).Select("tag").Where("id = ?", endpoint.Id).Find(&oldTag).Error
+				if err != nil {
+					return err
+				}
+				err = corePtr.RemoveEndpoint(oldTag)
 				if err != nil && err != os.ErrInvalid {
 					return err
 				}

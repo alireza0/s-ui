@@ -76,74 +76,85 @@ func (s *InboundService) FromIds(ids []uint) ([]*model.Inbound, error) {
 	return inbounds, nil
 }
 
-func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, hostname string) error {
+func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, hostname string) (uint, error) {
 	var err error
+	var id uint
 
 	switch act {
 	case "new", "edit":
 		var inbound model.Inbound
 		err = inbound.UnmarshalJSON(data)
 		if err != nil {
-			return err
+			return 0, err
 		}
+		id = inbound.Id
 		if inbound.TlsId > 0 {
 			err = tx.Model(model.Tls{}).Where("id = ?", inbound.TlsId).Find(&inbound.Tls).Error
 			if err != nil {
-				return err
+				return 0, err
 			}
 		}
 
 		if corePtr.IsRunning() {
 			if act == "edit" {
-				err = corePtr.RemoveInbound(inbound.Tag)
+				var oldTag string
+				err = tx.Model(model.Inbound{}).Select("tag").Where("id = ?", inbound.Id).Find(&oldTag).Error
+				if err != nil {
+					return 0, err
+				}
+				err = corePtr.RemoveInbound(oldTag)
 				if err != nil && err != os.ErrInvalid {
-					return err
+					return 0, err
 				}
 			}
 
 			inboundConfig, err := inbound.MarshalJSON()
 			if err != nil {
-				return err
+				return 0, err
 			}
 
 			inboundConfig, err = s.addUsers(tx, inboundConfig, inbound.Id, inbound.Type)
 			if err != nil {
-				return err
+				return 0, err
 			}
 
 			err = corePtr.AddInbound(inboundConfig)
 			if err != nil {
-				return err
+				return 0, err
 			}
 		}
 
 		err = util.FillOutJson(&inbound, hostname)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
 		err = tx.Save(&inbound).Error
 		if err != nil {
-			return err
+			return 0, err
 		}
 	case "del":
 		var tag string
 		err = json.Unmarshal(data, &tag)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		if corePtr.IsRunning() {
 			err = corePtr.RemoveInbound(tag)
 			if err != nil && err != os.ErrInvalid {
-				return err
+				return 0, err
 			}
+		}
+		err = tx.Model(model.Inbound{}).Select("id").Where("tag = ?", tag).Scan(&id).Error
+		if err != nil {
+			return 0, err
 		}
 		err = tx.Where("tag = ?", tag).Delete(model.Inbound{}).Error
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
-	return nil
+	return id, nil
 }
 
 func (s *InboundService) UpdateOutJsons(tx *gorm.DB, inboundIds []uint, hostname string) error {

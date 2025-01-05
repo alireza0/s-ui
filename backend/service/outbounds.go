@@ -73,7 +73,12 @@ func (s *OutboundService) Save(tx *gorm.DB, action string, data json.RawMessage)
 				return err
 			}
 			if action == "edit" {
-				err = corePtr.RemoveOutbound(outbound.Tag)
+				var oldTag string
+				err = tx.Model(model.Outbound{}).Select("tag").Where("id = ?", outbound.Id).Find(&oldTag).Error
+				if err != nil {
+					return err
+				}
+				err = corePtr.RemoveOutbound(oldTag)
 				if err != nil && err != os.ErrInvalid {
 					return err
 				}
