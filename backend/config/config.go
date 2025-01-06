@@ -46,14 +46,6 @@ func IsDebug() bool {
 	return os.Getenv("SUI_DEBUG") == "true"
 }
 
-func GetBinFolderPath() string {
-	binFolderPath := os.Getenv("SUI_BIN_FOLDER")
-	if binFolderPath == "" {
-		binFolderPath = "bin"
-	}
-	return binFolderPath
-}
-
 func GetDBFolderPath() string {
 	dbFolderPath := os.Getenv("SUI_DB_FOLDER")
 	if dbFolderPath == "" {
