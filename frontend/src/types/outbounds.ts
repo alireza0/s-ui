@@ -4,7 +4,6 @@ import { Transport } from "./transport"
 
 export const OutTypes = {
   Direct: 'direct',
-  Block: 'block',
   SOCKS: 'socks',
   HTTP: 'http',
   Shadowsocks: 'shadowsocks',
@@ -17,7 +16,6 @@ export const OutTypes = {
   Hysteria2: 'hysteria2',
   Tor: 'tor',
   SSH: 'ssh',
-  DNS: 'dns',
   Selector: 'selector',
   URLTest: 'urltest',
 }
@@ -54,12 +52,7 @@ export interface WgPeer {
   reserved?: number[]
 }
 
-export interface Direct extends OutboundBasics, Dial {
-  override_address?: string
-  override_port?: number
-}
-
-export interface Block extends OutboundBasics {}
+export interface Direct extends OutboundBasics, Dial {}
 
 export interface SOCKS extends OutboundBasics, Dial {
   server: string
@@ -209,8 +202,6 @@ export interface SSH extends OutboundBasics, Dial  {
   client_version?: string
 }
 
-export interface DNS extends OutboundBasics {}
-
 export interface Selector extends OutboundBasics {
   outbounds: string[]
   url?: string
@@ -240,7 +231,6 @@ export type Outbound = InterfaceMap[keyof InterfaceMap]
 // Create defaultValues object dynamically
 const defaultValues: Record<OutType, Outbound> = {
   direct: { type: OutTypes.Direct },
-  block: { type: OutTypes.Block },
   socks: { type: OutTypes.SOCKS, version: "5" },
   http: { type: OutTypes.HTTP, tls: {} },
   shadowsocks: { type: OutTypes.Shadowsocks, method: 'none', multiplex: {} },
@@ -253,7 +243,6 @@ const defaultValues: Record<OutType, Outbound> = {
   hysteria2: { type: OutTypes.Hysteria2, tls: { enabled: true } },
   tor: { type: OutTypes.Tor, executable_path: './tor', data_directory: '$HOME/.cache/tor', torrc: { ClientOnly: 1 } },
   ssh: { type: OutTypes.SSH },
-  dns: { type: OutTypes.DNS },
   selector: { type: OutTypes.Selector },
   urltest: { type: OutTypes.URLTest },
 }

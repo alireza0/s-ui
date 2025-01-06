@@ -48,7 +48,6 @@
                   </v-text-field>
                 </v-col>
               </v-row>
-              <Direct v-if="outbound.type == outTypes.Direct" direction="out" :data="outbound" />
               <Socks v-if="outbound.type == outTypes.SOCKS" :data="outbound" />
               <Http v-if="outbound.type == outTypes.HTTP" :data="outbound" />
               <Shadowsocks v-if="outbound.type == outTypes.Shadowsocks" direction="out" :data="outbound" />
@@ -139,8 +138,8 @@ export default {
       link: "",
       loading: false,
       outTypes: OutTypes,
-      NoDial: [OutTypes.Block, OutTypes.DNS, OutTypes.Selector, OutTypes.URLTest],
-      NoServer: [OutTypes.Direct, OutTypes.Block, OutTypes.DNS, OutTypes.Selector, OutTypes.URLTest, OutTypes.Tor],
+      NoDial: [OutTypes.Selector, OutTypes.URLTest],
+      NoServer: [OutTypes.Direct, OutTypes.Selector, OutTypes.URLTest, OutTypes.Tor],
     }
   },
   methods: {

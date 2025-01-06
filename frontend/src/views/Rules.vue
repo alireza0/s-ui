@@ -97,15 +97,21 @@
         </v-card-subtitle>
         <v-card-text>
           <v-row>
+            <v-col>{{ $t('admin.action') }}</v-col>
+            <v-col>
+              {{ item.action }}
+            </v-col>
+          </v-row>
+          <v-row>
             <v-col>{{ $t('objects.outbound') }}</v-col>
             <v-col>
-              {{ item.outbound }}
+              {{ item.outbound?? '-' }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('pages.rules') }}</v-col>
             <v-col>
-              {{ item.rules ? item.rules.length : Object.keys(item).filter(r => !["rule_set_ipcidr_match_source","invert","outbound"].includes(r)).length }}
+              {{ item.rules ? item.rules.length : Object.keys(item).filter(r => !actionKeys.includes(r)).length }}
             </v-col>
           </v-row>
           <v-row>
@@ -151,7 +157,7 @@ import { computed, ref, onMounted } from 'vue'
 import RuleVue from '@/layouts/modals/Rule.vue'
 import RulesetVue from '@/layouts/modals/Ruleset.vue'
 import { Config } from '@/types/config'
-import { logicalRule, ruleset } from '@/types/rules'
+import { actionKeys, ruleset } from '@/types/rules'
 import { FindDiff } from '@/plugins/utils'
 
 const oldConfig = ref({})
@@ -239,15 +245,12 @@ const closeRuleModal = () => {
   ruleModal.value.visible = false
 }
 
-const saveRuleModal = (data:logicalRule) => {
-  // Logical or simple
-  const ruleData = data.type == 'logical' ? data : data.rules[0]
-
+const saveRuleModal = (data:any) => {
   // New or Edit
   if (ruleModal.value.index == -1) {
-    rules.value.push(ruleData)
+    rules.value.push(data)
   } else {
-    rules.value[ruleModal.value.index] = ruleData
+    rules.value[ruleModal.value.index] = data
   }
   ruleModal.value.visible = false
 }

@@ -70,15 +70,14 @@
               </v-row>
               <v-row>
                 <v-col>
-                  <v-combobox
+                  <v-select
                     v-model="clientInbounds"
                     :items="inboundTags"
                     :label="$t('client.inboundTags')"
-                    :return-object="false"
                     multiple
                     chips
                     hide-details
-                  ></v-combobox>
+                  ></v-select>
                 </v-col>
               </v-row>
             </v-window-item>

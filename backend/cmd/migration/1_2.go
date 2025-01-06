@@ -113,6 +113,11 @@ func moveJsonToDb(db *gorm.DB) error {
 			inbObj["out_json"] = json.RawMessage("{}")
 			inbObj["addrs"] = json.RawMessage("[]")
 		}
+		// Delete deprecated fields
+		delete(inbObj, "sniff")
+		delete(inbObj, "sniff_override_destination")
+		delete(inbObj, "sniff_timeout")
+		delete(inbObj, "domain_strategy")
 		inbJson, _ := json.Marshal(inbObj)
 
 		var newInbound model.Inbound
@@ -126,6 +131,9 @@ func moveJsonToDb(db *gorm.DB) error {
 		}
 	}
 	delete(oldConfig, "inbounds")
+
+	blockOutboundTags := []string{}
+	dnsOutboundTags := []string{}
 
 	oldOutbounds := oldConfig["outbounds"].([]interface{})
 	db.Migrator().DropTable(&model.Outbound{}, &model.Endpoint{})
@@ -149,13 +157,68 @@ func moveJsonToDb(db *gorm.DB) error {
 			if err != nil {
 				return err
 			}
-			err = db.Create(&newOutbound).Error
-			if err != nil {
-				return err
+			// Delete deprecated fields
+			if newOutbound.Type == "direct" {
+				var options map[string]interface{}
+				json.Unmarshal(newOutbound.Options, &options)
+				delete(options, "override_address")
+				delete(options, "override_port")
+				newOutbound.Options, _ = json.Marshal(options)
+			}
+
+			switch newOutbound.Type {
+			case "dns":
+				dnsOutboundTags = append(dnsOutboundTags, newOutbound.Tag)
+			case "block":
+				blockOutboundTags = append(blockOutboundTags, newOutbound.Tag)
+			default:
+				err = db.Create(&newOutbound).Error
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
 	delete(oldConfig, "outbounds")
+
+	// Check routing rules
+	if routingRules, ok := oldConfig["route"].(map[string]interface{}); ok {
+		if rules, hasRules := routingRules["rules"].([]interface{}); hasRules {
+			hasDns := false
+			for index, rule := range rules {
+				ruleObj, _ := rule.(map[string]interface{})
+				isBlock := false
+				isDns := false
+				outboundTag, _ := ruleObj["outbound"].(string)
+				for _, tag := range blockOutboundTags {
+					if tag == outboundTag {
+						isBlock = true
+						delete(ruleObj, "outbound")
+						ruleObj["action"] = "reject"
+						break
+					}
+				}
+				for _, tag := range dnsOutboundTags {
+					if tag == outboundTag {
+						isDns = true
+						hasDns = true
+						delete(ruleObj, "outbound")
+						ruleObj["action"] = "hijack-dns"
+						break
+					}
+				}
+				if !isBlock && !isDns {
+					ruleObj["action"] = "route"
+				}
+				rules[index] = ruleObj
+			}
+			if hasDns {
+				rules = append(rules, map[string]interface{}{"action": "sniff"})
+			}
+			routingRules["rules"] = rules
+		}
+		oldConfig["route"] = routingRules
+	}
 
 	// Remove v2rayapi and clashapi from experimental config
 	experimental := oldConfig["experimental"].(map[string]interface{})

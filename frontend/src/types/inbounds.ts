@@ -41,10 +41,6 @@ export interface Listen {
   udp_fragment?: boolean
   udp_timeout?: string
   detour?: string
-  sniff?: boolean
-  sniff_override_destination?: boolean
-  sniff_timeout?: string
-  domain_strategy?: string
 }
 
 interface InboundBasics extends Listen {
@@ -180,7 +176,6 @@ export interface Tun extends InboundBasics {
   udp_timeout?: string
   stack?: string
   auto_route?: boolean
-  // gso?: boolean
   // strict_route?: boolean
   // iproute2_table_index?: number
   // iproute2_rule_index?: number

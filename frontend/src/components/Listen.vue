@@ -29,24 +29,6 @@
         v-model="inbound.detour">
         </v-select>
       </v-col>
-      <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="inbound.sniff" color="primary" :label="$t('listen.sniffing')" hide-details></v-switch>
-      </v-col>
-    </v-row>
-    <v-row v-if="inbound.sniff">
-      <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="inbound.sniff_override_destination" color="primary" :label="$t('listen.sniffingOverride')" hide-details></v-switch>
-      </v-col>
-      <v-col cols="12" sm="6" md="4">
-        <v-text-field
-        :label="$t('listen.sniffingTimeout')"
-        hide-details
-        type="number"
-        min="50"
-        step="50"
-        :suffix="$t('date.ms')"
-        v-model.number="sniffTimeout"></v-text-field>
-      </v-col>
     </v-row>
     <v-row v-if="optionTCP">
       <v-col cols="12" sm="6" md="4">
@@ -70,16 +52,6 @@
         v-model.number="udpTimeout"></v-text-field>
       </v-col>
     </v-row>
-    <v-row v-if="optionDS">
-      <v-col cols="12" sm="6" md="4">
-        <v-select
-            hide-details
-            :label="$t('listen.domainStrategy')"
-            :items="['prefer_ipv4','prefer_ipv6','ipv4_only','ipv6_only']"
-            v-model="inbound.domain_strategy">
-          </v-select>
-      </v-col>
-    </v-row>
     <v-card-actions class="pt-0" v-if="inbound.type != 'tun'">
       <v-spacer></v-spacer>
       <v-menu v-model="menu" :close-on-content-click="false" location="start">
@@ -96,9 +68,6 @@
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionUDP" color="primary" :label="$t('listen.udpOptions')" hide-details></v-switch>
-            </v-list-item>
-            <v-list-item>
-              <v-switch v-model="optionDS" color="primary" :label="$t('listen.domainStrategy')" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>
@@ -119,10 +88,6 @@ export default {
     udpTimeout: {
       get() { return this.$props.inbound.udp_timeout ? parseInt(this.$props.inbound.udp_timeout.replace('m','')) : 5 },
       set(newValue:number) { this.$props.inbound.udp_timeout = newValue > 0 ? newValue + 'm' : '5m' }
-    },
-    sniffTimeout: {
-      get() { return this.$props.inbound.sniff_timeout ? parseInt(this.$props.inbound.sniff_timeout.replace('ms','')) : 300 },
-      set(newValue:number) { this.$props.inbound.sniff_timeout = newValue > 0 ? newValue + 'ms' : '300ms' }
     },
     optionTCP: {
       get(): boolean { 
@@ -147,10 +112,6 @@ export default {
     optionDetour: {
       get(): boolean { return this.$props.inbound.detour != undefined },
       set(v:boolean) { this.$props.inbound.detour = v ? this.inTags[0]?? '' : undefined }
-    },
-    optionDS: {
-      get(): boolean { return this.$props.inbound.domain_strategy != undefined },
-      set(v:boolean) { this.$props.inbound.domain_strategy = v ? 'prefer_ipv4' : undefined }
     }
   }
 }

@@ -252,11 +252,6 @@ export default {
       ],
       fingerprints: [
         { title: "Chrome", value: "chrome" },
-        { title: "Chrome PSK", value: "chrome_psk" },
-        { title: "Chrome PSK Shuffle", value: "chrome_psk_shuffle" },
-        { title: "Chrome Padding PSK Shuffle", value: "chrome_padding_psk_shuffle" },
-        { title: "Chrome Post-Quantum", value: "chrome_pq" },
-        { title: "Chrome Post-Quantum PSK", value: "chrome_pq_psk" },
         { title: "Firefox", value: "firefox" },
         { title: "Microsoft Edge", value: "edge" },
         { title: "Apple Safari", value: "safari" },
