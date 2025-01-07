@@ -165,7 +165,15 @@ export interface Hysteria2 extends InboundBasics {
   }
   users: NamePass[]
   ignore_client_bandwidth?: boolean
-  masquerade?: string
+  masquerade?: string | {
+    type: string
+    directory?: string
+    url?: string
+    rewrite_host?: string
+    status_code?: number
+    headers?: Headers[]
+    content?: string
+  }
   brutal_debug?: boolean
 }
 export interface Tun extends InboundBasics {

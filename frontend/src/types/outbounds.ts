@@ -168,6 +168,8 @@ export interface TUIC extends OutboundBasics, Dial {
 export interface Hysteria2 extends OutboundBasics, Dial {
   server: string
   server_port: number
+  server_ports?: string[]
+  hop_interval: string
   up_mbps?: number
   down_mbps?: number
   obfs?: {
