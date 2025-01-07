@@ -11,6 +11,16 @@
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="8">
+        <v-text-field
+          v-model="options.public_key"
+          disabled
+          :label="$t('tls.pubKey')"
+          append-icon="mdi-refresh"
+          @click:append="getWgPubKey()"
+          hide-details>
+        </v-text-field>
+      </v-col>
+      <v-col cols="12" sm="8">
         <v-text-field v-model="address" :label="$t('types.wg.localIp') + ' ' + $t('commaSeparated')" hide-details></v-text-field>
       </v-col>
     </v-row>
@@ -59,11 +69,11 @@
       <v-col cols="12" sm="6" md="4">
         <v-switch v-model="data.system" color="primary" :label="$t('types.wg.sysIf')" hide-details></v-switch>
       </v-col>
-      <v-col cols="12" sm="6" md="4" v-if="data.name != undefined">
+      <v-col cols="12" sm="6" md="4" v-if="data.system">
         <v-text-field
           :label="$t('types.wg.ifName')"
           hide-details
-          v-model="data.name">
+          v-model="ifName">
         </v-text-field>
       </v-col>
     </v-row>
@@ -83,9 +93,6 @@
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionMtu" color="primary" label="MTU" hide-details></v-switch>
-            </v-list-item>
-            <v-list-item>
-              <v-switch v-model="optionInterface" color="primary" :label="$t('types.wg.ifName')" hide-details></v-switch>
             </v-list-item>
           </v-list>
         </v-card>
@@ -111,8 +118,8 @@
 import Peer from '@/components/WgPeer.vue'
 
 export default {
-  props: ['data'],
-  emits: ["newWgKey"],
+  props: ['data', 'options'],
+  emits: ['newWgKey', 'getWgPubKey'],
   data() {
     return {
       menu: false,
@@ -124,6 +131,11 @@ export default {
     },
     newKey() {
       this.$emit('newWgKey')
+    },
+    getWgPubKey() {
+      const privKey = this.$props.data.private_key
+      if (privKey.length == 0) return
+      this.$emit('getWgPubKey', privKey)
     },
   },
   computed: {
@@ -143,9 +155,9 @@ export default {
       get(): boolean { return this.$props.data.mtu != undefined },
       set(v:boolean) { this.$props.data.mtu = v ? 1408 : undefined }
     },
-    optionInterface: {
-      get(): boolean { return this.$props.data.name != undefined },
-      set(v:boolean) { this.$props.data.name = v ? "" : undefined }
+    ifName: {
+      get() { return this.$props.data.name?? '' },
+      set(v:string) { this.$props.data.name = v.length > 0 ? v : undefined }
     },
     address: {
       get() { return this.$props.data.address?.join(',') },

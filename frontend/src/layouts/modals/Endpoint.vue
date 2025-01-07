@@ -20,7 +20,7 @@
             <v-text-field v-model="endpoint.tag" :label="$t('objects.tag')" hide-details></v-text-field>
           </v-col>
         </v-row>
-        <Wireguard v-if="endpoint.type == epTypes.Wireguard" :data="endpoint" @newWgKey="newWgKey" />
+        <Wireguard v-if="endpoint.type == epTypes.Wireguard" :data="endpoint" :options="options" @getWgPubKey="getWgPubKey" @newWgKey="newWgKey" />
         <Dial :dial="endpoint" :outTags="tags" />
       </v-card-text>
       <v-card-actions>
@@ -61,9 +61,9 @@ export default {
       endpoint: createEndpoint("wireguard",{ "tag": "" }),
       title: "add",
       tab: "t1",
-      link: "",
       loading: false,
       epTypes: EpTypes,
+      options: <any>{},
     }
   },
   methods: {
@@ -71,21 +71,24 @@ export default {
       if (this.$props.id > 0) {
         const newData = JSON.parse(this.$props.data)
         this.endpoint = createEndpoint(newData.type, newData)
+        this.options = {}
         this.title = "edit"
       }
       else {
         const port = RandomUtil.randomIntRange(10000, 60000)
         const randomIPoctet = RandomUtil.randomIntRange(1, 255)
+        const wgKeys = (await this.genWgKey())
         this.endpoint = createEndpoint("wireguard",{
           tag: "wireguard-" + RandomUtil.randomSeq(3),
           address: ['10.0.0.'+ randomIPoctet.toString() +'/32','fe80::'+ randomIPoctet.toString(16) +'/128'],
           listen_port: port,
-          private_key: (await this.genWgKey()).private_key,
+          private_key: wgKeys.private_key,
           peers: [{
             public_key: (await this.genWgKey()).public_key,
             allowed_ips: ['0.0.0.0/0', '::/0']
           }]
         })
+        this.options.public_key = wgKeys.public_key
         this.title = "add"
       }
       this.tab = "t1"
@@ -130,11 +133,20 @@ export default {
     async newWgKey(){
       const newKeys = await this.genWgKey()
       this.endpoint.private_key = newKeys.private_key
+      this.options.public_key = newKeys.public_key
+    },
+    async getWgPubKey(private_key: string) {
+      this.loading = true
+      const msg = await HttpUtils.get('api/keypairs', { k: "wireguard", o: private_key })
+      if (msg.success) {
+        this.options.public_key = msg.obj        
+      }
+      this.loading = false
     }
   },
   watch: {
-    visible(newValue) {
-      if (newValue) {
+    visible(v) {
+      if (v) {
         this.updateData()
       }
     },

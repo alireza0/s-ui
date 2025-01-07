@@ -163,7 +163,7 @@ func (s *ServerService) GenKeypair(keyType string, options string) []string {
 	case "reality":
 		return s.generateRealityKeyPair()
 	case "wireguard":
-		return generateWireGuardKey()
+		return generateWireGuardKey(options)
 	}
 
 	return []string{"Failed to generate keypair"}
@@ -195,10 +195,14 @@ func (s *ServerService) generateRealityKeyPair() []string {
 	return []string{"PrivateKey: " + base64.RawURLEncoding.EncodeToString(privateKey[:]), "PublicKey: " + base64.RawURLEncoding.EncodeToString(publicKey[:])}
 }
 
-func generateWireGuardKey() []string {
-	privateKey, err := wgtypes.GeneratePrivateKey()
+func generateWireGuardKey(pk string) []string {
+	if len(pk) > 0 {
+		key, _ := wgtypes.ParseKey(pk)
+		return []string{key.PublicKey().String()}
+	}
+	wgKeys, err := wgtypes.GeneratePrivateKey()
 	if err != nil {
 		return []string{"Failed to generate wireguard keypair: ", err.Error()}
 	}
-	return []string{"PrivateKey: " + privateKey.String(), "PublicKey: " + privateKey.PublicKey().String()}
+	return []string{"PrivateKey: " + wgKeys.String(), "PublicKey: " + wgKeys.PublicKey().String()}
 }

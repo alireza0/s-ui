@@ -13,7 +13,7 @@
       type="number"
       min="0"
       hide-details
-      v-model="port">
+      v-model.number="port">
       </v-text-field>
     </v-col>
     <v-col cols="12" sm="6" md="4">
@@ -21,8 +21,9 @@
       label="KeepAlive"
       type="number"
       min="0"
+      :suffix="$t('date.s')"
       hide-details
-      v-model="data.persistent_keepalive_interval">
+      v-model.number="keepAlive">
       </v-text-field>
     </v-col>
   </v-row>
@@ -72,6 +73,10 @@ export default {
     port: {
       get() { return this.$props.data.port },
       set(v:number) { this.$props.data.port = v > 0 ? v : undefined }
+    },
+    keepAlive: {
+      get() { return this.$props.data.persistent_keepalive_interval?? 0 },
+      set(v:number) { this.$props.data.persistent_keepalive_interval = v > 0 ? v : undefined }
     }
   }
 }
