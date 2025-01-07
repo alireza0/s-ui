@@ -169,7 +169,7 @@ export interface Hysteria2 extends InboundBasics {
     type: string
     directory?: string
     url?: string
-    rewrite_host?: string
+    rewrite_host?: boolean
     status_code?: number
     headers?: Headers[]
     content?: string

@@ -77,12 +77,12 @@
             </v-text-field>
           </v-col>
           <v-col cols="12" sm="6" md="4">
-            <v-text-field
+            <v-switch
             label="Rewrite Host"
-            placeholder="example.com"
             v-model="data.masquerade.rewrite_host"
+            color="primary"
             hide-details>
-            </v-text-field>
+            </v-switch>
           </v-col>
         </v-row>
         <template v-if="masqueradeType == 'string'">
