@@ -144,7 +144,7 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 			return
 		}
 		jsonObj(c, *users, nil)
-	case "setting":
+	case "settings":
 		data, err := a.SettingService.GetAllSetting()
 		if err != nil {
 			jsonMsg(c, "", err)
@@ -298,6 +298,12 @@ func (a *APIHandler) loadPartialData(c *gin.Context, objs []string) error {
 				return err
 			}
 			data[obj] = json.RawMessage(config)
+		case "settings":
+			settings, err := a.SettingService.GetAllSetting()
+			if err != nil {
+				return err
+			}
+			data[obj] = settings
 		}
 	}
 

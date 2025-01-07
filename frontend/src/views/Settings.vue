@@ -14,7 +14,7 @@
   <v-card-text>
     <v-row align="center" justify="center" style="margin-bottom: 10px;">
       <v-col cols="auto">
-        <v-btn color="primary" @click="saveChanges" :loading="loading" :disabled="!stateChange">
+        <v-btn color="primary" @click="save" :loading="loading" :disabled="!stateChange">
           {{ $t('actions.save') }}
         </v-btn>
       </v-col>
@@ -152,11 +152,12 @@
 
 <script lang="ts" setup>
 import { useLocale } from 'vuetify'
-import { languages } from '@/locales'
+import { i18n, languages } from '@/locales'
 import { Ref, computed, inject, onMounted, ref } from 'vue'
 import HttpUtils from '@/plugins/httputil'
 import { FindDiff } from '@/plugins/utils'
 import SubJsonExtVue from '@/components/SubJsonExt.vue'
+import { push } from 'notivue'
 const locale = useLocale()
 const tab = ref("t1")
 const loading:Ref = inject('loading')?? ref(false)
@@ -195,22 +196,28 @@ const changeLocale = (l: any) => {
 
 const loadData = async () => {
   loading.value = true
-  const msg = await HttpUtils.get('api/setting')
+  const msg = await HttpUtils.get('api/settings')
   loading.value = false
   if (msg.success) {
-    settings.value = msg.obj
-    oldSettings.value = { ...msg.obj }
+    setData(msg.obj)
   }
 }
 
-const saveChanges = async () => {
+const setData = (data: any) => {
+  settings.value = data
+  oldSettings.value = { ...data }
+}
+
+const save = async () => {
   loading.value = true
-  const diff = {
-    settings: JSON.stringify(FindDiff.Settings(settings.value,oldSettings.value)),
-  }
-  const msg = await HttpUtils.post('api/save', diff)
+  const msg = await HttpUtils.post('api/save', { object: 'settings', action: 'set', data: JSON.stringify(settings.value) })
   if (msg.success) {
-    loadData()
+    push.success({
+      title: i18n.global.t('success'),
+      duration: 5000,
+      message: i18n.global.t('actions.set') + " " + i18n.global.t('pages.settings')
+    })
+    setData(msg.obj.settings)
   }
   loading.value = false
 }

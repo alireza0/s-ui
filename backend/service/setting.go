@@ -351,13 +351,14 @@ func (s *SettingService) SaveConfig(tx *gorm.DB, config json.RawMessage) error {
 	return tx.Model(model.Setting{}).Where("key = ?", "config").Update("value", string(configs)).Error
 }
 
-func (s *SettingService) Save(tx *gorm.DB, changes []model.Changes) error {
+func (s *SettingService) Save(tx *gorm.DB, data json.RawMessage) error {
 	var err error
-	for _, change := range changes {
-		key := change.Key
-		var obj string
-		json.Unmarshal(change.Obj, &obj)
-
+	var settings map[string]string
+	err = json.Unmarshal(data, &settings)
+	if err != nil {
+		return err
+	}
+	for key, obj := range settings {
 		// Secure file existance check
 		if obj != "" && (key == "webCertFile" ||
 			key == "webKeyFile" ||

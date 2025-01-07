@@ -148,6 +148,8 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, login
 			return nil, err
 		}
 		err = s.restartCoreWithConfig(data)
+	case "settings":
+		err = s.SettingService.Save(tx, data)
 	default:
 		return nil, common.NewError("unknown object: ", obj)
 	}
