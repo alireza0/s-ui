@@ -176,6 +176,21 @@ config_after_install() {
     fi
 }
 
+prepare_services() {
+    if [[ -f "/etc/systemd/system/sing-box.service" ]]; then
+        echo -e "${yellow}Stopping sing-box service... ${plain}"
+        systemctl stop sing-box
+        rm -f /usr/local/s-ui/bin/sing-box /usr/local/s-ui/bin/runSingbox.sh /usr/local/s-ui/bin/signal
+    fi
+    if [[ -e "/usr/local/s-ui/bin" ]]; then
+        echo -e "###############################################################"
+        echo -e "${green}/usr/local/s-ui/bin${red} directory exists yet!"
+        echo -e "Please check the content and delete it manually after migration ${plain}"
+        echo -e "###############################################################"
+    fi
+    systemctl daemon-reload
+}
+
 install_s-ui() {
     cd /tmp/
 
@@ -204,26 +219,26 @@ install_s-ui() {
 
     if [[ -e /usr/local/s-ui/ ]]; then
         systemctl stop s-ui
-        systemctl stop sing-box
     fi
 
     tar zxvf s-ui-linux-$(arch).tar.gz
     rm s-ui-linux-$(arch).tar.gz -f
 
-    wget --no-check-certificate -O /usr/bin/s-ui https://raw.githubusercontent.com/alireza0/s-ui/main/s-ui.sh
-
-    chmod +x s-ui/sui s-ui/bin/sing-box s-ui/bin/runSingbox.sh /usr/bin/s-ui
+    chmod +x s-ui/sui /s-ui/s-ui.sh
+    cp s-ui/s-ui.sh /usr/bin/s-ui
     cp -rf s-ui /usr/local/
     cp -f s-ui/*.service /etc/systemd/system/
     rm -rf s-ui
 
     config_after_install
+    prepare_services
 
-    systemctl daemon-reload
     systemctl enable s-ui --now
-    systemctl enable sing-box --now
 
     echo -e "${green}s-ui v${last_version}${plain} installation finished, it is up and running now..."
+    echo -e "You may access the Panel with following URL(s):${yellow}"
+    /usr/local/s-ui/sui uri
+    echo -e "${plain}"
     echo -e ""
     s-ui help
 }

@@ -1,5 +1,5 @@
 import { iMultiplex } from "./multiplex"
-import { iTls } from "./inTls"
+import { iTls } from "./tls"
 import { Dial } from "./outbounds"
 import { Transport } from "./transport"
 
@@ -24,6 +24,15 @@ export const InTypes = {
 
 type InType = typeof InTypes[keyof typeof InTypes]
 
+export interface Addr {
+  server: string
+  server_port: number
+  tls?: boolean
+  insecure?: boolean
+  server_name?: string
+  remark?: string
+}
+
 export interface Listen {
   listen: string
   listen_port: number
@@ -32,15 +41,15 @@ export interface Listen {
   udp_fragment?: boolean
   udp_timeout?: string
   detour?: string
-  sniff?: boolean
-  sniff_override_destination?: boolean
-  sniff_timeout?: string
-  domain_strategy?: string
 }
 
 interface InboundBasics extends Listen {
+  id: number
   type: InType
   tag: string
+  tls_id: number
+  addrs?: Addr[]
+  out_json?: any
 }
 
 interface UsernamePass {
@@ -87,7 +96,6 @@ export interface SOCKS extends InboundBasics {
 }
 export interface HTTP extends InboundBasics {
   users?: UsernamePass[]
-  tls?: iTls,
 }
 export interface Shadowsocks extends InboundBasics {
   method: string
@@ -125,7 +133,6 @@ export interface Hysteria extends InboundBasics {
   recv_window_client?: number
   max_conn_client?: number
   disable_mtu_discovery?: boolean
-  tls: iTls
 }
 export interface ShadowTLS extends InboundBasics {
   version: 1|2|3
@@ -139,7 +146,6 @@ export interface ShadowTLS extends InboundBasics {
 }
 export interface VLESS extends InboundBasics {
   users: VlessUser[]
-  tls?: iTls
   multiplex?: iMultiplex
   transport?: Transport
 }
@@ -149,7 +155,6 @@ export interface TUIC extends InboundBasics {
   auth_timeout?: string
   zero_rtt_handshake?: boolean
   heartbeat?: string
-  tls: iTls
 }
 export interface Hysteria2 extends InboundBasics {
   up_mbps?: number
@@ -160,8 +165,15 @@ export interface Hysteria2 extends InboundBasics {
   }
   users: NamePass[]
   ignore_client_bandwidth?: boolean
-  tls: iTls
-  masquerade?: string
+  masquerade?: string | {
+    type: string
+    directory?: string
+    url?: string
+    rewrite_host?: string
+    status_code?: number
+    headers?: Headers[]
+    content?: string
+  }
   brutal_debug?: boolean
 }
 export interface Tun extends InboundBasics {
@@ -172,7 +184,6 @@ export interface Tun extends InboundBasics {
   udp_timeout?: string
   stack?: string
   auto_route?: boolean
-  // gso?: boolean
   // strict_route?: boolean
   // iproute2_table_index?: number
   // iproute2_rule_index?: number
@@ -234,24 +245,26 @@ type userEnabledTypes = {
   vless: VLESS
 }
 
+export const inboundWithUsers = ['mixed', 'socks:', 'http', 'shadowsocks', 'vmess', 'trojan', 'naive', 'hysteria', 'shadowtls', 'tuic', 'hysteria2', 'vless']
+
 // Create union type from userEnabledTypes
-export type InboundWithUser = userEnabledTypes[keyof userEnabledTypes]
+type InboundWithUser = userEnabledTypes[keyof userEnabledTypes]
 
 // Create defaultValues object dynamically
 const defaultValues: Record<InType, Inbound> = {
   direct: <Direct>{ type: InTypes.Direct },
   mixed: <Mixed>{ type: InTypes.Mixed },
   socks: <SOCKS>{ type: InTypes.SOCKS },
-  http: <HTTP>{ type: InTypes.HTTP, tls: {} },
+  http: <HTTP>{ type: InTypes.HTTP, tls_id: 0 },
   shadowsocks: <Shadowsocks>{ type: InTypes.Shadowsocks, method: 'none', multiplex: {} },
-  vmess: <VMess>{ type: InTypes.VMess, users: <VmessUser[]>[], tls: {}, multiplex: {}, transport: {} },
-  trojan: <Trojan>{ type: InTypes.Trojan, users: <NamePass[]>[], tls: {}, multiplex: {}, transport: {} },
-  naive: <Naive>{ type: InTypes.Naive, users: <UsernamePass[]>[], tls: { enabled: true } },
-  hysteria: <Hysteria>{ type: InTypes.Hysteria, users: <NameAuth[]>[], up_mbps: 100, down_mbps: 100, tls: { enabled: true } },
+  vmess: <VMess>{ type: InTypes.VMess, users: <VmessUser[]>[], tls_id: 0, multiplex: {}, transport: {} },
+  trojan: <Trojan>{ type: InTypes.Trojan, users: <NamePass[]>[], tls_id: 0, multiplex: {}, transport: {} },
+  naive: <Naive>{ type: InTypes.Naive, users: <UsernamePass[]>[], tls_id: 0 },
+  hysteria: <Hysteria>{ type: InTypes.Hysteria, users: <NameAuth[]>[], up_mbps: 100, down_mbps: 100, tls_id: 0 },
   shadowtls: <ShadowTLS>{ type: InTypes.ShadowTLS, version: 3, users: <NamePass[]>[], handshake: {}, handshake_for_server_name: {} },
-  tuic: <TUIC>{ type: InTypes.TUIC, users: <TuicUser[]>[], congestion_control: "cubic", tls: { enabled: true } },
-  hysteria2: <Hysteria2>{ type: InTypes.Hysteria2, users: <NamePass[]>[], tls: { enabled: true } },
-  vless: <VLESS>{ type: InTypes.VLESS, users: <VlessUser[]>[], tls: {}, multiplex: {}, transport: {} },
+  tuic: <TUIC>{ type: InTypes.TUIC, users: <TuicUser[]>[], congestion_control: "cubic", tls_id: 0 },
+  hysteria2: <Hysteria2>{ type: InTypes.Hysteria2, users: <NamePass[]>[], tls_id: 0 },
+  vless: <VLESS>{ type: InTypes.VLESS, users: <VlessUser[]>[], tls_id: 0, multiplex: {}, transport: {} },
   tun: <Tun>{ type: InTypes.Tun, mtu: 9000, stack: 'system', udp_timeout: '5m', auto_route: false },
   redirect: <Redirect>{ type: InTypes.Redirect },
   tproxy: <TProxy>{ type: InTypes.TProxy },

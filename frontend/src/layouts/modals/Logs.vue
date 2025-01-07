@@ -3,7 +3,7 @@
     <v-card class="rounded-lg">
       <v-card-title>
         <v-row>
-          <v-col>{{ $t('basic.log.title') + " - " + (logType == 's-ui'? "S-UI" : "Sing-Box") }}</v-col>
+          <v-col>{{ $t('basic.log.title') }}</v-col>
           <v-spacer></v-spacer>
           <v-col cols="auto">
             <v-icon icon="mdi-close" @click="$emit('close')" />
@@ -51,7 +51,7 @@
 import HttpUtils from '@/plugins/httputil';
 
 export default {
-  props: ['logType', 'visible'],
+  props: ['visible'],
   data() {
     return {
       loading: false,
@@ -69,7 +69,7 @@ export default {
   methods: {
     async loadData() {
       this.loading = true
-      const data = await HttpUtils.get('api/logs',{ s: this.$props.logType, c: this.logCount, l: this.logLevel })
+      const data = await HttpUtils.get('api/logs',{ c: this.logCount, l: this.logLevel })
       if (data.success) {
         this.lines = data.obj?? []
         this.loading = false

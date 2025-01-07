@@ -41,7 +41,7 @@
                   <DatePick :expiry="expDate" @submit="setDate" />
                 </v-col>
               </v-row>
-              <v-row v-if="index != -1">
+              <v-row v-if="id > 0">
                 <v-col cols="12" sm="6" md="4" class="d-flex flex-column">
                   <div class="d-flex justify-space-between align-center">
                     <div>
@@ -70,19 +70,14 @@
               </v-row>
               <v-row>
                 <v-col>
-                  <v-combobox
+                  <v-select
                     v-model="clientInbounds"
                     :items="inboundTags"
                     :label="$t('client.inboundTags')"
                     multiple
                     chips
                     hide-details
-                  ></v-combobox>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="auto">
-                  <v-switch v-model="clientStats" color="primary" :label="$t('stats.enable')" hide-details></v-switch>
+                  ></v-select>
                 </v-col>
               </v-row>
             </v-window-item>
@@ -183,13 +178,12 @@
 </template>
 
 <script lang="ts">
-import { Link } from '@/plugins/link'
-import { createClient, randomConfigs, updateConfigs } from '@/types/clients'
+import { createClient, randomConfigs, updateConfigs, Link } from '@/types/clients'
 import DatePick from '@/components/DateTime.vue'
 import { HumanReadable } from '@/plugins/utils'
 
 export default {
-  props: ['visible', 'data', 'index', 'inboundTags', 'groups', 'stats'],
+  props: ['visible', 'data', 'id', 'inboundTags', 'groups'],
   emits: ['close', 'save'],
   data() {
     return {
@@ -206,7 +200,7 @@ export default {
   },
   methods: {
     updateData() {
-      if (this.$props.index != -1) {
+      if (this.$props.id > 0) {
         const newData = JSON.parse(this.$props.data)
         this.client = createClient(newData)
         this.title = "edit"
@@ -217,7 +211,6 @@ export default {
         this.title = "add"
         this.clientConfig = randomConfigs('client')
       }
-      this.clientStats = this.$props.stats
       this.links = this.client.links.filter(l => l.type == 'local')
       this.extLinks = this.client.links.filter(l => l.type == 'external')
       this.subLinks = this.client.links.filter(l => l.type == 'sub')
@@ -231,7 +224,6 @@ export default {
       this.loading = true
       this.client.config = updateConfigs(this.clientConfig, this.client.name)
       this.client.links = [
-                        ...this.links,
                         ...this.extLinks.filter(l => l.uri != ''),
                         ...this.subLinks.filter(l => l.uri != '')]
       this.$emit('save', this.client, this.clientStats)
@@ -243,8 +235,8 @@ export default {
   },
   computed: {
     clientInbounds: {
-      get() { return this.client.inbounds.length>0 ? this.client.inbounds.filter(i => this.inboundTags.includes(i)) : [] },
-      set(newValue:string[]) { this.client.inbounds = newValue.length == 0 ?  [] : newValue }
+      get() { return this.client.inbounds.length>0 ? this.client.inbounds : [] },
+      set(v:number[]) { this.client.inbounds = v.length == 0 ?  [] : v }
     },
     expDate: {
       get() { return this.client.expiry},

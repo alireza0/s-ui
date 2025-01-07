@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 	"s-ui/config"
+	"s-ui/core"
 	"s-ui/cronjob"
 	"s-ui/database"
 	"s-ui/logger"
@@ -15,9 +16,12 @@ import (
 
 type APP struct {
 	service.SettingService
-	webServer *web.Server
-	subServer *sub.Server
-	cronJob   *cronjob.CronJob
+	configService *service.ConfigService
+	webServer     *web.Server
+	subServer     *sub.Server
+	cronJob       *cronjob.CronJob
+	logger        *logging.Logger
+	core          *core.Core
 }
 
 func NewApp() *APP {
@@ -34,15 +38,17 @@ func (a *APP) Init() error {
 		return err
 	}
 
+	// Init Setting
+	a.SettingService.GetAllSetting()
+
+	a.core = core.NewCore()
+
 	a.cronJob = cronjob.NewCronJob()
 	a.webServer = web.NewServer()
 	a.subServer = sub.NewServer()
 
-	configService := service.NewConfigService()
-	err = configService.InitConfig()
-	if err != nil {
-		return err
-	}
+	a.configService = service.NewConfigService(a.core)
+
 	return nil
 }
 
@@ -72,6 +78,11 @@ func (a *APP) Start() error {
 		return err
 	}
 
+	err = a.configService.StartCore("")
+	if err != nil {
+		logger.Error(err)
+	}
+
 	return nil
 }
 
@@ -84,6 +95,10 @@ func (a *APP) Stop() {
 	err = a.webServer.Stop()
 	if err != nil {
 		logger.Warning("stop Web Server err:", err)
+	}
+	err = a.configService.StopCore()
+	if err != nil {
+		logger.Warning("stop Core err:", err)
 	}
 }
 
@@ -105,4 +120,8 @@ func (a *APP) initLog() {
 func (a *APP) RestartApp() {
 	a.Stop()
 	a.Start()
+}
+
+func (a *APP) GetCore() *core.Core {
+	return a.core
 }

@@ -1,3 +1,5 @@
+import { en } from "vuetify/lib/locale/index.mjs";
+
 export default {
   message: "Welcome",
   success: "success",
@@ -37,6 +39,7 @@ export default {
     home: "Home",
     inbounds: "Inbounds",
     outbounds: "Outbounds",
+    endpoints: "Endpoints",
     clients: "Clients",
     rules: "Rules",
     tls: "TLS Settings",
@@ -75,6 +78,8 @@ export default {
     inbound: "Inbound",
     client: "Client",
     outbound: "Outbound",
+    endpoint: "Endpoint",
+    config: "Config",
     rule: "Rule",
     user: "User",
     tag: "Tag",
@@ -83,7 +88,6 @@ export default {
     tls: "TLS",
     multiplex: "Multiplex",
     transport: "Transport",
-    method: "Method",
     headers: "Headers",
     key: "Key",
     value: "Value",
@@ -91,6 +95,7 @@ export default {
   actions: {
     action: "Action",
     add: "Add",
+    addbulk: "Add Bulk",
     new: "New",
     edit: "Edit",
     del: "Delete",
@@ -168,7 +173,6 @@ export default {
     sub: "External Subscription",
   },
   bulk: {
-    add: "Add Bulk",
     order: "Order",
     random: "Random",
   },
@@ -228,7 +232,6 @@ export default {
       worker: "Workers",
       ifName: "Interface Name",
       sysIf: "System Interface",
-      gso: "Segmentation Offload",
       options: "Wireguard Options",
       multiPeer: "Multi Peer",
       allowedIp: "Allowed IPs",
@@ -256,9 +259,6 @@ export default {
     mdOption: "Multi Domain Options",
   },
   listen: {
-    sniffing: "Sniffing",
-    sniffingTimeout: "Sniffing Timeout",
-    sniffingOverride: "Override Destation",
     options: "Listen Options",
     tcpOptions: "TCP Options",
     udpOptions: "UDP Options",
@@ -324,6 +324,14 @@ export default {
     domainRules: "Domain/IP",
     srcIpRules: "Source IP",
     srcPortRules: "Source Port",
+    udpDisableDomainUnmapping: "UDP Disable Domain Unmapping",
+    udpConnect: "UDP Connect",
+    udpTimeout: "UDP Timeout",
+    method: "Method",
+    noDrop: "No Drop",
+    sniffer: "Sniffer",
+    timeout: "Timeout",
+    strategy: "Strategy",
   },
   ruleset: {
     add: "Add Ruleset",
@@ -394,7 +402,6 @@ export default {
     download: "Download",
     volume: "Volume",
     usage: "Usage",
-    enable: "Enable Statistics",
     graphTitle: "Traffic Chart",
     B: "B",
     KB: "KB",

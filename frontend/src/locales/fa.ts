@@ -1,3 +1,5 @@
+import { config } from "process";
+
 export default {
   message: "خوش آمدید",
   success: "موفق",
@@ -37,6 +39,7 @@ export default {
     home: "خانه",
     inbounds: "ورودی‌ها",
     outbounds: "خروجی‌ها",
+    endpoints: "درگاه‌ها",
     clients: "کاربران",
     rules: "قوانین",
     tls: "رمزنگاری‌ها",
@@ -75,6 +78,8 @@ export default {
     inbound: "ورودی‌",
     client: "کاربر",
     outbound: "خروجی‌",
+    endpoint: "درگاه",
+    config: "پیکربندی",
     rule: "قانون",
     user: "کاربر",
     tag: "برچسب",
@@ -90,6 +95,7 @@ export default {
   actions: {
     action: "فرمان",
     add: "ایجاد",
+    addbulk: "ایجاد انبوه",
     new: "جدید",
     edit: "ویرایش",
     del: "حذف",
@@ -167,7 +173,6 @@ export default {
     sub: "سابسکریپشن خارجی",
   },
   bulk: {
-    add: "ایجاد انبوه",
     order: "ترتیب",
     random: "تصادفی",
   },
@@ -227,7 +232,6 @@ export default {
       worker: "عملگرها",
       ifName: "نام اینترفیس",
       sysIf: "استفاده از اینترفیس سیستم",
-      gso: "بارگذاری تقسیم‌بندی عمومی",
       options: "گزینه‌های Wireguard",
       multiPeer: "چند همتایی",
       allowedIp: "آدرس‌های مجاز",
@@ -255,9 +259,6 @@ export default {
     mdOption: "گزینه‌های دامنه چندگانه",
   },
   listen: {
-    sniffing: "شنود آدرس",
-    sniffingTimeout: "مهلت شنود آدرس",
-    sniffingOverride: "جایگزینی مقصد",
     options: "گزینه‌های گوش‌دادن",
     tcpOptions: "گزینه‌های TCP",
     udpOptions: "گزینه‌های UDP",
@@ -323,6 +324,14 @@ export default {
     domainRules: "دامنه/آدرس",
     srcIpRules: "آدرس مبدا",
     srcPortRules: "پورت مبدا",
+    udpDisableDomainUnmapping: "عدم تبدیل مسیریابی دامنه",
+    udpConnect: "اتصال UDP",
+    udpTimeout: "مهلت UDP",
+    method: "روش",
+    noDrop: "عدم رهاکردن",
+    sniffer: "شنود کننده",
+    timeout: "مهلت",
+    strategy: "استراتژی",
   },
   ruleset: {
     add: "ایجاد مجموعه",
@@ -393,7 +402,6 @@ export default {
     download: "دانلود",
     volume: "حجم",
     usage: "استفاده",
-    enable: "فعال سازی کنترل ترافیک",
     graphTitle: "نمودار ترافیک",
     B: "ب",
     KB: "ک‌ب",

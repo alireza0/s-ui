@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"s-ui/cmd/migration"
 	"s-ui/config"
 )
 
@@ -40,6 +41,7 @@ func ParseCmd() {
 		fmt.Println()
 		fmt.Println("Commands:")
 		fmt.Println("    admin          set/reset/show first admin credentials")
+		fmt.Println("    uri            Show panel URI")
 		fmt.Println("    migrate        migrate form older version")
 		fmt.Println("    setting        set/reset/show settings")
 		fmt.Println()
@@ -71,8 +73,11 @@ func ParseCmd() {
 			showAdmin()
 		}
 
+	case "uri":
+		getPanelURI()
+
 	case "migrate":
-		migrateDb()
+		migration.MigrateDb()
 
 	case "setting":
 		err := settingCmd.Parse(os.Args[2:])

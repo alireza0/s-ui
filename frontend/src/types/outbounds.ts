@@ -1,16 +1,14 @@
-import { oTls } from "./outTls"
+import { oTls } from "./tls"
 import { oMultiplex } from "./multiplex"
 import { Transport } from "./transport"
 
 export const OutTypes = {
   Direct: 'direct',
-  Block: 'block',
   SOCKS: 'socks',
   HTTP: 'http',
   Shadowsocks: 'shadowsocks',
   VMess: 'vmess',
   Trojan: 'trojan',
-  Wireguard: 'wireguard',
   Hysteria: 'hysteria',
   VLESS: 'vless',
   ShadowTLS: 'shadowtls',
@@ -18,7 +16,6 @@ export const OutTypes = {
   Hysteria2: 'hysteria2',
   Tor: 'tor',
   SSH: 'ssh',
-  DNS: 'dns',
   Selector: 'selector',
   URLTest: 'urltest',
 }
@@ -41,6 +38,7 @@ export interface Dial {
 }
 
 interface OutboundBasics {
+  id: number
   type: OutType
   tag: string
 }
@@ -54,12 +52,7 @@ export interface WgPeer {
   reserved?: number[]
 }
 
-export interface Direct extends OutboundBasics, Dial {
-  override_address?: string
-  override_port?: number
-}
-
-export interface Block extends OutboundBasics {}
+export interface Direct extends OutboundBasics, Dial {}
 
 export interface SOCKS extends OutboundBasics, Dial {
   server: string
@@ -124,23 +117,6 @@ export interface Trojan extends OutboundBasics, Dial {
   transport?: Transport
 }
 
-export interface WireGuard extends OutboundBasics, Dial {
-  server?: string
-  server_port?: number
-  system_interface?: boolean
-  gso?: boolean
-  interface_name?: string
-  local_address: string[]
-  private_key: string
-  peers?: WgPeer[]
-  peer_public_key?: string
-  pre_shared_key?: string
-  reserved?: number[]
-  workers?: number
-  mtu?: number
-  network?: "udp" | "tcp"
-}
-
 export interface Hysteria extends OutboundBasics, Dial {
   server: string
   server_port: number
@@ -192,6 +168,8 @@ export interface TUIC extends OutboundBasics, Dial {
 export interface Hysteria2 extends OutboundBasics, Dial {
   server: string
   server_port: number
+  server_ports?: string[]
+  hop_interval: string
   up_mbps?: number
   down_mbps?: number
   obfs?: {
@@ -226,8 +204,6 @@ export interface SSH extends OutboundBasics, Dial  {
   client_version?: string
 }
 
-export interface DNS extends OutboundBasics {}
-
 export interface Selector extends OutboundBasics {
   outbounds: string[]
   url?: string
@@ -257,13 +233,11 @@ export type Outbound = InterfaceMap[keyof InterfaceMap]
 // Create defaultValues object dynamically
 const defaultValues: Record<OutType, Outbound> = {
   direct: { type: OutTypes.Direct },
-  block: { type: OutTypes.Block },
   socks: { type: OutTypes.SOCKS, version: "5" },
   http: { type: OutTypes.HTTP, tls: {} },
   shadowsocks: { type: OutTypes.Shadowsocks, method: 'none', multiplex: {} },
   vmess: { type: OutTypes.VMess, tls: {}, multiplex: {}, transport: {}, security: 'auto', global_padding: false },
   trojan: { type: OutTypes.Trojan, tls: {}, multiplex: {}, transport: {} },
-  wireguard: { type: OutTypes.Wireguard, local_address: ['10.0.0.2/32','fe80::2/128'], private_key: '' },
   hysteria: { type: OutTypes.Hysteria, up_mbps: 100, down_mbps: 100, tls: { enabled: true } },
   shadowtls: { type: OutTypes.ShadowTLS, version: 3, tls: { enabled: true } },
   vless: { type: OutTypes.VLESS, tls: {}, multiplex: {}, transport: {} },
@@ -271,7 +245,6 @@ const defaultValues: Record<OutType, Outbound> = {
   hysteria2: { type: OutTypes.Hysteria2, tls: { enabled: true } },
   tor: { type: OutTypes.Tor, executable_path: './tor', data_directory: '$HOME/.cache/tor', torrc: { ClientOnly: 1 } },
   ssh: { type: OutTypes.SSH },
-  dns: { type: OutTypes.DNS },
   selector: { type: OutTypes.Selector },
   urltest: { type: OutTypes.URLTest },
 }

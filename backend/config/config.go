@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -12,9 +13,6 @@ var version string
 
 //go:embed name
 var name string
-
-//go:embed config.json
-var defaultConfig string
 
 type LogLevel string
 
@@ -48,43 +46,18 @@ func IsDebug() bool {
 	return os.Getenv("SUI_DEBUG") == "true"
 }
 
-func GetBinFolderPath() string {
-	binFolderPath := os.Getenv("SUI_BIN_FOLDER")
-	if binFolderPath == "" {
-		binFolderPath = "bin"
-	}
-	return binFolderPath
-}
-
 func GetDBFolderPath() string {
 	dbFolderPath := os.Getenv("SUI_DB_FOLDER")
 	if dbFolderPath == "" {
-		dbFolderPath = "/usr/local/s-ui/db"
+		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			dbFolderPath = "/usr/local/s-ui/db"
+		}
+		dbFolderPath = dir + "/db"
 	}
 	return dbFolderPath
 }
 
 func GetDBPath() string {
 	return fmt.Sprintf("%s/%s.db", GetDBFolderPath(), GetName())
-}
-
-func GetDefaultConfig() string {
-	apiEnv := GetEnvApi()
-	if len(apiEnv) > 0 {
-		return strings.Replace(defaultConfig, "127.0.0.1:1080", apiEnv, 1)
-	}
-	return defaultConfig
-}
-
-func GetEnvApi() string {
-	return os.Getenv("SINGBOX_API")
-}
-
-func IsSystemd() bool {
-	pid := os.Getppid()
-	cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/comm", pid))
-	if err != nil {
-		return false
-	}
-	return string(cmdline) == "systemd\n"
 }

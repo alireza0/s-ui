@@ -1,12 +1,43 @@
-export interface logicalRule {
+interface generalRule {
+  invert: boolean
+  action: 'route' | 'route-options' | 'reject' | 'hijack-dns' | 'sniff' | 'resolve'
+  outbound?: string
+  override_address?: string
+  override_port?: number
+  udp_disable_domain_unmapping?: boolean
+  udp_connect?: boolean
+  udp_timeout?: string
+  method?: string
+  no_drop?: boolean
+  sniffer: string[]
+  timeout: string
+  strategy: string
+  server: string
+}
+
+export const actionKeys = [
+  'invert',
+  'action',
+  'outbound',
+  'override_address',
+  'override_port',
+  'udp_disable_domain_unmapping',
+  'udp_connect',
+  'udp_timeout',
+  'method',
+  'no_drop',
+  'sniffer',
+  'timeout',
+  'strategy',
+  'server'
+]
+export interface logicalRule extends generalRule {
   type: 'logical' | 'simple'
   mode: 'and' | 'or'
   rules: rule[]
-  invert: boolean
-  outbound: string
 }
 
-export interface rule {
+export interface rule extends generalRule {
   inbound?: string[]
   ip_version?: 4 | 6
   network?: string[]
@@ -32,8 +63,6 @@ export interface rule {
   clash_mode?: string
   rule_set?: string[]
   rule_set_ipcidr_match_source?: boolean
-  invert?: boolean
-  outbound?: string
 }
 
 export interface ruleset {

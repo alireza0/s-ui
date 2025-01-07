@@ -6,20 +6,20 @@
           hide-details
           :items="['4','4a','5']"
           :label="$t('version')"
-          v-model="inData.outJson.version">
+          v-model="inData.out_json.version">
         </v-select>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="needNetwork">
-        <Network :data="inData.outJson" />
+        <Network :data="inData.out_json" />
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="needUot">
-        <UoT :data="inData.outJson" />
+        <UoT :data="inData.out_json" />
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="type == inTypes.HTTP">
         <v-text-field
         :label="$t('transport.path')"
         hide-details
-        v-model="inData.outJson.path">
+        v-model="inData.out_json.path">
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="type == inTypes.VMess || type == inTypes.VLESS">
@@ -36,14 +36,14 @@
             hide-details
             :label="$t('types.vmess.security')"
             :items="vmessSecurities"
-            v-model="inData.outJson.security">
+            v-model="inData.out_json.security">
           </v-select>
         </v-col>
         <v-col cols="12" sm="6" md="4">
-          <v-switch v-model="inData.outJson.global_padding" color="primary" :label="$t('types.vmess.globalPadding')" hide-details></v-switch>
+          <v-switch v-model="inData.out_json.global_padding" color="primary" :label="$t('types.vmess.globalPadding')" hide-details></v-switch>
         </v-col>
         <v-col cols="12" sm="6" md="4">
-          <v-switch v-model="inData.outJson.authenticated_length" color="primary" :label="$t('types.vmess.authLen')" hide-details></v-switch>
+          <v-switch v-model="inData.out_json.authenticated_length" color="primary" :label="$t('types.vmess.authLen')" hide-details></v-switch>
         </v-col>
       </template>
       <v-col cols="12" sm="6" md="4" v-if="type == inTypes.Hysteria">
@@ -52,7 +52,7 @@
         hide-details
         type="number"
         min="0"
-        v-model.number="inData.outJson.recv_window">
+        v-model.number="inData.out_json.recv_window">
         </v-text-field>
       </v-col>
       <template v-if="type == inTypes.TUIC">
@@ -62,16 +62,16 @@
             label="UDP Relay Mode"
             :items="['native', 'quic']"
             clearable
-            @click:clear="delete inData.outJson.udp_relay_mode"
-            v-model="inData.outJson.udp_relay_mode">
+            @click:clear="delete inData.out_json.udp_relay_mode"
+            v-model="inData.out_json.udp_relay_mode">
           </v-select>
         </v-col>
         <v-col cols="12" sm="6" md="4">
-          <v-switch color="primary" label="UDP Over Stream" v-model="inData.outJson.udp_over_stream" hide-details></v-switch>
+          <v-switch color="primary" label="UDP Over Stream" v-model="inData.out_json.udp_over_stream" hide-details></v-switch>
         </v-col>
       </template>
     </v-row>
-    <Headers :data="inData.outJson" v-if="type == inTypes.HTTP" />
+    <Headers :data="inData.out_json" v-if="type == inTypes.HTTP" />
   </v-card>
 </template>
 
@@ -114,8 +114,8 @@ export default {
     needNetwork():boolean { return this.haveNetwork.includes(this.$props.type) },
     needUot():boolean { return this.havUoT.includes(this.$props.type) },
     packet_encoding: {
-      get() { return this.$props.inData.outJson.packet_encoding != undefined ? this.$props.inData.outJson.packet_encoding : 'none'; },
-      set(v:string) { this.$props.inData.outJson.packet_encoding = v != "none" ? v : undefined }
+      get() { return this.$props.inData.out_json.packet_encoding != undefined ? this.$props.inData.out_json.packet_encoding : 'none'; },
+      set(v:string) { this.$props.inData.out_json.packet_encoding = v != "none" ? v : undefined }
     },
   },
   components: { Network, UoT, Headers }

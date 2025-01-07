@@ -1,49 +1,13 @@
-package cmd
+package migration
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"os"
-	"s-ui/config"
 	"s-ui/database/model"
 	"strings"
 
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
-
-func migrateDb() {
-	// void running on first install
-	path := config.GetDBPath()
-	_, err := os.Stat(path)
-	if err != nil {
-		return
-	}
-
-	db, err := gorm.Open(sqlite.Open(path))
-	if err != nil {
-		log.Fatal(err)
-	}
-	tx := db.Begin()
-	defer func() {
-		if err == nil {
-			tx.Commit()
-		} else {
-			tx.Rollback()
-		}
-	}()
-	fmt.Println("Start migrating database...")
-	err = migrateClientSchema(tx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = changesObj(tx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Migration done!")
-}
 
 func migrateClientSchema(db *gorm.DB) error {
 	rows, err := db.Raw("PRAGMA table_info(clients)").Rows()
@@ -95,10 +59,21 @@ func migrateClientSchema(db *gorm.DB) error {
 			}
 		}
 	}
-	db.AutoMigrate(model.Client{})
 	return nil
 }
 
 func changesObj(db *gorm.DB) error {
 	return db.Exec("UPDATE changes SET obj = CAST('\"' || CAST(obj AS TEXT) || '\"' AS BLOB) WHERE actor = ? and obj not like ?", "DepleteJob", "\"%\"").Error
+}
+
+func to1_1(db *gorm.DB) error {
+	err := migrateClientSchema(db)
+	if err != nil {
+		return err
+	}
+	err = changesObj(db)
+	if err != nil {
+		return err
+	}
+	return nil
 }

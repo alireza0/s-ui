@@ -3,7 +3,6 @@ package logger
 import (
 	"fmt"
 	"os"
-	"s-ui/config"
 	"time"
 
 	"github.com/op/go-logging"
@@ -26,10 +25,10 @@ func InitLogger(level logging.Level) {
 
 	backend, err = logging.NewSyslogBackend("")
 	if err != nil {
-		println("Unable to use syslog: " + err.Error())
+		fmt.Println("Unable to use syslog: " + err.Error())
 		backend = logging.NewLogBackend(os.Stderr, "", 0)
 	}
-	if config.IsSystemd() && err != nil {
+	if err != nil {
 		format = logging.MustStringFormatter(`%{time:2006/01/02 15:04:05} %{level} - %{message}`)
 	} else {
 		format = logging.MustStringFormatter(`%{level} - %{message}`)
@@ -41,6 +40,10 @@ func InitLogger(level logging.Level) {
 	newLogger.SetBackend(backendLeveled)
 
 	logger = newLogger
+}
+
+func GetLogger() *logging.Logger {
+	return logger
 }
 
 func Debug(args ...interface{}) {

@@ -1,7 +1,7 @@
 <template>
   <v-card subtitle="Direct">
     <v-row>
-      <v-col cols="12" sm="6" md="4" v-if="direction == 'in'">
+      <v-col cols="12" sm="6" md="4">
         <Network :data="data" />
       </v-col>
       <v-col cols="12" sm="6" md="4">
@@ -28,7 +28,7 @@
 import Network from '@/components/Network.vue'
 
 export default {
-  props: ['direction','data'],
+  props: ['data'],
   data() {
     return {}
   },

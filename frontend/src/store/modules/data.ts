@@ -3,6 +3,9 @@ import HttpUtils from '@/plugins/httputil'
 import { defineStore } from 'pinia'
 import { push } from 'notivue'
 import { i18n } from '@/locales'
+import { Inbound } from '@/types/inbounds'
+import { Outbound } from '@/types/outbounds'
+import { Endpoint } from '@/types/endpoints'
 
 const Data = defineStore('Data', {
   state: () => ({ 
@@ -10,23 +13,17 @@ const Data = defineStore('Data', {
     reloadItems: localStorage.getItem("reloadItems")?.split(',')?? <string[]>[],
     subURI: "",
     onlines: {inbound: <string[]>[], outbound: <string[]>[], user: <string[]>[]},
-    oldData: <{config: any, clients: any[], tlsConfigs: any[], inData: any[]}>{},
     config: <any>{},
+    inbounds: <Inbound[]>[],
+    outbounds: <Outbound[]>[],
+    endpoints: <Endpoint[]>[],
     clients: [],
-    tlsConfigs: [],
-    inData: [],
+    tlsConfigs: <any[]>[],
   }),
   actions: {
     async loadData() {
       const msg = await HttpUtils.get('api/load', this.lastLoad >0 ? {lu: this.lastLoad} : {} )
       if(msg.success) {
-        this.lastLoad = Math.floor((new Date()).getTime()/1000)
-
-        // Set new data
-        if (msg.obj.config) this.oldData.config = msg.obj.config
-        if (msg.obj.clients) this.oldData.clients = msg.obj.clients
-        if (msg.obj.tls) this.oldData.tlsConfigs = msg.obj.tls
-        if (msg.obj.inData) this.oldData.inData = msg.obj.inData
         this.onlines = msg.obj.onlines
         if (msg.obj.lastLog) {
           push.error({
@@ -37,84 +34,49 @@ const Data = defineStore('Data', {
         }
         
         if (msg.obj.config) {
-          // To avoid ref copy
-          const data = JSON.parse(JSON.stringify(msg.obj))
-          if (data.subURI) this.subURI = data.subURI
-          if (data.config) this.config = data.config
-          if (data.clients) this.clients = data.clients
-          if (data.tls) this.tlsConfigs = data.tls
-          if (data.inData) this.inData = data.inData
+          this.setNewData(msg.obj)
         }
       }
     },
-    async pushData() {
-      const diff = {
-        config: JSON.stringify(FindDiff.Config(this.config,this.oldData.config), null, 2),
-        clients: JSON.stringify(FindDiff.ArrObj(this.clients,this.oldData.clients, "clients"), null, 2),
-        tls: JSON.stringify(FindDiff.ArrObj(this.tlsConfigs,this.oldData.tlsConfigs, "tls"), null, 2),
-        inData: JSON.stringify(FindDiff.ArrObj(this.inData,this.oldData.inData, "inData"), null, 2),
-      }
-      const msg = await HttpUtils.post('api/save',diff)
-      if(msg.success) {
-        this.lastLoad = 0
-        this.loadData()
-      }
+    setNewData(data: any) {
+      this.lastLoad = Math.floor((new Date()).getTime()/1000)
+      if (data.subURI) this.subURI = data.subURI
+      if (data.config) this.config = data.config
+      if (data.clients) this.clients = data.clients
+      if (data.inbounds) this.inbounds = data.inbounds
+      if (data.outbounds) this.outbounds = data.outbounds
+      if (data.endpoints) this.endpoints = data.endpoints
+      if (data.tls) this.tlsConfigs = data.tls
     },
-    async delInbound(index: number) {
-      const diff = {
-        config: JSON.stringify([{key: "inbounds", action: "del", index: index, obj: null}]),
-        clients: JSON.stringify(FindDiff.ArrObj(this.clients,this.oldData.clients, "clients"), null, 2),
-        tls: JSON.stringify(FindDiff.ArrObj(this.tlsConfigs,this.oldData.tlsConfigs, "tls"), null, 2),
-        inData: <string|undefined> undefined,
-      }
-
-      // Validate inData
-      let invalidInData = <any[]>[]
-      this.inData.forEach((d:any) => {
-        const inboundIndex = this.config.inbounds.findIndex((i:any) => i.tag == d.tag)
-        if (inboundIndex == -1) invalidInData.push({key: "inData", action: "del", index: d.id, obj: null})
-      })
-      if (invalidInData.length>0) {
-        diff.inData = JSON.stringify(invalidInData)
-      }
-      const msg = await HttpUtils.post('api/save',diff)
+    async loadInbounds(ids: number[]): Promise<Inbound[]> {
+      const options = ids.length > 0 ? {id: ids.join(",")} : {}
+      const msg = await HttpUtils.get('api/inbounds', options)
       if(msg.success) {
-        this.loadData()
+        return msg.obj.inbounds
       }
+      return <Inbound[]>[]
     },
-    async delInData(id: number) {
-      const diff = {
-        inData: JSON.stringify([{key: "inData", action: "del", index: id, obj: null}])
+    async save (object: string, action: string, data: any, userLinks: any[] | null = null, outJsons: any[] | null = null): Promise<boolean> {
+      let postData = {
+        object: object,
+        action: action,
+        data: JSON.stringify(data, null, 2),
+        userLinks: userLinks == null ? undefined : JSON.stringify(userLinks),
       }
-      await HttpUtils.post('api/save',diff)
-    },
-    async delOutbound(index: number) {
-      const diff = {
-        config: JSON.stringify([{key: "outbounds", action: "del", index: index, obj: null}]),
+      if (userLinks == null) {
+        delete postData.userLinks
       }
-      const msg = await HttpUtils.post('api/save',diff)
-      if(msg.success) {
-        this.loadData()
+      const msg = await HttpUtils.post('api/save', postData)
+      if (msg.success) {
+        const objectName = ['tls', 'config'].includes(object) ? object : object.substring(0, object.length - 1)
+        push.success({
+          title: i18n.global.t('success'),
+          duration: 5000,
+          message: i18n.global.t('actions.' + action) + " " + i18n.global.t('objects.' + objectName)
+        })
+        this.setNewData(msg.obj)
       }
-    },
-    async delClient(id: number) {
-      const diff = {
-        config: JSON.stringify(FindDiff.Config(this.config,this.oldData.config)),
-        clients:JSON.stringify([{key: "clients", action: "del", index: id, obj: null}]),
-      }
-      const msg = await HttpUtils.post('api/save',diff)
-      if(msg.success) {
-        this.loadData()
-      }
-    },
-    async delTls(id: number) {
-      const diff = {
-        tls:JSON.stringify([{key: "tls", action: "del", index: id, obj: null}]),
-      }
-      const msg = await HttpUtils.post('api/save',diff)
-      if(msg.success) {
-        this.loadData()
-      }
+      return msg.success
     }
   },
 })

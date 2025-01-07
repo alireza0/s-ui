@@ -2,7 +2,7 @@
   <v-dialog transition="dialog-bottom-transition" width="800">
     <v-card class="rounded-lg">
       <v-card-title>
-        {{ $t('bulk.add') }}
+        {{ $t('actions.addbulk') }}
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text style="padding: 0 16px; overflow-y: scroll;">
@@ -53,18 +53,15 @@
                 v-model="bulkData.clientInbounds"
                 :items="inboundTags"
                 :label="$t('client.inboundTags')"
+                :return-object="false"
                 multiple
                 chips
                 hide-details
               ></v-combobox>
             </v-col>
           </v-row>
-          <v-row>
-            <v-col cols="auto">
-              <v-switch v-model="bulkData.clientStats" color="primary" :label="$t('stats.enable')" hide-details></v-switch>
-            </v-col>
-          </v-row>
         </v-container>
+        <pre dir="ltr">{{ bulkData }}</pre>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -109,7 +106,6 @@ export default {
         clientInbounds: [],
         expiry: 0,
         Volume: 0,
-        clientStats: false,
       },
       patterns: [
         { title: i18n.global.t("bulk.random"), value: "random" },
@@ -129,7 +125,6 @@ export default {
         clientInbounds: [],
         expiry: 0,
         Volume: 0,
-        clientStats: false,
       }
     },
     closeModal() {
@@ -140,6 +135,7 @@ export default {
         push.error(i18n.global.t('error.dplData'))
         return
       }
+      this.clients = []
       this.loading = true
       for(let i=0;i<this.count;i++){
         const name = this.genByPattern(this.bulkData.name, i)
@@ -157,8 +153,7 @@ export default {
           group: this.bulkData.group
         }))
       }
-      this.$emit('save', this.clients, this.bulkData.clientInbounds, this.bulkData.clientStats)
-      this.resetData() // reset to default
+      this.$emit('save', this.clients)
       this.loading = false
     },
     genByPattern(pattern: any[], order :number){

@@ -2,9 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"s-ui/config"
 	"s-ui/database"
 	"s-ui/service"
+	"strings"
+
+	"github.com/shirou/gopsutil/v4/net"
 )
 
 func resetSetting() {
@@ -101,5 +106,66 @@ func showSetting() {
 	}
 	if (*allSetting)["subURI"] != "" {
 		fmt.Println("\tSub URI:\t", (*allSetting)["subURI"])
+	}
+}
+
+func getPanelURI() {
+	err := database.InitDB(config.GetDBPath())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	settingService := service.SettingService{}
+	Port, _ := settingService.GetPort()
+	BasePath, _ := settingService.GetWebPath()
+	Listen, _ := settingService.GetListen()
+	Domain, _ := settingService.GetWebDomain()
+	KeyFile, _ := settingService.GetKeyFile()
+	CertFile, _ := settingService.GetCertFile()
+	TLS := false
+	if KeyFile != "" && CertFile != "" {
+		TLS = true
+	}
+	Proto := ""
+	if TLS {
+		Proto = "https://"
+	} else {
+		Proto = "http://"
+	}
+	PortText := fmt.Sprintf(":%d", Port)
+	if (Port == 443 && TLS) || (Port == 80 && !TLS) {
+		PortText = ""
+	}
+	if len(Domain) > 0 {
+		fmt.Println(Proto + Domain + PortText + BasePath)
+		return
+	}
+	if len(Listen) > 0 {
+		fmt.Println(Proto + Listen + PortText + BasePath)
+		return
+	}
+	fmt.Println("Local address:")
+	// get ip address
+	netInterfaces, _ := net.Interfaces()
+	for i := 0; i < len(netInterfaces); i++ {
+		if len(netInterfaces[i].Flags) > 2 && netInterfaces[i].Flags[0] == "up" && netInterfaces[i].Flags[1] != "loopback" {
+			addrs := netInterfaces[i].Addrs
+			for _, address := range addrs {
+				IP := strings.Split(address.Addr, "/")[0]
+				if strings.Contains(address.Addr, ".") {
+					fmt.Println(Proto + IP + PortText + BasePath)
+				} else if address.Addr[0:6] != "fe80::" {
+					fmt.Println(Proto + "[" + IP + "]" + PortText + BasePath)
+				}
+			}
+		}
+	}
+	resp, err := http.Get("https://api.ipify.org?format=text")
+	if err == nil {
+		defer resp.Body.Close()
+		ip, err := io.ReadAll(resp.Body)
+		if err == nil {
+			fmt.Printf("\nGlobal address:\n%s%s%s%s\n", Proto, ip, PortText, BasePath)
+		}
 	}
 }

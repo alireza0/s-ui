@@ -87,27 +87,27 @@ func (j *JsonService) GetJson(subId string, format string) (*string, error) {
 	return &resultStr, nil
 }
 
-func (j *JsonService) getData(subId string) (*model.Client, *[]model.InboundData, error) {
+func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, error) {
 	db := database.GetDB()
 	client := &model.Client{}
 	err := db.Model(model.Client{}).Where("enable = true and name = ?", subId).First(client).Error
 	if err != nil {
 		return nil, nil, err
 	}
-	var inbounds []string
-	err = json.Unmarshal(client.Inbounds, &inbounds)
+	var clientInbounds []uint
+	err = json.Unmarshal(client.Inbounds, &clientInbounds)
 	if err != nil {
 		return nil, nil, err
 	}
-	inDatas := &[]model.InboundData{}
-	err = db.Model(model.InboundData{}).Where("tag in ?", inbounds).Find(&inDatas).Error
+	var inbounds []*model.Inbound
+	err = db.Model(model.Inbound{}).Where("id in ?", clientInbounds).Find(&inbounds).Error
 	if err != nil {
 		return nil, nil, err
 	}
-	return client, inDatas, nil
+	return client, inbounds, nil
 }
 
-func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]model.InboundData) (*[]map[string]interface{}, *[]string, error) {
+func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*model.Inbound) (*[]map[string]interface{}, *[]string, error) {
 	var outbounds []map[string]interface{}
 	var configs map[string]interface{}
 	var outTags []string
@@ -116,7 +116,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]mode
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, inData := range *inDatas {
+	for _, inData := range inbounds {
 		if len(inData.OutJson) < 5 {
 			continue
 		}
@@ -161,22 +161,14 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inDatas *[]mode
 				newOut["server_port"] = int(port)
 
 				// Override TLS
-				newTls, overrideTls := addr["tls"].(bool)
-				if overrideTls {
-					tlsIf := map[string]interface{}{}
-					if newTls {
-						tlsIf["enabled"] = true
-						newSNI, overrideSNI := addr["server_name"].(string)
-						if overrideSNI {
-							tlsIf["server_name"] = newSNI
-						}
-						newInsecure, overrideInsecure := addr["insecure"].(bool)
-						if overrideInsecure {
-							tlsIf["insecure"] = newInsecure
-						}
+				outTls, _ := newOut["tls"].(map[string]interface{})
+				if addrTls, ok := addr["tls"].(map[string]interface{}); ok {
+					for key, value := range addrTls {
+						outTls[key] = value
 					}
-					newOut["tls"] = tlsIf
 				}
+				newOut["tls"] = outTls
+
 				remark, _ := addr["remark"].(string)
 				newTag := fmt.Sprintf("%d.%s%s", index+1, tag, remark)
 				newOut["tag"] = newTag

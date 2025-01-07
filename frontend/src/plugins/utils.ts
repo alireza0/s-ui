@@ -144,10 +144,10 @@ export const HumanReadable = {
     const remain = Math.floor((second/3600) - (day*24))
     return day + i18n.global.t('date.d') + (remain > 0 ? ' ' + remain + i18n.global.t('date.h') : '')
   },
-  remainedDays(exp:number): number|null {
-    if (exp == 0) return -1
+  remainedDays(exp:number): string {
+    if (exp == 0) return i18n.global.t('unlimited')
     const now = Date.now()/1000
-    if (exp < now) return null
-    return Math.floor((exp - now) / (3600*24))
+    if (exp < now) return i18n.global.t('date.expired')
+    return Math.floor((exp - now) / (3600*24)) + " " + i18n.global.t('date.d')
   }
 }

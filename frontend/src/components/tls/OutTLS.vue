@@ -216,7 +216,7 @@
 </template>
 
 <script lang="ts">
-import { oTls, defaultOutTls } from '@/types/outTls'
+import { oTls, defaultOutTls } from '@/types/tls'
 export default {
   props: ['outbound'],
   data() {
@@ -252,11 +252,6 @@ export default {
       ],
       fingerprints: [
         { title: "Chrome", value: "chrome" },
-        { title: "Chrome PSK", value: "chrome_psk" },
-        { title: "Chrome PSK Shuffle", value: "chrome_psk_shuffle" },
-        { title: "Chrome Padding PSK Shuffle", value: "chrome_padding_psk_shuffle" },
-        { title: "Chrome Post-Quantum", value: "chrome_pq" },
-        { title: "Chrome Post-Quantum PSK", value: "chrome_pq_psk" },
         { title: "Firefox", value: "firefox" },
         { title: "Microsoft Edge", value: "edge" },
         { title: "Apple Safari", value: "safari" },
@@ -275,7 +270,7 @@ export default {
     },
     tlsEnable: {
       get() { return Object.hasOwn(this.tls, 'enabled') ? this.tls.enabled : false },
-      set(newValue: boolean) { this.$props.outbound.tls = newValue ? { enabled: true } : {} }
+      set(newValue: boolean) { this.$props.outbound.tls = newValue ? { enabled: true } : { enabled: false } }
     },
     disable_sni: {
       get() { return this.tls.disable_sni ?? false },

@@ -2,26 +2,27 @@ package service
 
 import (
 	"encoding/json"
-	"os"
-	"s-ui/config"
+	"s-ui/core"
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/logger"
-	"s-ui/singbox"
+	"s-ui/util/common"
 	"strconv"
 	"time"
 )
 
-var ApiAddr string
-var LastUpdate int64
-var IsSystemd bool
+var (
+	LastUpdate int64
+	corePtr    *core.Core
+)
 
 type ConfigService struct {
 	ClientService
 	TlsService
-	InDataService
-	singbox.Controller
 	SettingService
+	InboundService
+	OutboundService
+	EndpointService
 }
 
 type SingBoxConfig struct {
@@ -30,90 +31,95 @@ type SingBoxConfig struct {
 	Ntp          json.RawMessage   `json:"ntp"`
 	Inbounds     []json.RawMessage `json:"inbounds"`
 	Outbounds    []json.RawMessage `json:"outbounds"`
+	Endpoints    []json.RawMessage `json:"endpoints"`
 	Route        json.RawMessage   `json:"route"`
 	Experimental json.RawMessage   `json:"experimental"`
 }
 
-func NewConfigService() *ConfigService {
+func NewConfigService(core *core.Core) *ConfigService {
+	corePtr = core
 	return &ConfigService{}
 }
 
-func (s *ConfigService) InitConfig() error {
-	IsSystemd = config.IsSystemd()
-	configPath := config.GetBinFolderPath()
-	data, err := os.ReadFile(configPath + "/config.json")
-	if err != nil {
-		if os.IsNotExist(err) {
-			defaultConfig := []byte(config.GetDefaultConfig())
-			err = os.MkdirAll(configPath, 01764)
-			if err != nil {
-				return err
-			}
-			err = os.WriteFile(configPath+"/config.json", defaultConfig, 0764)
-			if err != nil {
-				return err
-			}
-			data = defaultConfig
-		} else {
-			return err
+func (s *ConfigService) GetConfig(data string) (*SingBoxConfig, error) {
+	var err error
+	if len(data) == 0 {
+		data, err = s.SettingService.GetConfig()
+		if err != nil {
+			return nil, err
 		}
 	}
-	var singboxConfig SingBoxConfig
-	err = json.Unmarshal(data, &singboxConfig)
-	if err != nil {
-		return err
-	}
-
-	return s.RefreshApiAddr(&singboxConfig)
-}
-
-func (s *ConfigService) GetConfig() (*SingBoxConfig, error) {
-	configPath := config.GetBinFolderPath()
-	data, err := os.ReadFile(configPath + "/config.json")
+	singboxConfig := SingBoxConfig{}
+	err = json.Unmarshal([]byte(data), &singboxConfig)
 	if err != nil {
 		return nil, err
 	}
-	singboxConfig := SingBoxConfig{}
-	err = json.Unmarshal(data, &singboxConfig)
+
+	singboxConfig.Inbounds, err = s.InboundService.GetAllConfig(database.GetDB())
+	if err != nil {
+		return nil, err
+	}
+	singboxConfig.Outbounds, err = s.OutboundService.GetAllConfig(database.GetDB())
+	if err != nil {
+		return nil, err
+	}
+	singboxConfig.Endpoints, err = s.EndpointService.GetAllConfig(database.GetDB())
 	if err != nil {
 		return nil, err
 	}
 	return &singboxConfig, nil
 }
 
-func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string) error {
+func (s *ConfigService) StartCore(defaultConfig string) error {
+	if corePtr.IsRunning() {
+		return nil
+	}
+	singboxConfig, err := s.GetConfig(defaultConfig)
+	if err != nil {
+		return err
+	}
+	rawConfig, err := json.MarshalIndent(singboxConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+	err = corePtr.Start(rawConfig)
+	if err != nil {
+		logger.Error("start sing-box err:", err.Error())
+		return err
+	}
+	logger.Info("sing-box started")
+	return nil
+}
+
+func (s *ConfigService) RestartCore() error {
+	err := s.StopCore()
+	if err != nil {
+		return err
+	}
+	return s.StartCore("")
+}
+
+func (s *ConfigService) restartCoreWithConfig(config json.RawMessage) error {
+	err := s.StopCore()
+	if err != nil {
+		return err
+	}
+	return s.StartCore(string(config))
+}
+
+func (s *ConfigService) StopCore() error {
+	err := corePtr.Stop()
+	if err != nil {
+		return err
+	}
+	logger.Info("sing-box stopped")
+	return nil
+}
+
+func (s *ConfigService) Save(obj string, act string, data json.RawMessage, loginUser string, hostname string) ([]string, error) {
 	var err error
-	var clientChanges, tlsChanges, inChanges, settingChanges, configChanges []model.Changes
-	if _, ok := changes["clients"]; ok {
-		err = json.Unmarshal([]byte(changes["clients"]), &clientChanges)
-		if err != nil {
-			return err
-		}
-	}
-	if _, ok := changes["tls"]; ok {
-		err = json.Unmarshal([]byte(changes["tls"]), &tlsChanges)
-		if err != nil {
-			return err
-		}
-	}
-	if _, ok := changes["inData"]; ok {
-		err = json.Unmarshal([]byte(changes["inData"]), &inChanges)
-		if err != nil {
-			return err
-		}
-	}
-	if _, ok := changes["settings"]; ok {
-		err = json.Unmarshal([]byte(changes["settings"]), &settingChanges)
-		if err != nil {
-			return err
-		}
-	}
-	if _, ok := changes["config"]; ok {
-		err = json.Unmarshal([]byte(changes["config"]), &configChanges)
-		if err != nil {
-			return err
-		}
-	}
+	var inboundIds []uint
+	var inboundId uint
 
 	db := database.GetDB()
 	tx := db.Begin()
@@ -125,99 +131,96 @@ func (s *ConfigService) SaveChanges(changes map[string]string, loginUser string)
 		}
 	}()
 
-	if len(clientChanges) > 0 {
-		err = s.ClientService.Save(tx, clientChanges)
+	switch obj {
+	case "clients":
+		inboundIds, err = s.ClientService.Save(tx, act, data, hostname)
+	case "tls":
+		inboundIds, err = s.TlsService.Save(tx, act, data)
+	case "inbounds":
+		inboundId, err = s.InboundService.Save(tx, act, data, hostname)
+	case "outbounds":
+		err = s.OutboundService.Save(tx, act, data)
+	case "endpoints":
+		err = s.EndpointService.Save(tx, act, data)
+	case "config":
+		err = s.SettingService.SaveConfig(tx, data)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		err = s.restartCoreWithConfig(data)
+	default:
+		return nil, common.NewError("unknown object: ", obj)
 	}
-	if len(tlsChanges) > 0 {
-		err = s.TlsService.Save(tx, tlsChanges)
-		if err != nil {
-			return err
-		}
-	}
-	if len(inChanges) > 0 {
-		err = s.InDataService.Save(tx, inChanges)
-		if err != nil {
-			return err
-		}
-	}
-	if len(settingChanges) > 0 {
-		err = s.SettingService.Save(tx, settingChanges)
-		if err != nil {
-			return err
-		}
-	}
-	if len(configChanges) > 0 {
-		singboxConfig, err := s.GetConfig()
-		if err != nil {
-			return err
-		}
-		newConfig := *singboxConfig
-		for _, change := range configChanges {
-			rawObject := change.Obj
-			switch change.Key {
-			case "all":
-				err = json.Unmarshal(rawObject, &newConfig)
-				if err != nil {
-					return err
-				}
-			case "log":
-				newConfig.Log = rawObject
-			case "dns":
-				newConfig.Dns = rawObject
-			case "ntp":
-				newConfig.Ntp = rawObject
-			case "route":
-				newConfig.Route = rawObject
-			case "experimental":
-				newConfig.Experimental = rawObject
-			case "inbounds":
-				if change.Action == "edit" {
-					newConfig.Inbounds[change.Index] = rawObject
-				} else if change.Action == "del" {
-					newConfig.Inbounds = append(newConfig.Inbounds[:change.Index], newConfig.Inbounds[change.Index+1:]...)
-				} else {
-					newConfig.Inbounds = append(newConfig.Inbounds, rawObject)
-				}
-			case "outbounds":
-				if change.Action == "edit" {
-					newConfig.Outbounds[change.Index] = rawObject
-				} else if change.Action == "del" {
-					newConfig.Outbounds = append(newConfig.Outbounds[:change.Index], newConfig.Outbounds[change.Index+1:]...)
-				} else {
-					newConfig.Outbounds = append(newConfig.Outbounds, rawObject)
-				}
-			}
-		}
-
-		err = s.Save(&newConfig)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	// Log changes
 	dt := time.Now().Unix()
-	allChanges := append(clientChanges, settingChanges...)
-	allChanges = append(allChanges, configChanges...)
-	allChanges = append(allChanges, tlsChanges...)
-	allChanges = append(allChanges, inChanges...)
-	if len(allChanges) > 0 {
-		for index := range allChanges {
-			allChanges[index].DateTime = dt
-			allChanges[index].Actor = loginUser
-		}
-		err = tx.Model(model.Changes{}).Create(&allChanges).Error
+	err = tx.Create(&model.Changes{
+		DateTime: dt,
+		Actor:    loginUser,
+		Key:      obj,
+		Action:   act,
+		Obj:      data,
+	}).Error
+	if err != nil {
+		return nil, err
+	}
+	// Commit changes so far
+	tx.Commit()
+	LastUpdate = time.Now().Unix()
+	var objs []string = []string{obj}
+	tx = db.Begin()
+
+	// Update side changes
+
+	// Update client links
+	if obj == "tls" && len(inboundIds) > 0 {
+		err = s.ClientService.UpdateLinksByInboundChange(tx, inboundIds, hostname)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		objs = append(objs, "clients")
+	}
+	if obj == "inbounds" && act != "add" {
+		switch act {
+		case "edit":
+			err = s.ClientService.UpdateLinksByInboundChange(tx, []uint{inboundId}, hostname)
+		case "del":
+			var tag string
+			err = json.Unmarshal(data, &tag)
+			if err != nil {
+				return nil, err
+			}
+			err = s.ClientService.UpdateClientsOnInboundDelete(tx, inboundId, tag)
+		}
+		if err != nil {
+			return nil, err
+		}
+		objs = append(objs, "clients")
 	}
 
-	LastUpdate = dt
+	// Update out_json of inbounds when tls is changed
+	if obj == "tls" && len(inboundIds) > 0 {
+		err = s.InboundService.UpdateOutJsons(tx, inboundIds, hostname)
+		if err != nil {
+			return nil, common.NewError("unable to update out_json of inbounds: ", err.Error())
+		}
+		objs = append(objs, "inbounds")
+	}
 
-	return nil
+	if len(inboundIds) > 0 && corePtr.IsRunning() {
+		err1 := s.InboundService.RestartInbounds(tx, inboundIds)
+		if err1 != nil {
+			logger.Error("unable to restart inbounds: ", err1)
+		}
+	}
+	// Try to start core if it is not running
+	if !corePtr.IsRunning() {
+		s.StartCore("")
+	}
+
+	return objs, nil
 }
 
 func (s *ConfigService) CheckChanges(lu string) (bool, error) {
@@ -236,132 +239,6 @@ func (s *ConfigService) CheckChanges(lu string) (bool, error) {
 		intLu, err := strconv.ParseInt(lu, 10, 64)
 		return LastUpdate > intLu, err
 	}
-}
-
-func (s *ConfigService) Save(singboxConfig *SingBoxConfig) error {
-	configPath := config.GetBinFolderPath()
-	_, err := os.Stat(configPath + "/config.json")
-	if os.IsNotExist(err) {
-		err = os.MkdirAll(configPath, 01764)
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
-	}
-
-	data, err := json.MarshalIndent(singboxConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(configPath+"/config.json", data, 0764)
-	if err != nil {
-		return err
-	}
-
-	s.RefreshApiAddr(singboxConfig)
-	s.Controller.Restart()
-
-	return nil
-}
-
-func (s *ConfigService) RefreshApiAddr(singboxConfig *SingBoxConfig) error {
-	Env_API := config.GetEnvApi()
-	if len(Env_API) > 0 {
-		ApiAddr = Env_API
-	} else {
-		var err error
-		if singboxConfig == nil {
-			singboxConfig, err = s.GetConfig()
-			if err != nil {
-				return err
-			}
-
-		}
-
-		var experimental struct {
-			V2rayApi struct {
-				Listen string      `json:"listen"`
-				Stats  interface{} `jaon:"stats"`
-			} `json:"v2ray_api"`
-		}
-		err = json.Unmarshal(singboxConfig.Experimental, &experimental)
-		if err != nil {
-			return err
-		}
-
-		ApiAddr = experimental.V2rayApi.Listen
-	}
-	return nil
-}
-
-func (s *ConfigService) DepleteClients() error {
-	users, inbounds, err := s.ClientService.DepleteClients()
-	if err != nil || len(users) == 0 || len(inbounds) == 0 {
-		return err
-	}
-
-	singboxConfig, err := s.GetConfig()
-	if err != nil {
-		return err
-	}
-	for inbound_index, inbound := range singboxConfig.Inbounds {
-		var inboundJson map[string]interface{}
-		json.Unmarshal(inbound, &inboundJson)
-		if s.contains(inbounds, inboundJson["tag"].(string)) {
-			inbound_users, ok := inboundJson["users"].([]interface{})
-			if ok {
-				var updatedUsers []interface{}
-				for _, user := range inbound_users {
-					userMap, ok := user.(map[string]interface{})
-					if ok {
-						name, exists := userMap["name"].(string)
-						if exists && s.contains(users, name) {
-							// Skip the user exists
-							continue
-						}
-						username, exists := userMap["username"].(string)
-						if exists && s.contains(users, username) {
-							// Skip the username exists
-							continue
-						}
-					}
-					updatedUsers = append(updatedUsers, user)
-				}
-				// Exception for Naive and ShadowTLSv3
-				if len(updatedUsers) == 0 {
-					if inboundJson["type"].(string) == "naive" ||
-						(inboundJson["type"].(string) == "shadowtls" &&
-							inboundJson["version"].(float64) == 3) {
-						updatedUsers = append(updatedUsers, make(map[string]interface{}))
-					}
-				}
-
-				inboundJson["users"] = updatedUsers
-			}
-		}
-		modifiedInbound, err := json.MarshalIndent(inboundJson, "", "  ")
-		if err != nil {
-			return err
-		}
-		singboxConfig.Inbounds[inbound_index] = modifiedInbound
-	}
-
-	err = s.Save(singboxConfig)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *ConfigService) contains(slice []string, item string) bool {
-	for _, str := range slice {
-		if str == item {
-			return true
-		}
-	}
-	return false
 }
 
 func (s *ConfigService) GetChanges(actor string, chngKey string, count string) []model.Changes {

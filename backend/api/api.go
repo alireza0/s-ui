@@ -1,10 +1,11 @@
 package api
 
 import (
+	"encoding/json"
 	"s-ui/logger"
 	"s-ui/service"
-	"s-ui/singbox"
 	"s-ui/util"
+	"s-ui/util/common"
 	"strconv"
 	"strings"
 
@@ -17,11 +18,12 @@ type APIHandler struct {
 	service.ConfigService
 	service.ClientService
 	service.TlsService
-	service.InDataService
+	service.InboundService
+	service.OutboundService
+	service.EndpointService
 	service.PanelService
 	service.StatsService
 	service.ServerService
-	singbox.Controller
 }
 
 func NewAPIHandler(g *gin.RouterGroup) {
@@ -45,6 +47,8 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 	var err error
 	action := c.Param("postAction")
 	remoteIP := getRemoteIp(c)
+	loginUser := GetLoginUser(c)
+	hostname := getHostname(c)
 
 	switch action {
 	case "login":
@@ -81,25 +85,31 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 			jsonMsg(c, "", err)
 		}
 	case "save":
-		loginUser := GetLoginUser(c)
-		data := map[string]string{}
-		err = c.ShouldBind(&data)
-		if err == nil {
-			err = a.ConfigService.SaveChanges(data, loginUser)
+		obj := c.Request.FormValue("object")
+		act := c.Request.FormValue("action")
+		data := c.Request.FormValue("data")
+		objs, err := a.ConfigService.Save(obj, act, json.RawMessage(data), loginUser, hostname)
+		if err != nil {
+			jsonMsg(c, "save", err)
+			return
 		}
-		jsonMsg(c, "save", err)
+		err = a.loadPartialData(c, objs)
+		if err != nil {
+			jsonMsg(c, obj, err)
+		}
+		return
 	case "restartApp":
 		err = a.PanelService.RestartPanel(3)
 		jsonMsg(c, "restartApp", err)
 	case "restartSb":
-		err = a.Controller.Restart()
+		err = a.ConfigService.RestartCore()
 		jsonMsg(c, "restartSb", err)
 	case "linkConvert":
 		link := c.Request.FormValue("link")
 		result, _, err := util.GetOutbound(link, 0)
 		jsonObj(c, result, err)
 	default:
-		jsonMsg(c, "API call", nil)
+		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
 }
 
@@ -121,6 +131,12 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 			return
 		}
 		jsonObj(c, data, nil)
+	case "inbounds", "outbounds", "endpoints", "tls", "clients", "config":
+		err := a.loadPartialData(c, []string{action})
+		if err != nil {
+			jsonMsg(c, action, err)
+		}
+		return
 	case "users":
 		users, err := a.UserService.GetUsers()
 		if err != nil {
@@ -156,10 +172,9 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		onlines, err := a.StatsService.GetOnlines()
 		jsonObj(c, onlines, err)
 	case "logs":
-		service := c.Query("s")
 		count := c.Query("c")
 		level := c.Query("l")
-		logs := a.ServerService.GetLogs(service, count, level)
+		logs := a.ServerService.GetLogs(count, level)
 		jsonObj(c, logs, nil)
 	case "changes":
 		actor := c.Query("a")
@@ -173,7 +188,7 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		keypair := a.ServerService.GenKeypair(kType, options)
 		jsonObj(c, keypair, nil)
 	default:
-		jsonMsg(c, "API call", nil)
+		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
 }
 
@@ -188,7 +203,7 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 
 	sysInfo := a.ServerService.GetSingboxInfo()
 	if sysInfo["running"] == false {
-		logs := a.ServerService.GetLogs("sing-box", "1", "debug")
+		logs := a.ServerService.GetLogs("1", "debug")
 		if len(logs) > 0 {
 			data["lastLog"] = logs[0]
 		}
@@ -198,7 +213,7 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 		return "", err
 	}
 	if isUpdated {
-		config, err := a.ConfigService.GetConfig()
+		config, err := a.SettingService.GetConfig()
 		if err != nil {
 			return "", err
 		}
@@ -210,7 +225,15 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 		if err != nil {
 			return "", err
 		}
-		inData, err := a.InDataService.GetAll()
+		inbounds, err := a.InboundService.GetAll()
+		if err != nil {
+			return "", err
+		}
+		outbounds, err := a.OutboundService.GetAll()
+		if err != nil {
+			return "", err
+		}
+		endpoints, err := a.EndpointService.GetAll()
 		if err != nil {
 			return "", err
 		}
@@ -218,10 +241,12 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 		if err != nil {
 			return "", err
 		}
-		data["config"] = *config
+		data["config"] = json.RawMessage(config)
 		data["clients"] = clients
 		data["tls"] = tlsConfigs
-		data["inData"] = inData
+		data["inbounds"] = inbounds
+		data["outbounds"] = outbounds
+		data["endpoints"] = endpoints
 		data["subURI"] = subURI
 		data["onlines"] = onlines
 	} else {
@@ -229,4 +254,62 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 	}
 
 	return data, nil
+}
+
+func (a *APIHandler) loadPartialData(c *gin.Context, objs []string) error {
+	data := make(map[string]interface{}, 0)
+
+	for _, obj := range objs {
+		switch obj {
+		case "inbounds":
+			id := c.Query("id")
+			inbounds, err := a.InboundService.Get(id)
+			if err != nil {
+				return err
+			}
+			data[obj] = inbounds
+		case "outbounds":
+			outbounds, err := a.OutboundService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = outbounds
+		case "endpoints":
+			endpoints, err := a.EndpointService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = endpoints
+		case "tls":
+			tlsConfigs, err := a.TlsService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = tlsConfigs
+		case "clients":
+			clients, err := a.ClientService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = clients
+		case "config":
+			config, err := a.SettingService.GetConfig()
+			if err != nil {
+				return err
+			}
+			data[obj] = json.RawMessage(config)
+		}
+	}
+
+	jsonObj(c, data, nil)
+	return nil
+}
+
+func (a *APIHandler) postActions(c *gin.Context) (string, json.RawMessage, error) {
+	var data map[string]json.RawMessage
+	err := c.ShouldBind(&data)
+	if err != nil {
+		return "", nil, err
+	}
+	return string(data["action"]), data["data"], nil
 }

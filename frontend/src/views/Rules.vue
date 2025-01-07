@@ -24,6 +24,9 @@
     <v-col cols="12" justify="center" align="center">
       <v-btn color="primary" @click="showRuleModal(-1)" style="margin: 0 5px;">{{ $t('rule.add') }}</v-btn>
       <v-btn color="primary" @click="showRulesetModal(-1)" style="margin: 0 5px;">{{ $t('ruleset.add') }}</v-btn>
+      <v-btn variant="outlined" color="warning" @click="saveConfig" :loading="loading" :disabled="stateChange">
+        {{ $t('actions.save') }}
+      </v-btn>
     </v-col>
   </v-row>
   <v-row>
@@ -38,13 +41,13 @@
         <v-card-text>
           <v-row>
             <v-col>{{ $t('ruleset.format') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.format }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('actions.update') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ item.update_interval?? '-' }}
             </v-col>
           </v-row>
@@ -94,20 +97,26 @@
         </v-card-subtitle>
         <v-card-text>
           <v-row>
+            <v-col>{{ $t('admin.action') }}</v-col>
+            <v-col>
+              {{ item.action }}
+            </v-col>
+          </v-row>
+          <v-row>
             <v-col>{{ $t('objects.outbound') }}</v-col>
-            <v-col dir="ltr">
-              {{ item.outbound }}
+            <v-col>
+              {{ item.outbound?? '-' }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('pages.rules') }}</v-col>
-            <v-col dir="ltr">
-              {{ item.rules ? item.rules.length : Object.keys(item).filter(r => !["rule_set_ipcidr_match_source","invert","outbound"].includes(r)).length }}
+            <v-col>
+              {{ item.rules ? item.rules.length : Object.keys(item).filter(r => !actionKeys.includes(r)).length }}
             </v-col>
           </v-row>
           <v-row>
             <v-col>{{ $t('rule.invert') }}</v-col>
-            <v-col dir="ltr">
+            <v-col>
               {{ $t( (item.invert?? false)? 'yes' : 'no') }}
             </v-col>
           </v-row>
@@ -144,15 +153,36 @@
 
 <script lang="ts" setup>
 import Data from '@/store/modules/data'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import RuleVue from '@/layouts/modals/Rule.vue'
 import RulesetVue from '@/layouts/modals/Ruleset.vue'
 import { Config } from '@/types/config'
-import { logicalRule, ruleset } from '@/types/rules'
+import { actionKeys, ruleset } from '@/types/rules'
+import { FindDiff } from '@/plugins/utils'
+
+const oldConfig = ref({})
+const loading = ref(false)
 
 const appConfig = computed((): Config => {
   return <Config> Data().config
 })
+
+onMounted(async () => {
+  oldConfig.value = JSON.parse(JSON.stringify(Data().config))
+})
+
+const stateChange = computed(() => {
+  return FindDiff.deepCompare(appConfig.value,oldConfig.value)
+})
+
+const saveConfig = async () => {
+  loading.value = true
+  const success = await Data().save("config", "set", appConfig.value)
+  if (success) {
+    oldConfig.value = JSON.parse(JSON.stringify(Data().config))
+    loading.value = false
+  }
+}
 
 const clients = computed((): string[] => {
   return Data().clients.map((c:any) => c.name)
@@ -189,11 +219,11 @@ const rulesetTags = computed((): any[] => {
 })
 
 const outboundTags = computed((): string[] => {
-  return appConfig.value.outbounds?.map((o:any) => o.tag)
+  return [...Data().outbounds?.map((o:any) => o.tag), ...Data().endpoints?.map((e:any) => e.tag)]
 })
 
 const inboundTags = computed((): string[] => {
-  return appConfig.value.inbounds?.map((i:any) => i.tag)
+  return [...Data().inbounds?.map((o:any) => o.tag), ...Data().endpoints?.map((e:any) => e.tag)]
 })
 
 let delRuleOverlay = ref(new Array<boolean>)
@@ -215,15 +245,12 @@ const closeRuleModal = () => {
   ruleModal.value.visible = false
 }
 
-const saveRuleModal = (data:logicalRule) => {
-  // Logical or simple
-  const ruleData = data.type == 'logical' ? data : data.rules[0]
-
+const saveRuleModal = (data:any) => {
   // New or Edit
   if (ruleModal.value.index == -1) {
-    rules.value.push(ruleData)
+    rules.value.push(data)
   } else {
-    rules.value[ruleModal.value.index] = ruleData
+    rules.value[ruleModal.value.index] = data
   }
   ruleModal.value.visible = false
 }
@@ -268,7 +295,7 @@ const draggedItemIndex = ref(null);
 
 const onDragStart = (index: any) => {
   draggedItemIndex.value = index;
-};
+}
 
 const onDrop = (index: any) => {
   if (draggedItemIndex.value !== null) {
@@ -278,5 +305,5 @@ const onDrop = (index: any) => {
     rules.value.splice(index, 0, draggedItem);
     draggedItemIndex.value = null;
   }
-};
+}
 </script>

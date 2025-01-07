@@ -19,18 +19,22 @@ var onlineResources = &onlines{}
 type StatsService struct {
 }
 
-func (s *StatsService) SaveStats(stats []*model.Stats) error {
-	var err error
+func (s *StatsService) SaveStats() error {
+	if !corePtr.IsRunning() {
+		return nil
+	}
+	stats := corePtr.GetInstance().ConnTracker().GetStats()
 
 	// Reset onlines
 	onlineResources.Inbound = nil
 	onlineResources.Outbound = nil
 	onlineResources.User = nil
 
-	if len(stats) == 0 {
+	if len(*stats) == 0 {
 		return nil
 	}
 
+	var err error
 	db := database.GetDB()
 	tx := db.Begin()
 	defer func() {
@@ -41,7 +45,7 @@ func (s *StatsService) SaveStats(stats []*model.Stats) error {
 		}
 	}()
 
-	for _, stat := range stats {
+	for _, stat := range *stats {
 		if stat.Resource == "user" {
 			if stat.Direction {
 				err = tx.Model(model.Client{}).Where("name = ?", stat.Tag).
@@ -70,7 +74,7 @@ func (s *StatsService) SaveStats(stats []*model.Stats) error {
 	return err
 }
 
-func (s *StatsService) GetStats(resorce string, tag string, limit int) ([]model.Stats, error) {
+func (s *StatsService) GetStats(resource string, tag string, limit int) ([]model.Stats, error) {
 	var err error
 	var result []model.Stats
 
@@ -78,7 +82,11 @@ func (s *StatsService) GetStats(resorce string, tag string, limit int) ([]model.
 	timeDiff := currentTime - (int64(limit) * 3600)
 
 	db := database.GetDB()
-	err = db.Model(model.Stats{}).Where("resource = ? AND tag = ? AND date_time > ?", resorce, tag, timeDiff).Scan(&result).Error
+	resources := []string{resource}
+	if resource == "endpoint" {
+		resources = []string{"inbound", "outbound"}
+	}
+	err = db.Model(model.Stats{}).Where("resource in ? AND tag = ? AND date_time > ?", resources, tag, timeDiff).Scan(&result).Error
 	if err != nil {
 		return nil, err
 	}

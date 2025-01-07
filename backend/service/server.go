@@ -1,24 +1,24 @@
 package service
 
 import (
-	"bytes"
+	"encoding/base64"
 	"os"
-	"os/exec"
 	"runtime"
 	"s-ui/config"
 	"s-ui/logger"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/host"
-	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/shirou/gopsutil/v3/net"
+	"github.com/sagernet/sing-box/common/tls"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/host"
+	"github.com/shirou/gopsutil/v4/mem"
+	"github.com/shirou/gopsutil/v4/net"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-type ServerService struct {
-	SingBoxService
-}
+type ServerService struct{}
 
 func (s *ServerService) GetStatus(request string) *map[string]interface{} {
 	status := make(map[string]interface{}, 0)
@@ -91,15 +91,21 @@ func (s *ServerService) GetNetInfo() map[string]interface{} {
 }
 
 func (s *ServerService) GetSingboxInfo() map[string]interface{} {
-	info := make(map[string]interface{}, 0)
-	sysStats, err := s.SingBoxService.GetSysStats()
-	if err == nil {
-		info["running"] = true
-		info["stats"] = sysStats
-	} else {
-		info["running"] = s.SingBoxService.IsRunning()
+	var rtm runtime.MemStats
+	runtime.ReadMemStats(&rtm)
+	isRunning := corePtr.IsRunning()
+	uptime := uint32(0)
+	if isRunning {
+		uptime = corePtr.GetInstance().Uptime()
 	}
-	return info
+	return map[string]interface{}{
+		"running": isRunning,
+		"stats": map[string]interface{}{
+			"NumGoroutine": uint32(runtime.NumGoroutine()),
+			"Alloc":        rtm.Alloc,
+			"Uptime":       uptime,
+		},
+	}
 }
 
 func (s *ServerService) GetSystemInfo() map[string]interface{} {
@@ -139,48 +145,60 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 	return info
 }
 
-func (s *ServerService) GetLogs(service string, count string, level string) []string {
+func (s *ServerService) GetLogs(count string, level string) []string {
 	c, _ := strconv.Atoi(count)
-
-	if service == "s-ui" {
-		return logger.GetLogs(c, level)
-	}
-	var lines []string
-	var cmdArgs []string
-	if IsSystemd {
-		cmdArgs = []string{"journalctl", "-u", service, "--no-pager", "-n", count, "-p", level}
-	} else {
-		cmdArgs = []string{"tail", "/logs/" + service + ".log", "-n", count}
-	}
-	// Run the command
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return []string{"Failed to get logs!", err.Error()}
-	}
-	lines = strings.Split(out.String(), "\n")
-
-	return lines
+	return logger.GetLogs(c, level)
 }
 
 func (s *ServerService) GenKeypair(keyType string, options string) []string {
 	if len(keyType) == 0 {
 		return []string{"No keypair to generate"}
 	}
-	sbExec := s.GetBinaryPath()
-	cmdArgs := []string{"generate", keyType + "-keypair"}
-	if keyType == "tls" || keyType == "ech" {
-		cmdArgs = append(cmdArgs, options)
+
+	switch keyType {
+	case "ech":
+		return s.generateECHKeyPair(options)
+	case "tls":
+		return s.generateTLSKeyPair(options)
+	case "reality":
+		return s.generateRealityKeyPair()
+	case "wireguard":
+		return generateWireGuardKey()
 	}
-	// Run the command
-	cmd := exec.Command(sbExec, cmdArgs...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
+
+	return []string{"Failed to generate keypair"}
+}
+
+func (s *ServerService) generateECHKeyPair(options string) []string {
+	parts := strings.Split(options, ",")
+	configPem, keyPem, err := tls.ECHKeygenDefault(parts[0], parts[1] == "true")
 	if err != nil {
-		return []string{"Failed to generate keypair"}
+		return []string{"Failed to generate ECH keypair: ", err.Error()}
 	}
-	return strings.Split(out.String(), "\n")
+	return append(strings.Split(configPem, "\n"), strings.Split(keyPem, "\n")...)
+}
+
+func (s *ServerService) generateTLSKeyPair(serverName string) []string {
+	privateKeyPem, publicKeyPem, err := tls.GenerateKeyPair(time.Now, serverName, time.Now().AddDate(0, 12, 0))
+	if err != nil {
+		return []string{"Failed to generate TLS keypair: ", err.Error()}
+	}
+	return append(strings.Split(string(privateKeyPem), "\n"), strings.Split(string(publicKeyPem), "\n")...)
+}
+
+func (s *ServerService) generateRealityKeyPair() []string {
+	privateKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		return []string{"Failed to generate Reality keypair: ", err.Error()}
+	}
+	publicKey := privateKey.PublicKey()
+	return []string{"PrivateKey: " + base64.RawURLEncoding.EncodeToString(privateKey[:]), "PublicKey: " + base64.RawURLEncoding.EncodeToString(publicKey[:])}
+}
+
+func generateWireGuardKey() []string {
+	privateKey, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		return []string{"Failed to generate wireguard keypair: ", err.Error()}
+	}
+	return []string{"PrivateKey: " + privateKey.String(), "PublicKey: " + privateKey.PublicKey().String()}
 }

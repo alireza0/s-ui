@@ -48,13 +48,11 @@
                   </v-text-field>
                 </v-col>
               </v-row>
-              <Direct v-if="outbound.type == outTypes.Direct" direction="out" :data="outbound" />
               <Socks v-if="outbound.type == outTypes.SOCKS" :data="outbound" />
               <Http v-if="outbound.type == outTypes.HTTP" :data="outbound" />
               <Shadowsocks v-if="outbound.type == outTypes.Shadowsocks" direction="out" :data="outbound" />
               <Vmess v-if="outbound.type == outTypes.VMess" :data="outbound" />
               <Trojan v-if="outbound.type == outTypes.Trojan" :data="outbound" />
-              <Wireguard v-if="outbound.type == outTypes.Wireguard" :data="outbound" />
               <Hysteria v-if="outbound.type == outTypes.Hysteria" direction="out" :data="outbound" />
               <ShadowTls v-if="outbound.type == outTypes.ShadowTLS" :data="outbound" />
               <Vless v-if="outbound.type == outTypes.VLESS" :data="outbound" />
@@ -69,7 +67,6 @@
               <OutTLS v-if="Object.hasOwn(outbound,'tls')" :outbound="outbound" />
               <Multiplex v-if="Object.hasOwn(outbound,'multiplex')" direction="out" :data="outbound" />
               <Dial v-if="!NoDial.includes(outbound.type)" :dial="outbound" :outTags="tags" />
-              <v-switch v-model="outboundStats" color="primary" :label="$t('stats.enable')" hide-details></v-switch>
             </v-window-item>
             <v-window-item value="t2">
               <v-row>
@@ -131,7 +128,7 @@ import Selector from '@/components/protocols/Selector.vue'
 import UrlTest from '@/components/protocols/UrlTest.vue'
 import HttpUtils from '@/plugins/httputil'
 export default {
-  props: ['visible', 'data', 'id', 'stats', 'tags'],
+  props: ['visible', 'data', 'id', 'tags'],
   emits: ['close', 'save'],
   data() {
     return {
@@ -141,14 +138,13 @@ export default {
       link: "",
       loading: false,
       outTypes: OutTypes,
-      outboundStats: false,
-      NoDial: [OutTypes.Block, OutTypes.DNS, OutTypes.Selector, OutTypes.URLTest],
-      NoServer: [OutTypes.Direct, OutTypes.Block, OutTypes.DNS, OutTypes.Selector, OutTypes.URLTest, OutTypes.Tor],
+      NoDial: [OutTypes.Selector, OutTypes.URLTest],
+      NoServer: [OutTypes.Direct, OutTypes.Selector, OutTypes.URLTest, OutTypes.Tor],
     }
   },
   methods: {
     updateData() {
-      if (this.$props.id != -1) {
+      if (this.$props.id > 0) {
         const newData = JSON.parse(this.$props.data)
         this.outbound = createOutbound(newData.type, newData)
         this.title = "edit"
@@ -158,13 +154,12 @@ export default {
         this.title = "add"
       }
       this.tab = "t1"
-      this.outboundStats = this.$props.stats
     },
     changeType() {
       // Tag change only in add outbound
-      const tag = this.$props.id != -1 ? this.outbound.tag : this.outbound.type + "-" + RandomUtil.randomSeq(3)
+      const tag = this.$props.id > 0 ? this.outbound.tag : this.outbound.type + "-" + RandomUtil.randomSeq(3)
       // Use previous data
-      const prevConfig = { tag: tag ,listen: this.outbound.listen, listen_port: this.outbound.listen_port }
+      const prevConfig = { id: this.outbound.id, tag: tag ,listen: this.outbound.listen, listen_port: this.outbound.listen_port }
       this.outbound = createOutbound(this.outbound.type, prevConfig)
     },
     closeModal() {
@@ -173,7 +168,7 @@ export default {
     },
     saveChanges() {
       this.loading = true
-      this.$emit('save', this.outbound, this.outboundStats)
+      this.$emit('save', this.outbound)
       this.loading = false
     },
     async linkConvert() {

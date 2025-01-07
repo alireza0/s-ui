@@ -2,7 +2,6 @@
   <LogVue
   v-model="logModal.visible"
   :visible="logModal.visible"
-  :logType="logModal.logType"
   @close="closeLogs"
   />
   <v-container class="fill-height" :loading="loading">
@@ -93,7 +92,7 @@
                       </v-tooltip>
                       v{{ tilesData.sys?.appVersion }}
                     </v-chip>
-                    <v-chip density="compact" color="transparent" style="cursor: pointer;" @click="openLogs('s-ui')">
+                    <v-chip density="compact" color="transparent" style="cursor: pointer;" @click="openLogs()">
                       <v-tooltip activator="parent" location="top">
                         {{ $t('basic.log.title') + " - S-UI" }}
                       </v-tooltip>
@@ -110,12 +109,6 @@
                   <v-col cols="8">
                     <v-chip density="compact" color="success" variant="flat" v-if="tilesData.sbd?.running">{{ $t('yes') }}</v-chip> 
                     <v-chip density="compact" color="error" variant="flat" v-else>{{ $t('no') }}</v-chip>
-                    <v-chip density="compact" color="transparent" style="cursor: pointer;" @click="openLogs('sing-box')">
-                      <v-tooltip activator="parent" location="top">
-                        {{ $t('basic.log.title') + " - Sing-Box" }}
-                      </v-tooltip>
-                      <v-icon icon="mdi-list-box-outline" :color="tilesData.sbd?.running ? 'success': 'error'" />
-                    </v-chip>
                     <v-chip density="compact" color="transparent" v-if="tilesData.sbd?.running && !loading" style="cursor: pointer;" @click="restartSingbox()">
                       <v-tooltip activator="parent" location="top">
                         {{ $t('actions.restartSb') }}
@@ -244,16 +237,13 @@ onBeforeUnmount(() => {
 
 const logModal = ref({
   visible: false,
-  logType: "s-ui"
 })
 
-const openLogs = (logType: string) => {
-  logModal.value.logType = logType
+const openLogs = () => {
   logModal.value.visible = true
 }
 
 const closeLogs = () => {
-  logModal.value.logType = "s-ui"
   logModal.value.visible = false
 }
 

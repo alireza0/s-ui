@@ -4,7 +4,7 @@
       <v-text-field
       :label="$t('out.addr')"
       hide-details
-      v-model="data.server">
+      v-model="address">
       </v-text-field>
     </v-col>
     <v-col cols="12" sm="6" md="4">
@@ -13,7 +13,16 @@
       type="number"
       min="0"
       hide-details
-      v-model="data.server_port">
+      v-model="port">
+      </v-text-field>
+    </v-col>
+    <v-col cols="12" sm="6" md="4">
+      <v-text-field
+      label="KeepAlive"
+      type="number"
+      min="0"
+      hide-details
+      v-model="data.persistent_keepalive_interval">
       </v-text-field>
     </v-col>
   </v-row>
@@ -36,6 +45,8 @@
 </template>
 
 <script lang="ts">
+import { KeepAlive } from 'vue';
+
 export default {
   props: ['data'],
   data() {
@@ -54,6 +65,14 @@ export default {
         }
       }
     },
+    address: {
+      get() { return this.$props.data.address },
+      set(v:string) { this.$props.data.address = v.length > 0 ? v : undefined }
+    },
+    port: {
+      get() { return this.$props.data.port },
+      set(v:number) { this.$props.data.port = v > 0 ? v : undefined }
+    }
   }
 }
 </script>
