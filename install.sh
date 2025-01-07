@@ -224,7 +224,7 @@ install_s-ui() {
     tar zxvf s-ui-linux-$(arch).tar.gz
     rm s-ui-linux-$(arch).tar.gz -f
 
-    chmod +x s-ui/sui /s-ui/s-ui.sh
+    chmod +x s-ui/sui s-ui/s-ui.sh
     cp s-ui/s-ui.sh /usr/bin/s-ui
     cp -rf s-ui /usr/local/
     cp -f s-ui/*.service /etc/systemd/system/
@@ -236,7 +236,7 @@ install_s-ui() {
     systemctl enable s-ui --now
 
     echo -e "${green}s-ui v${last_version}${plain} installation finished, it is up and running now..."
-    echo -e "You may access the Panel with following URL(s):${yellow}"
+    echo -e "You may access the Panel with following URL(s):${green}"
     /usr/local/s-ui/sui uri
     echo -e "${plain}"
     echo -e ""

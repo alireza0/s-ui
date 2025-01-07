@@ -251,6 +251,7 @@ set_setting() {
 
 view_setting() {
     /usr/local/s-ui/sui setting -show
+    view_uri
     before_show_menu
 }
 
@@ -261,7 +262,7 @@ view_uri() {
         before_show_menu
     fi
     LOGI "You may access the Panel with following URL(s):"
-    echo -e "${yellow}${info}${reset}"
+    echo -e "${green}${info}${plain}"
 }
 
 start() {
@@ -850,7 +851,7 @@ show_menu() {
         check_install && set_setting
         ;;
     10)
-        check_install && view_setting && view_uri
+        check_install && view_setting
         ;;
     11)
         check_install && start s-ui
