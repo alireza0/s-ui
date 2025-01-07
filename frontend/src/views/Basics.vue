@@ -234,7 +234,6 @@ import Data from '@/store/modules/data'
 import Dial from '@/components/Dial.vue'
 import { computed, ref, onMounted } from 'vue'
 import { Config, Ntp } from '@/types/config'
-import { Client } from '@/types/clients'
 import { FindDiff } from '@/plugins/utils'
 
 const oldConfig = ref({})

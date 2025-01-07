@@ -5,55 +5,6 @@ type OBJ = {
 }
 
 export const FindDiff = {
-  Config(obj1: OBJ, obj2: OBJ): any[] {
-    const differences: any[] = []
-
-    if(!obj2){
-      return [ { key: "all", obj: obj1 } ]
-    }
-
-    for (const key in obj1) {
-      if (obj2.hasOwnProperty(key)) {
-        const value1 = obj1[key]
-        const value2 = obj2[key]
-
-        if (Array.isArray(value1)){
-          value1.forEach((v1,index) => {
-            if(index >= value2.length){
-              differences.push({key: key, action: "new", index: index, obj: v1})
-            } else if(!this.deepCompare(v1,value2[index])) {
-              differences.push({key: key, action: "edit", index: index, obj: v1})
-            }
-          })
-        } else {
-          if (!this.deepCompare(value1,value2)) {
-            differences.push({ key: key, action: "set", obj: value1})
-          }
-        }
-      } else {
-        differences.push({ key: key, action: "set", obj: obj1[key]})
-      }
-    }
-
-    return differences
-  },
-  ArrObj(value1: any[], value2: any[], key: string): any {
-    const differences: any[] = []
-    value1.forEach((v1,index) => {
-      if(index >= value2.length) differences.push({key: key, action: "new", obj: v1})
-      else if(!this.deepCompare(v1,value2[index])) differences.push({key: key, action: "edit", obj: v1})
-    })
-    return differences
-  },
-  Settings(obj1: OBJ, obj2: OBJ): any {
-    const differences: any[] = []
-    for (const key in obj1) {
-      if (obj1[key] != obj2[key]) {
-        differences.push({ key: key, action: "set", obj: obj1[key]})
-      }
-    }
-    return differences
-  },
   deepCompare(obj1: any, obj2: any): boolean {
     // Check if the types of both objects are the same
     if (typeof obj1 !== typeof obj2) {

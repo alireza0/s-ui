@@ -1,4 +1,3 @@
-import { FindDiff } from '@/plugins/utils'
 import HttpUtils from '@/plugins/httputil'
 import { defineStore } from 'pinia'
 import { push } from 'notivue'
@@ -56,15 +55,11 @@ const Data = defineStore('Data', {
       }
       return <Inbound[]>[]
     },
-    async save (object: string, action: string, data: any, userLinks: any[] | null = null, outJsons: any[] | null = null): Promise<boolean> {
+    async save (object: string, action: string, data: any): Promise<boolean> {
       let postData = {
         object: object,
         action: action,
         data: JSON.stringify(data, null, 2),
-        userLinks: userLinks == null ? undefined : JSON.stringify(userLinks),
-      }
-      if (userLinks == null) {
-        delete postData.userLinks
       }
       const msg = await HttpUtils.post('api/save', postData)
       if (msg.success) {
@@ -78,7 +73,7 @@ const Data = defineStore('Data', {
       }
       return msg.success
     }
-  },
+  }
 })
 
 export default Data

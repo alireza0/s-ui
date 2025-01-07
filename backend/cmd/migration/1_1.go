@@ -62,12 +62,20 @@ func migrateClientSchema(db *gorm.DB) error {
 	return nil
 }
 
+func deleteOldWebSecret(db *gorm.DB) error {
+	return db.Exec("DELETE FROM settings WHERE key = ?", "webSecret").Error
+}
+
 func changesObj(db *gorm.DB) error {
 	return db.Exec("UPDATE changes SET obj = CAST('\"' || CAST(obj AS TEXT) || '\"' AS BLOB) WHERE actor = ? and obj not like ?", "DepleteJob", "\"%\"").Error
 }
 
 func to1_1(db *gorm.DB) error {
 	err := migrateClientSchema(db)
+	if err != nil {
+		return err
+	}
+	err = deleteOldWebSecret(db)
 	if err != nil {
 		return err
 	}
