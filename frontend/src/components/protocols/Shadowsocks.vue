@@ -6,7 +6,7 @@
           hide-details
           :label="$t('in.ssMethod')"
           :items="ssMethods"
-          @update:model-value="changeMethod($event)"
+          @update:model-value="direction == 'in' ? changeMethod($event) : undefined"
           v-model="data.method">
         </v-select>
       </v-col>
@@ -17,13 +17,13 @@
         <UoT :data="data" />
       </v-col>
     </v-row>
-    <v-row v-if="data.method.startsWith('2022')">
+    <v-row v-if="data.method.startsWith('2022') || direction == 'out'">
       <v-col cols="12" sm="8">
         <v-text-field
           v-model="data.password"
           :label="$t('types.pw')"
           hide-details
-          append-inner-icon="mdi-refresh"
+          :append-inner-icon="direction == 'in' ? 'mdi-refresh' : undefined"
           @click:append-inner="changeMethod(data.method)">
         </v-text-field>
       </v-col>
