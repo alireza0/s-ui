@@ -82,33 +82,33 @@
               </v-row>
             </v-window-item>
             <v-window-item value="t2">
-              <v-row v-for="(value, key) in clientConfig" :key="key">
+              <v-row v-for="key in Object.keys(clientConfig)">
                 <v-col cols="12" md="3" align="end" align-self="center">
                     {{ key }}
                 </v-col>
                 <v-col>
                   <v-text-field
-                    v-if="value.password != undefined"
+                    v-if="clientConfig[key].password != undefined"
                     label="Password"
-                    v-model="value.password"
+                    v-model="clientConfig[key].password"
                     hide-details>
                   </v-text-field>
                   <v-text-field
-                    v-if="value.uuid != undefined"
+                    v-if="clientConfig[key].uuid != undefined"
                     label="UUID"
-                    v-model="value.uuid"
+                    v-model="clientConfig[key].uuid"
                     hide-details>
                   </v-text-field>
                   <v-text-field
-                    v-if="value.flow != undefined"
+                    v-if="key == 'vless'"
                     label="Flow"
-                    v-model="value.flow"
+                    v-model="clientConfig[key].flow"
                     hide-details>
                   </v-text-field>
                   <v-text-field
-                    v-if="value.auth_str != undefined"
+                    v-if="key == 'hysteria'"
                     label="Auth"
-                    v-model="value.auth_str"
+                    v-model="clientConfig[key].auth_str"
                     hide-details>
                   </v-text-field>
                 </v-col>
@@ -190,7 +190,6 @@ export default {
       client: createClient(),
       title: "add",
       loading: false,
-      clientStats: false,
       tab: "t1",
       clientConfig: <any>[],
       links: <Link[]>[],
@@ -226,7 +225,7 @@ export default {
       this.client.links = [
                         ...this.extLinks.filter(l => l.uri != ''),
                         ...this.subLinks.filter(l => l.uri != '')]
-      this.$emit('save', this.client, this.clientStats)
+      this.$emit('save', this.client)
       this.loading = false
     },
     setDate(newDate:number){

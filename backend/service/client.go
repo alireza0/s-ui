@@ -105,9 +105,13 @@ func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*mod
 		}
 	}
 	for index, client := range clients {
-		var clientLinks, newClientLinks []map[string]string
-		json.Unmarshal(client.Links, &clientLinks)
+		var clientLinks []map[string]string
+		err = json.Unmarshal(client.Links, &clientLinks)
+		if err != nil {
+			return err
+		}
 
+		newClientLinks := []map[string]string{}
 		for _, inbound := range inbounds {
 			newLinks := util.LinkGenerator(client.Config, &inbound, hostname)
 			for _, newLink := range newLinks {
