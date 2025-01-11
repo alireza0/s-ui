@@ -113,7 +113,7 @@
           <v-row>
             <v-col cols="12" sm="6" md="4">
               <v-select
-                v-model="ruleData.sniff"
+                v-model="ruleData.sniffer"
                 :items="sniffers"
                 :label="$t('rule.sniffer')"
                 multiple
@@ -254,7 +254,7 @@ export default {
       this.loading = true
       let newRule = <any>{
         action: this.ruleData.action,
-        invert: this.ruleData.invert,
+        invert: this.ruleData.invert? this.ruleData.invert : undefined,
       }
 
       // Filter action data
@@ -263,25 +263,25 @@ export default {
           newRule.outbound = this.ruleData.outbound
           break
         case 'route-options':
-          newRule.override_address = this.ruleData.override_address.length > 0 ? this.ruleData.override_address : undefined
-          newRule.override_port = this.ruleData.override_port > 0 ? this.ruleData.override_port : undefined
-          newRule.network_strategy = this.ruleData.network_strategy.length > 0 ? this.ruleData.network_strategy : undefined
-          newRule.fallback_delay = this.ruleData.fallback_delay.length > 0 ? this.ruleData.fallback_delay : undefined
+          newRule.override_address = this.ruleData.override_address?.length > 0 ? this.ruleData.override_address : undefined
+          newRule.override_port = this.ruleData?.override_port > 0 ? this.ruleData.override_port : undefined
+          newRule.network_strategy = this.ruleData.network_strategy?.length > 0 ? this.ruleData.network_strategy : undefined
+          newRule.fallback_delay = this.ruleData.fallback_delay?.length > 0 ? this.ruleData.fallback_delay : undefined
           newRule.udp_disable_domain_unmapping = this.ruleData.udp_disable_domain_unmapping? true : undefined
           newRule.udp_connect = this.ruleData.udp_connect? true : undefined
-          newRule.udp_timeout = this.ruleData.udp_timeout.length > 0 ? this.ruleData.udp_timeout : undefined
+          newRule.udp_timeout = this.ruleData.udp_timeout?.length > 0 ? this.ruleData.udp_timeout : undefined
           break
         case 'reject':
-          newRule.method = this.ruleData.method.length > 0 ? this.ruleData.method : undefined
+          newRule.method = this.ruleData.method?.length > 0 ? this.ruleData.method : undefined
           newRule.no_drop = this.ruleData.no_drop? true : undefined
           break
         case 'sniff':
-          newRule.sniffer = this.ruleData.sniffer.length > 0 ? this.ruleData.sniffer : undefined
-          newRule.timeout = this.ruleData.timeout.length > 0 ? this.ruleData.timeout : undefined
+          newRule.sniffer = this.ruleData.sniffer?.length > 0 ? this.ruleData.sniffer : undefined
+          newRule.timeout = this.ruleData.timeout?.length > 0 ? this.ruleData.timeout : undefined
           break
         case 'resolve':
-          newRule.strategy = this.ruleData.strategy.length > 0 ? this.ruleData.strategy : undefined
-          newRule.server = this.ruleData.server.length > 0 ? this.ruleData.server : undefined
+          newRule.strategy = this.ruleData.strategy?.length > 0 ? this.ruleData.strategy : undefined
+          newRule.server = this.ruleData.server?.length > 0 ? this.ruleData.server : undefined
           break
       }
 

@@ -140,7 +140,7 @@ const clients = computed((): Client[] => {
 })
 
 const onlines = computed(() => {
-  return Data().onlines.inbound ? inbounds.value.map(i => Data().onlines.inbound.includes(i.tag)) : []
+  return Data().onlines.inbound?? []
 })
 
 const modal = ref({
