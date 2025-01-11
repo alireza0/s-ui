@@ -24,3 +24,7 @@ func Random(n int) string {
 	}
 	return string(runes)
 }
+
+func RandomInt(n int) int {
+	return rnd.Intn(n)
+}

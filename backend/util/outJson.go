@@ -98,6 +98,13 @@ func addTls(out *map[string]interface{}, tls *model.Tls) {
 		}
 		tlsConfig["reality"] = realityConfig
 	}
+	if ech, ok := tlsServer["ech"].(map[string]interface{}); ok && ech["enabled"].(bool) {
+		echConfig := tlsConfig["ech"].(map[string]interface{})
+		echConfig["enabled"] = true
+		echConfig["pq_signature_schemes_enabled"] = ech["pq_signature_schemes_enabled"]
+		echConfig["dynamic_record_sizing_disabled"] = ech["dynamic_record_sizing_disabled"]
+		tlsConfig["ech"] = echConfig
+	}
 
 	(*out)["tls"] = tlsConfig
 }

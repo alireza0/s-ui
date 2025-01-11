@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"s-ui/database/model"
+	"s-ui/util/common"
 	"strings"
 )
 
@@ -19,7 +20,7 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 
 	var tls map[string]interface{}
 	if i.TlsId > 0 {
-		json.Unmarshal(i.Tls.Client, &tls)
+		tls = prepareTls(i.Tls)
 	}
 
 	var userConfig map[string]map[string]interface{}
@@ -78,6 +79,28 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 	}
 
 	return []string{}
+}
+
+func prepareTls(t *model.Tls) map[string]interface{} {
+	var iTls, oTls map[string]interface{}
+	json.Unmarshal(t.Client, &oTls)
+	json.Unmarshal(t.Server, &iTls)
+
+	for k, v := range iTls {
+		switch k {
+		case "enabled", "server_name", "alpn":
+			oTls[k] = v
+		case "reality":
+			reality := v.(map[string]interface{})
+			clientReality := oTls["reality"].(map[string]interface{})
+			clientReality["enabled"] = reality["enabled"]
+			if short_ids, hasSIds := reality["short_ids"].([]interface{}); hasSIds && len(short_ids) > 0 {
+				clientReality["short_id"] = short_ids[common.RandomInt(len(short_ids))]
+			}
+			oTls["reality"] = clientReality
+		}
+	}
+	return oTls
 }
 
 func shadowsocksLink(
@@ -503,6 +526,26 @@ func getTransportParams(t interface{}) map[string]string {
 		}
 		if path, ok := trasport["path"].(string); ok {
 			params["path"] = path
+		}
+	}
+	return params
+}
+
+func getTlsParams(t interface{}) map[string]string {
+	params := map[string]string{}
+	if tls, hasTls := t.(map[string]interface{}); hasTls {
+		if sni, ok := tls["server_name"].(string); ok {
+			params["sni"] = sni
+		}
+		if alpn, ok := tls["alpn"].([]interface{}); ok {
+			alpnList := make([]string, len(alpn))
+			for i, v := range alpn {
+				alpnList[i] = v.(string)
+			}
+			params["alpn"] = strings.Join(alpnList, ",")
+		}
+		if insecure, ok := tls["insecure"].(bool); ok && insecure {
+			params["insecure"] = "1"
 		}
 	}
 	return params
