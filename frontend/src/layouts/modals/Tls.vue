@@ -334,11 +334,6 @@ export default {
       ],
       fingerprints: [
         { title: "Chrome", value: "chrome" },
-        { title: "Chrome PSK", value: "chrome_psk" },
-        { title: "Chrome PSK Shuffle", value: "chrome_psk_shuffle" },
-        { title: "Chrome Padding PSK Shuffle", value: "chrome_padding_psk_shuffle" },
-        { title: "Chrome Post-Quantum", value: "chrome_pq" },
-        { title: "Chrome Post-Quantum PSK", value: "chrome_pq_psk" },
         { title: "Firefox", value: "firefox" },
         { title: "Microsoft Edge", value: "edge" },
         { title: "Apple Safari", value: "safari" },
@@ -356,7 +351,7 @@ export default {
       if (this.$props.id > 0) {
         const newData = <tls>JSON.parse(this.$props.data)
         this.tls = newData
-        if (this.tls.server == null) this.tls.server = {}
+        if (this.tls.server == null) this.tls.server = { enabled: true }
         if (this.tls.client == null) this.tls.client = {}
         this.tlsType = newData.server?.reality == undefined ? 0 : 1
         this.usePath = newData.server?.key == undefined ? 0 : 1

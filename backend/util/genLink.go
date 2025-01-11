@@ -43,16 +43,17 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 		for index, addr := range Addrs {
 			addrRemark, _ := addr["remark"].(string)
 			Addrs[index]["remark"] = i.Tag + addrRemark
-			if addrTls, ok := addr["tls"].(map[string]interface{}); ok {
+			if i.TlsId > 0 {
 				newTls := map[string]interface{}{}
-				if oldTls, hasOldTls := tls["tls"].(map[string]interface{}); hasOldTls {
-					for k, v := range oldTls {
+				for k, v := range tls {
+					newTls[k] = v
+				}
+
+				// Override tls
+				if addrTls, ok := addr["tls"].(map[string]interface{}); ok {
+					for k, v := range addrTls {
 						newTls[k] = v
 					}
-				}
-				// Override tls
-				for k, v := range addrTls {
-					newTls[k] = v
 				}
 				Addrs[index]["tls"] = newTls
 			}
@@ -243,7 +244,9 @@ func hysteria2Link(
 		if downmbps, ok := inbound["down_mbps"].(string); ok {
 			params["down_mbps"] = downmbps
 		}
+		fmt.Printf("%+v\n", addr["tls"])
 		if tls, ok := addr["tls"].(map[string]interface{}); ok {
+			fmt.Printf("%+v\n", tls)
 			if sni, ok := tls["server_name"].(string); ok {
 				params["sni"] = sni
 			}

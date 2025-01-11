@@ -60,22 +60,10 @@ func moveJsonToDb(db *gorm.DB) error {
 			} else {
 				tls_server, _ := json.MarshalIndent(tlsObj, "", "  ")
 				if len(tls_server) > 5 {
-					tlsObject := tlsObj.(map[string]interface{})
-					tlsClientObj := map[string]interface{}{}
-					if enabled, ok := tlsObject["enabled"]; ok {
-						tlsClientObj["enabled"] = enabled
-					}
-					if alpn, ok := tlsObject["alpn"]; ok {
-						tlsClientObj["alpn"] = alpn
-					}
-					if sni, ok := tlsObject["server_name"]; ok {
-						tlsClientObj["server_name"] = sni
-					}
-					tls_client, _ := json.MarshalIndent(tlsClientObj, "", "  ")
 					newTls := &model.Tls{
 						Name:   tag,
 						Server: tls_server,
-						Client: tls_client,
+						Client: json.RawMessage("{}"),
 					}
 					err = db.Create(newTls).Error
 					if err != nil {
@@ -243,7 +231,34 @@ func migrateTls(db *gorm.DB) error {
 	if !db.Migrator().HasColumn(&model.Tls{}, "inbounds") {
 		return nil
 	}
-	return db.Migrator().DropColumn(&model.Tls{}, "inbounds")
+	err := db.Migrator().DropColumn(&model.Tls{}, "inbounds")
+	if err != nil {
+		return err
+	}
+	var tlsConfig []model.Tls
+	err = db.Model(model.Tls{}).Scan(&tlsConfig).Error
+	if err != nil {
+		return err
+	}
+
+	for index, tls := range tlsConfig {
+		var tlsClient map[string]interface{}
+		err = json.Unmarshal(tls.Client, &tlsClient)
+		if err != nil {
+			continue
+		}
+		for key, _ := range tlsClient {
+			switch key {
+			case "insecure", "disable_sni", "utls", "ech", "reality":
+				continue
+			default:
+				delete(tlsClient, key)
+			}
+		}
+		tlsConfig[index].Client, _ = json.MarshalIndent(tlsClient, "", "  ")
+	}
+
+	return db.Save(&tlsConfig).Error
 }
 
 func dropInboundData(db *gorm.DB) error {
