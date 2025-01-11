@@ -26,8 +26,7 @@ var defaultConfig = `{
         "protocol": [
           "dns"
         ],
-        "outbound": "dns-out",
-        "action": "route"
+        "action": "hijack-dns"
       }
     ]
   },

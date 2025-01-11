@@ -21,7 +21,6 @@ const defaultJson = `
       "mtu": 9000,
       "auto_route": true,
       "strict_route": false,
-      "sniff": true,
       "endpoint_independent_nat": false,
       "stack": "system",
       "platform": {
@@ -36,7 +35,6 @@ const defaultJson = `
       "type": "mixed",
       "listen": "127.0.0.1",
       "listen_port": 2080,
-      "sniff": true,
       "users": []
     }
   ]
@@ -203,14 +201,6 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 		{
 			"type": "direct",
 			"tag":  "direct",
-		},
-		{
-			"type": "dns",
-			"tag":  "dns-out",
-		},
-		{
-			"type": "block",
-			"tag":  "block",
 		},
 	}
 	*outbounds = append(outbound, *outbounds...)

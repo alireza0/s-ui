@@ -153,7 +153,6 @@ export default {
           "mtu": 9000,
           "auto_route": true,
           "strict_route": false,
-          "sniff": true,
           "endpoint_independent_nat": false,
           "stack": "system",
           "exclude_package": [],
@@ -169,7 +168,6 @@ export default {
           "type": "mixed",
           "listen": "127.0.0.1",
           "listen_port": 2080,
-          "sniff": true,
           "users": []
         }
       ],
@@ -199,24 +197,24 @@ export default {
             "tag": "local-dns",
             "address": "local",
             "detour": "direct"
-          },
-          {
-            "address": "rcode://success",
-            "tag": "block"
           }
         ],
         "rules": [
           {
             "clash_mode": "Global",
             "source_ip_cidr": [
-              "172.19.0.0/30"
+              "172.19.0.0/30",
+              "fdfe:dcba:9876::1/126"
             ],
+            "action": "route",
             "server": "proxy-dns"
           },
           {
             "source_ip_cidr": [
-              "172.19.0.0/30"
+              "172.19.0.0/30",
+              "fdfe:dcba:9876::1/126"
             ],
+            "action": "route",
             "server": "proxy-dns"
           }
         ],
@@ -319,10 +317,10 @@ export default {
         if (v) {
           this.subJsonExt.dns = this.defaultDns
           if (this.rules == undefined) this.subJsonExt.rules = []
-          this.subJsonExt.rules.unshift({ protocol: "dns", outbound: "dns-out" })
+          this.subJsonExt.rules.unshift({ protocol: "dns", action: "hijack-dns" })
         } else {
           delete this.subJsonExt.dns
-          const ruleDnsIndex = this.subJsonExt?.rules?.findIndex((r:any) => r.protocol == "dns" && r.outbound == "dns-out")
+          const ruleDnsIndex = this.subJsonExt?.rules?.findIndex((r:any) => r.protocol == "dns" && r.action == "hijack-dns")
           if (ruleDnsIndex >= 0) this.subJsonExt.rules.splice(ruleDnsIndex,1)
           if (this.rules.length == 0) delete this.subJsonExt.rules
         }
@@ -348,7 +346,7 @@ export default {
         if (v?.length>0) {
           if (sIndex === -1) {
             this.dns.servers.push({ tag: "direct-dns", address: v, detour: "direct" })
-            this.dns.rules.push({ clash_mode: "Direct", server: "direct-dns" })
+            this.dns.rules.push({ clash_mode: "Direct", action: "route", server: "direct-dns" })
           } else {
             this.dns.servers[sIndex].address = v
           }
@@ -369,7 +367,7 @@ export default {
           if (ruleIndex >= 0){
             this.dns.rules[ruleIndex].rule_set = v
           } else {
-            this.dns.rules.push({ rule_set: v, server: "direct-dns" })
+            this.dns.rules.push({ rule_set: v, action: "route", server: "direct-dns" })
           }
         } else {
           if (ruleIndex != -1) this.dns.rules.splice(ruleIndex,1)
@@ -395,7 +393,7 @@ export default {
             this.rules[ruleIndex].rule_set = v
           } else {
             if (this.rules == undefined) this.subJsonExt.rules = []
-            this.rules.push({ rule_set: v, outbound: "direct" })
+            this.rules.push({ rule_set: v, action: "route", outbound: "direct" })
           }
         } else {
           if (ruleIndex != -1) this.rules.splice(ruleIndex,1)
@@ -405,17 +403,17 @@ export default {
     },
     ruleToBlock: {
       get() :string[] {
-        const ruleIndex = this.rules?.findIndex((r:any) => r.outbound == "block" && Object.hasOwn(r,'rule_set'))
+        const ruleIndex = this.rules?.findIndex((r:any) => r.action == "reject" && Object.hasOwn(r,'rule_set'))
         return ruleIndex >= 0 ? this.rules[ruleIndex].rule_set : []
       },
       set(v:string[]) {
-        const ruleIndex = this.rules?.findIndex((r:any) => r.outbound == "block" && Object.hasOwn(r,'rule_set'))
+        const ruleIndex = this.rules?.findIndex((r:any) => r.action == "reject" && Object.hasOwn(r,'rule_set'))
         if (v.length>0) {
           if (ruleIndex >= 0){
             this.rules[ruleIndex].rule_set = v
           } else {
             if (this.rules == undefined) this.subJsonExt.rules = []
-            this.rules.push({ rule_set: v, outbound: "block" })
+            this.rules.push({ rule_set: v, action: "reject" })
           }
         } else {
           if (ruleIndex != -1) this.rules.splice(ruleIndex,1)
