@@ -80,10 +80,14 @@
                     v-model="clientInbounds"
                     :items="inboundTags"
                     :label="$t('client.inboundTags')"
+                    clearable
                     multiple
                     chips
-                    hide-details
-                  ></v-select>
+                    hide-details>
+                    <template v-slot:append>
+                      <v-icon style="cursor: hand;" @click="setAllInbounds" icon="mdi-set-all" v-tooltip:top="$t('all')" />
+                    </template>
+                  </v-select>
                 </v-col>
               </v-row>
             </v-window-item>
@@ -239,12 +243,15 @@ export default {
     },
     setDate(newDate:number){
       this.client.expiry = newDate
+    },
+    setAllInbounds(){
+      this.client.inbounds = this.inboundTags.map((i:any) => i.value).sort()
     }
   },
   computed: {
     clientInbounds: {
-      get() { return this.client.inbounds.length>0 ? this.client.inbounds : [] },
-      set(v:number[]) { this.client.inbounds = v.length == 0 ?  [] : v }
+      get() { return this.client.inbounds.length>0 ? this.client.inbounds.sort() : [] },
+      set(v:number[]) { this.client.inbounds = v.length == 0 ?  [] : v.sort() }
     },
     expDate: {
       get() { return this.client.expiry},
