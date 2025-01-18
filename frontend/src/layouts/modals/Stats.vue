@@ -18,9 +18,17 @@
         <v-radio-group v-model="limit" @change="loadData" density="compact" :loading="loading" inline hide-details>
           <v-radio v-for="p in periods" :label="p.title" :value="p.value"></v-radio>
         </v-radio-group>
-        <v-container id="container" style="height:40vh;">
-          <v-alert :text="$t('noData')" type="warning" variant="outlined" v-if="alert"></v-alert>
-          <Line v-if="loaded" :data="usage" :options="<any>options" />
+          <v-container id="container" style="height:40vh;">
+            <v-skeleton-loader
+            class="mx-auto border"
+            width="95%"
+            type="image"
+            v-if="loading"
+          ></v-skeleton-loader>
+          <template v-else>
+            <v-alert :text="$t('noData')" type="warning" variant="outlined" v-if="alert"></v-alert>
+            <Line v-if="loaded" :data="usage" :options="<any>options" />
+          </template>
         </v-container>
       </v-card-text>
     </v-card>
