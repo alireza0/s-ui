@@ -6,6 +6,7 @@
           hide-details
           :items="[1,2,3]"
           :label="$t('version')"
+          :disabled="data.id > 0"
           v-model="version">
         </v-select>
       </v-col>
@@ -115,23 +116,18 @@ export default {
         switch (newValue) {
         case 1:
           delete this.Inbound.password
-          delete this.Inbound.users
           delete this.Inbound.handshake_for_server_name
           break;
         case 2:
           if (!this.Inbound.password) {
             this.Inbound.password = ""
           }
-          delete this.Inbound.users
           if (!this.Inbound.handshake_for_server_name) {
             this.Inbound.handshake_for_server_name = {}
           }
           break;
         case 3:
           delete this.Inbound.password
-          if (!Object.hasOwn(this.Inbound, 'users')) {
-            this.Inbound.users = []
-          }
           if (!this.Inbound.handshake_for_server_name) {
             this.Inbound.handshake_for_server_name = {}
           }

@@ -48,6 +48,7 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 	}
 	var data []map[string]interface{}
 	for _, inbound := range inbounds {
+		var shadowtls_version uint
 		inbData := map[string]interface{}{
 			"id":     inbound.Id,
 			"type":   inbound.Type,
@@ -61,7 +62,25 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 			}
 			inbData["listen"] = restFields["listen"]
 			inbData["listen_port"] = restFields["listen_port"]
+			if inbound.Type == "shadowtls" {
+				json.Unmarshal(restFields["version"], &shadowtls_version)
+			}
 		}
+		switch inbound.Type {
+		case "mixed", "socks", "http", "shadowsocks", "vmess", "trojan", "naive", "hysteria", "shadowtls", "tuic", "hysteria2", "vless":
+			if inbound.Type == "shadowtls" && shadowtls_version < 3 {
+				break
+			}
+			var users []string
+			err = db.Raw("SELECT clients.name FROM clients, json_each(clients.inbounds) as je WHERE je.value = ?", inbound.Id).Scan(&users).Error
+			if err != nil {
+				return nil, err
+			}
+			if len(users) > 0 || inbound.Type != "shadowsocks" {
+				inbData["users"] = users
+			}
+		}
+
 		data = append(data, inbData)
 	}
 	return &data, nil
@@ -214,6 +233,13 @@ func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uin
 	if err != nil {
 		return nil, err
 	}
+
+	if inboundType == "shadowtls" {
+		version, _ := inbound["version"].(float64)
+		if int(version) < 3 {
+			return inboundJson, nil
+		}
+	}
 	if inboundType == "shadowsocks" {
 		method, _ := inbound["method"].(string)
 		if method == "2022-blake3-aes-128-gcm" {
@@ -231,6 +257,10 @@ func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uin
 	var usersJson []json.RawMessage
 	for _, user := range users {
 		usersJson = append(usersJson, json.RawMessage(user))
+	}
+
+	if len(usersJson) > 0 || inboundType != "shadowsocks" {
+		inbound["users"] = usersJson
 	}
 
 	inbound["users"] = usersJson
