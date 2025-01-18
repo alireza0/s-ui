@@ -61,7 +61,6 @@
             </v-col>
           </v-row>
         </v-container>
-        <pre dir="ltr">{{ bulkData }}</pre>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>

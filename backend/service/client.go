@@ -16,14 +16,32 @@ type ClientService struct {
 	InboundService
 }
 
-func (s *ClientService) GetAll() ([]model.Client, error) {
+func (s *ClientService) Get(id string) (*[]model.Client, error) {
+	if id == "" {
+		return s.GetAll()
+	}
+	return s.getById(id)
+}
+
+func (s *ClientService) getById(id string) (*[]model.Client, error) {
 	db := database.GetDB()
-	clients := []model.Client{}
-	err := db.Model(model.Client{}).Scan(&clients).Error
+	var client []model.Client
+	err := db.Model(model.Client{}).Where("id in ?", strings.Split(id, ",")).Scan(&client).Error
 	if err != nil {
 		return nil, err
 	}
-	return clients, nil
+
+	return &client, nil
+}
+
+func (s *ClientService) GetAll() (*[]model.Client, error) {
+	db := database.GetDB()
+	var clients []model.Client
+	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").Scan(&clients).Error
+	if err != nil {
+		return nil, err
+	}
+	return &clients, nil
 }
 
 func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, hostname string) ([]uint, error) {

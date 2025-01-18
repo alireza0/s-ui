@@ -120,6 +120,7 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, login
 	var err error
 	var inboundIds []uint
 	var inboundId uint
+	var objs []string = []string{obj}
 
 	db := database.GetDB()
 	tx := db.Begin()
@@ -134,6 +135,7 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, login
 	switch obj {
 	case "clients":
 		inboundIds, err = s.ClientService.Save(tx, act, data, hostname)
+		objs = append(objs, "inbounds")
 	case "tls":
 		inboundIds, err = s.TlsService.Save(tx, act, data)
 	case "inbounds":

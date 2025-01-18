@@ -244,9 +244,7 @@ func hysteria2Link(
 		if downmbps, ok := inbound["down_mbps"].(string); ok {
 			params["down_mbps"] = downmbps
 		}
-		fmt.Printf("%+v\n", addr["tls"])
 		if tls, ok := addr["tls"].(map[string]interface{}); ok {
-			fmt.Printf("%+v\n", tls)
 			if sni, ok := tls["server_name"].(string); ok {
 				params["sni"] = sni
 			}

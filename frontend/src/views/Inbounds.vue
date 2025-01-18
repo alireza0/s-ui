@@ -51,11 +51,11 @@
           <v-row>
             <v-col>{{ $t('pages.clients') }}</v-col>
             <v-col>
-              <template v-if="inboundWithUsers.includes(item.type)">
-                <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="findInboundUsers(item).length > 0">
-                  <span v-for="u in findInboundUsers(item)">{{ u }}<br /></span>
+              <template v-if="item.users">
+                <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="item.users.length > 0">
+                  <span v-for="u in item.users">{{ u }}<br /></span>
                 </v-tooltip>
-                {{ findInboundUsers(item).length }}
+                {{ item.users.length }}
               </template>
               <template v-else>-</template>
             </v-col>
@@ -110,8 +110,7 @@ import InboundVue from '@/layouts/modals/Inbound.vue'
 import Stats from '@/layouts/modals/Stats.vue'
 import { Config } from '@/types/config'
 import { computed, ref } from 'vue'
-import { Inbound, inboundWithUsers } from '@/types/inbounds'
-import { Client } from '@/types/clients'
+import { Inbound } from '@/types/inbounds'
 import { i18n } from '@/locales'
 import { push } from 'notivue'
 
@@ -135,10 +134,6 @@ const outTags = computed((): string[] => {
   return appConfig.value.outbounds?.map(i => i.tag)
 })
 
-const clients = computed((): Client[] => {
-  return <Client[]> Data().clients
-})
-
 const onlines = computed(() => {
   return Data().onlines.inbound?? []
 })
@@ -157,7 +152,7 @@ const showModal = (id: number) => {
 const closeModal = () => {
   modal.value.visible = false
 }
-const saveModal = async (data:Inbound) => {
+const saveModal = async (data:Inbound, initUsers?: number[]) => {
   // Check duplicate tag
   const oldInbound = modal.value.id > 0 ? inbounds.value.findLast(i => i.id == modal.value.id) : null
   if (data.tag != oldInbound?.tag && inTags.value.includes(data.tag)) {
@@ -168,7 +163,7 @@ const saveModal = async (data:Inbound) => {
   }
 
   // save data
-  const success = await Data().save("inbounds", modal.value.id == 0 ? "new" : "edit", data)
+  const success = await Data().save("inbounds", modal.value.id == 0 ? "new" : "edit", data, initUsers)
   if (success) modal.value.visible = false
 }
 
@@ -178,10 +173,6 @@ const delInbound = async (id: number) => {
 
   const success = await Data().save("inbounds", "del", tag)
   if (success) delOverlay.value[index] = false
-}
-
-const findInboundUsers = (i: Inbound): string[] => {
-  return clients.value.filter(c => c.inbounds.includes(i.id)).map(c => c.name)
 }
 
 const stats = ref({

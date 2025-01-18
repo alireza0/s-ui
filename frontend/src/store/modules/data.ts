@@ -5,6 +5,7 @@ import { i18n } from '@/locales'
 import { Inbound } from '@/types/inbounds'
 import { Outbound } from '@/types/outbounds'
 import { Endpoint } from '@/types/endpoints'
+import { Client } from '@/types/clients'
 
 const Data = defineStore('Data', {
   state: () => ({ 
@@ -13,10 +14,10 @@ const Data = defineStore('Data', {
     subURI: "",
     onlines: {inbound: <string[]>[], outbound: <string[]>[], user: <string[]>[]},
     config: <any>{},
-    inbounds: <Inbound[]>[],
+    inbounds: <any[]>[],
     outbounds: <Outbound[]>[],
     endpoints: <Endpoint[]>[],
-    clients: [],
+    clients: <any>[],
     tlsConfigs: <any[]>[],
   }),
   actions: {
@@ -55,7 +56,14 @@ const Data = defineStore('Data', {
       }
       return <Inbound[]>[]
     },
-    async save (object: string, action: string, data: any): Promise<boolean> {
+    async loadClients(id: number): Promise<Client> {
+      const options = id > 0 ? {id: id} : {}
+      const msg = await HttpUtils.get('api/clients', options)
+      if(msg.success) {
+        return <Client>msg.obj.clients[0]??{}
+      }
+      return <Client>{}
+    },
       let postData = {
         object: object,
         action: action,

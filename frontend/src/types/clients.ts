@@ -10,9 +10,9 @@ export interface Client {
   id?: number
 	enable: boolean
 	name: string
-	config: Config
+	config?: Config
 	inbounds: number[]
-  links: Link[]
+  links?: Link[]
 	volume: number
 	expiry: number
   up: number

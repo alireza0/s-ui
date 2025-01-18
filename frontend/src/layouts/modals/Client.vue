@@ -1,12 +1,18 @@
 <template>
   <v-dialog transition="dialog-bottom-transition" width="800">
-    <v-card class="rounded-lg">
+    <v-card class="rounded-lg" :loading="loading">
       <v-card-title>
         {{ $t('actions.' + title) + " " + $t('objects.client') }}
       </v-card-title>
       <v-divider></v-divider>
+      <v-skeleton-loader
+          class="mx-auto border"
+          width="95%"
+          type="card, text, divider, list-item-two-line"
+          v-if="loading"
+        ></v-skeleton-loader>
       <v-card-text style="padding: 0 16px; overflow-y: scroll;">
-        <v-container style="padding: 0;">
+        <v-container style="padding: 0;" :hidden="loading">
           <v-tabs
             v-model="tab"
             align-tabs="center"
@@ -178,12 +184,13 @@
 </template>
 
 <script lang="ts">
-import { createClient, randomConfigs, updateConfigs, Link } from '@/types/clients'
+import { createClient, randomConfigs, updateConfigs, Link, Client } from '@/types/clients'
 import DatePick from '@/components/DateTime.vue'
 import { HumanReadable } from '@/plugins/utils'
+import Data from '@/store/modules/data';
 
 export default {
-  props: ['visible', 'data', 'id', 'inboundTags', 'groups'],
+  props: ['visible', 'id', 'inboundTags', 'groups'],
   emits: ['close', 'save'],
   data() {
     return {
@@ -198,21 +205,23 @@ export default {
     }
   },
   methods: {
-    updateData() {
+    async updateData() {
       if (this.$props.id > 0) {
-        const newData = JSON.parse(this.$props.data)
+        this.loading = true
+        const newData = await Data().loadClients(this.$props.id)
         this.client = createClient(newData)
         this.title = "edit"
         this.clientConfig = this.client.config
+        this.loading = false
       }
       else {
         this.client = createClient()
         this.title = "add"
         this.clientConfig = randomConfigs('client')
       }
-      this.links = this.client.links.filter(l => l.type == 'local')
-      this.extLinks = this.client.links.filter(l => l.type == 'external')
-      this.subLinks = this.client.links.filter(l => l.type == 'sub')
+      this.links = this.client.links?.filter(l => l.type == 'local')?? []
+      this.extLinks = this.client.links?.filter(l => l.type == 'external')?? []
+      this.subLinks = this.client.links?.filter(l => l.type == 'sub')?? []
       this.tab = "t1"
     },
     closeModal() {

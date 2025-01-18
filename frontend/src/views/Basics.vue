@@ -264,10 +264,6 @@ const outboundTags = computed((): string[] => {
   return [...Data().outbounds?.map((o:any) => o.tag), ...Data().endpoints?.map((e:any) => e.tag)]
 })
 
-const clientNames = computed((): string[] => {
-  return Data().clients.map((c:any) => c.name)
-})
-
 const levels = ["trace", "debug", "info", "warn", "error", "fatal", "panic"]
 
 const dnsServersTags = computed((): string[] => {

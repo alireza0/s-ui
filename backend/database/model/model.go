@@ -26,9 +26,9 @@ type Client struct {
 	Id       uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
 	Enable   bool            `json:"enable" form:"enable"`
 	Name     string          `json:"name" form:"name"`
-	Config   json.RawMessage `json:"config" form:"config"`
+	Config   json.RawMessage `json:"config,omitempty" form:"config"`
 	Inbounds json.RawMessage `json:"inbounds" form:"inbounds"`
-	Links    json.RawMessage `json:"links" form:"links"`
+	Links    json.RawMessage `json:"links,omitempty" form:"links"`
 	Volume   int64           `json:"volume" form:"volume"`
 	Expiry   int64           `json:"expiry" form:"expiry"`
 	Down     int64           `json:"down" form:"down"`

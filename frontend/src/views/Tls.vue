@@ -89,7 +89,6 @@ import TlsVue from '@/layouts/modals/Tls.vue'
 import Data from '@/store/modules/data'
 import { computed, ref } from 'vue'
 import { Inbound } from '@/types/inbounds'
-import { Client } from '@/types/clients'
 import { tls } from '@/types/tls'
 
 const tlsConfigs = computed((): any[] => {
@@ -103,10 +102,6 @@ const inbounds = computed((): Inbound[] => {
 const tlsInbounds = (id: number): string[] => {
   return inbounds.value.filter(i => i.tls_id == id).map(i => i.tag)  
 }
-
-const clients = computed((): any[] => {
-  return <Client[]>Data().clients
-})
 
 const modal = ref({
   visible: false,

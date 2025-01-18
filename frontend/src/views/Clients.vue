@@ -4,7 +4,6 @@
     v-model="modal.visible"
     :visible="modal.visible"
     :id="modal.id"
-    :data="modal.data"
     :groups="groups"
     :inboundTags="inboundTags"
     @close="closeModal"
@@ -116,129 +115,8 @@
         </v-card>
       </v-menu>
     </v-col>
-    <v-col cols="auto">
-      <v-btn hide-details variant="text" icon @click="toggleClientView">
-      <v-icon :icon="tableView ? 'mdi-table-eye' : 'mdi-table-eye-off'" :color="tableView ? 'primary' : ''"></v-icon>
-      </v-btn>
-    </v-col>
   </v-row>
-  <template v-for="group in groups" v-if="!tableView">
-    <v-row>
-      <v-col class="v-card-subtitle">
-        {{ group.length>0 ? group : $t('none') }}
-        <v-badge :content="(filterSettings.enabled ? filterSettings.filteredClients : clients).filter(c => c.group == group).length" inline color="info" />
-        <v-icon
-          :icon="openedGroups.includes(group) ? 'mdi-arrow-collapse-up' : 'mdi-arrow-collapse-down'"
-          size="small"
-          variant="text"
-          @click="toggleGroupOpen(group)"
-        ></v-icon>
-      </v-col>
-    </v-row>
-    <v-row v-if="openedGroups.includes(group)">
-    <template v-for="item in (filterSettings.enabled ? filterSettings.filteredClients : clients).filter(c => c.group == group)" :key="item.id">
-      <v-col cols="12" sm="4" md="3" lg="2">
-        <v-card rounded="xl" elevation="5" min-width="200">
-          <v-card-title>
-            <v-row>
-              <v-col>{{ item.name }}</v-col>
-              <v-spacer></v-spacer>
-              <v-col cols="auto">
-                <v-switch color="primary"
-                v-model="item.enable"
-                hideDetails density="compact" />
-              </v-col>
-            </v-row>
-          </v-card-title>
-          <v-card-subtitle style="margin-top: -20px;">
-            <v-row>
-              <v-col>{{ item.desc }}</v-col>
-            </v-row>
-          </v-card-subtitle>
-          <v-card-text>
-            <v-row>
-              <v-col>{{ $t('pages.inbounds') }}</v-col>
-              <v-col>
-                <v-tooltip activator="parent" dir="ltr" location="bottom" v-if="item.inbounds != ''">
-                  <span v-for="i in item.inbounds">{{ inbounds.find(inb => inb.id == i)?.tag }}<br /></span>
-                </v-tooltip>
-                {{ item.inbounds.length }}
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col>{{ $t('stats.volume') }}</v-col>
-              <v-col>
-                {{ item.volume == 0 ? $t('unlimited') : HumanReadable.sizeFormat(item.volume) }}
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col>{{ $t('date.expiry') }}</v-col>
-              <v-col>
-                {{ HumanReadable.remainedDays(item.expiry) }}
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col>{{ $t('stats.usage') }}</v-col>
-              <v-col>
-                <v-tooltip activator="parent" location="bottom">
-                  {{ $t('stats.upload') }}:{{ HumanReadable.sizeFormat(item.up) }}<br />
-                  {{ $t('stats.download') }}:{{ HumanReadable.sizeFormat(item.down) }}<br />
-                  <template v-if="item.volume>0">
-                    {{ $t('remained') }}: {{ HumanReadable.sizeFormat(item.volume - (item.up + item.down)) }}
-                  </template>
-                </v-tooltip>
-                {{ HumanReadable.sizeFormat(item.up + item.down) }}
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col>{{ $t('online') }}</v-col>
-              <v-col>
-                <template v-if="isOnline(item.name).value">
-                  <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
-                </template>
-                <template v-else>-</template>
-              </v-col>
-            </v-row>
-          </v-card-text>
-          <v-divider></v-divider>
-          <v-card-actions style="padding: 0;">
-            <v-btn icon="mdi-account-edit" @click="showModal(item.id)">
-              <v-icon />
-              <v-tooltip activator="parent" location="top" :text="$t('actions.edit')"></v-tooltip>
-            </v-btn>
-            <v-btn style="margin-inline-start:0;" icon="mdi-account-minus" color="warning" @click="delOverlay[clients.findIndex(c => c.id == item.id)] = true">
-              <v-icon />
-              <v-tooltip activator="parent" location="top" :text="$t('actions.del')"></v-tooltip>
-            </v-btn>
-            <v-overlay
-              v-model="delOverlay[clients.findIndex(c => c.id == item.id)]"
-              contained
-              class="align-center justify-center"
-            >
-              <v-card :title="$t('actions.del')" rounded="lg">
-                <v-divider></v-divider>
-                <v-card-text>{{ $t('confirm') }}</v-card-text>
-                <v-card-actions>
-                  <v-btn color="error" variant="outlined" @click="delClient(item.id)">{{ $t('yes') }}</v-btn>
-                  <v-btn color="success" variant="outlined" @click="delOverlay[clients.findIndex(c => c.id == item.id)] = false">{{ $t('no') }}</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-overlay>
-            <v-btn icon="mdi-qrcode" @click="showQrCode(item.id)">
-              <v-icon />
-              <v-tooltip activator="parent" location="top" text="QR-Code"></v-tooltip>
-            </v-btn>
-            <v-btn icon="mdi-chart-line" @click="showStats(item.name)">
-              <v-icon />
-              <v-tooltip activator="parent" location="top" :text="$t('stats.graphTitle')"></v-tooltip>
-            </v-btn>
-          </v-card-actions>
-        </v-card>      
-      </v-col>
-    </template>
-    </v-row>
-  </template>
-  <v-row v-else>
+  <v-row>
     <v-col cols="12">
       <v-data-table
         :headers="headers"
@@ -246,21 +124,19 @@
         :hide-default-footer="filterSettings.enabled ? filterSettings.filteredClients.length<=10 : clients.length<=10"
         hide-no-data
         fixed-header
-        :group-by="groupBy"
         item-value="name"
         :mobile="smAndDown"
         mobile-breakpoint="sm"
         width="100%"
         class="elevation-3 rounded"
         >
-        <template v-slot:group-header="{ item, columns, toggleGroup, isGroupOpen }">
-          <tr>
-            <td :colspan="columns.length" @click="toggleGroup(item)" style="min-height: fit-content; text-align: center;">
-              <v-icon :icon="isGroupOpen(item) ? '$expand' : '$next'"></v-icon>
-              {{ item.value.length>0 ? item.value : $t('none') }}
-              <v-badge :content="(filterSettings.enabled ? filterSettings.filteredClients : clients).filter(c => c.group == item.value).length" inline color="success" />
-            </td>
-          </tr>
+        <template v-slot:item.inbounds="{ item }">
+          <span>
+          <v-tooltip activator="parent" dir="ltr" location="start" v-if="item.inbounds != ''">
+            <span v-for="i in item.inbounds">{{ inbounds.find(inb => inb.id == i)?.tag }}<br /></span>
+          </v-tooltip>
+          {{ item.inbounds.length }}
+          </span>
         </template>
         <template v-slot:item.volume="{ item }">
           <div class="text-start">
@@ -363,13 +239,13 @@ const isOnline = (cname: string) => computed(() => {
   return Data().onlines?.user ? Data().onlines.user.includes(cname) : false
 })
 
-const inbounds = computed((): Inbound[] => {
-  return <Inbound[]> Data().inbounds?? []
+const inbounds = computed((): any[] => {
+  return Data().inbounds?? []
 })
 
 const inboundTags = computed((): any[] => {
   if (!inbounds.value) return []
-  return inbounds.value?.filter(i => i.tag != "" && inboundWithUsers.includes(i.type)).map(i => { return { title: i.tag, value: i.id } })
+  return inbounds.value?.filter(i => i.tag != "" && i.users).map(i => { return { title: i.tag, value: i.id } })
 })
 
 const groups = computed((): string[] => {
@@ -387,12 +263,6 @@ const filterSettings = ref({
   text: '',
   filteredClients: <any[]>[]
 })
-const tableView = ref(localStorage.getItem('clientView') == 'table')
-
-const toggleClientView = () => {
-  localStorage.setItem('clientView',tableView.value ? 'tile' : 'table')
-  tableView.value = !tableView.value
-}
 
 const filterItems = [
   { title: i18n.global.t('none'), value: '' },
@@ -403,30 +273,24 @@ const filterItems = [
 
 const headers = [
   { title: i18n.global.t('client.name'), key: 'name' },
-  { title: i18n.global.t('client.desc'), key: 'desc', sortable: false },
+  { title: i18n.global.t('client.group'), key: 'group' },
+  { title: i18n.global.t('pages.inbounds'), key: 'inbounds', width: 10 },
   { title: i18n.global.t('actions.action'), key: 'actions', sortable: false},
   { title: i18n.global.t('stats.volume'), key: 'volume' },
   { title: i18n.global.t('date.expiry'), key: 'expiry' },
   { title: i18n.global.t('online'), key: 'online' },
   { key: 'data-table-group', width: 0 },
 ]
-const groupBy = [
-  {
-    key: 'group'
-  }
-]
 
 const modal = ref({
   visible: false,
   id: 0,
-  data: "",
 })
 
 const delOverlay = ref(new Array<boolean>(clients.value.length).fill(false))
 
 const showModal = async (id: number) => {
   modal.value.id = id
-  modal.value.data = id == 0 ? '' : JSON.stringify(clients.value.findLast(o => o.id == id))
   modal.value.visible = true
 }
 const closeModal = () => {
@@ -479,13 +343,6 @@ const showStats = (tag: string) => {
 }
 const closeStats = () => {
   stats.value.visible = false
-}
-
-var openedGroups = ref(<string[]>[""])
-
-const toggleGroupOpen = (g: string) => {
-  const index = openedGroups.value.findIndex(og => og == g)
-  index == -1 ? openedGroups.value.push(g) : openedGroups.value.splice(index,1)
 }
 
 const doFilter = () => {

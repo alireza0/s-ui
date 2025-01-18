@@ -258,11 +258,11 @@ func (a *APIHandler) loadData(c *gin.Context) (interface{}, error) {
 
 func (a *APIHandler) loadPartialData(c *gin.Context, objs []string) error {
 	data := make(map[string]interface{}, 0)
+	id := c.Query("id")
 
 	for _, obj := range objs {
 		switch obj {
 		case "inbounds":
-			id := c.Query("id")
 			inbounds, err := a.InboundService.Get(id)
 			if err != nil {
 				return err
@@ -287,7 +287,7 @@ func (a *APIHandler) loadPartialData(c *gin.Context, objs []string) error {
 			}
 			data[obj] = tlsConfigs
 		case "clients":
-			clients, err := a.ClientService.GetAll()
+			clients, err := a.ClientService.Get(id)
 			if err != nil {
 				return err
 			}
