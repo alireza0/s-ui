@@ -85,7 +85,7 @@
                     chips
                     hide-details>
                     <template v-slot:append>
-                      <v-icon style="cursor: hand;" @click="setAllInbounds" icon="mdi-set-all" v-tooltip:top="$t('all')" />
+                      <v-icon @click="setAllInbounds" icon="mdi-set-all" v-tooltip:top="$t('all')" />
                     </template>
                   </v-select>
                 </v-col>

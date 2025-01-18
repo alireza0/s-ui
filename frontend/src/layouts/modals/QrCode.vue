@@ -1,6 +1,6 @@
 <template>
   <v-dialog transition="dialog-bottom-transition" width="400">
-    <v-card class="rounded-lg" id="qrcode-modal">
+    <v-card class="rounded-lg" id="qrcode-modal" :loading="loading">
       <v-card-title>
         <v-row>
           <v-col>QrCode</v-col>
@@ -9,7 +9,13 @@
         </v-row>
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text style="overflow-y: auto; padding: 0">
+      <v-skeleton-loader
+          class="mx-auto border"
+          width="80%"
+          type="text, image, divider, text, image"
+          v-if="loading"
+        ></v-skeleton-loader>
+      <v-card-text style="overflow-y: auto; padding: 0" :hidden="loading">
         <v-tabs
           v-model="tab"
           density="compact"
@@ -24,19 +30,19 @@
             <v-row>
               <v-col style="text-align: center;">
                 <v-chip>{{ $t('setting.sub') }}</v-chip><br />
-                <QrcodeVue :value="clientSub" :size="size" @click="copyToClipboard(clientSub)" :margin="1" style="border-radius: 1rem;" />
+                <QrcodeVue :value="clientSub" :size="size" @click="copyToClipboard(clientSub)" :margin="1" style="border-radius: 1rem; cursor: copy;" />
               </v-col>
             </v-row>
             <v-row>
               <v-col style="text-align: center;">
                 <v-chip>{{ $t('setting.jsonSub') }}</v-chip><br />
-                <QrcodeVue :value="clientSub + '?format=json'" :size="size" @click="copyToClipboard(clientSub + '?format=json')" :margin="1" style="border-radius: 1rem;" />
+                <QrcodeVue :value="clientSub + '?format=json'" :size="size" @click="copyToClipboard(clientSub + '?format=json')" :margin="1" style="border-radius: 1rem; cursor: copy;" />
               </v-col>
             </v-row>
             <v-row>
               <v-col style="text-align: center;">
-                <v-chip>SING-BOX</v-chip><br />
-                <QrcodeVue :value="singbox" :size="size" @click="copyToClipboard(singbox)" :margin="1" style="border-radius: .8rem;" />
+                <v-chip>SING-BOX (scan only)</v-chip><br />
+                <QrcodeVue :value="singbox" :size="size" :margin="1" style="border-radius: .8rem; cursor: not-allowed;" />
               </v-col>
             </v-row>
           </v-window-item>
@@ -44,7 +50,7 @@
             <v-row v-for="l in clientLinks">
               <v-col style="text-align: center;">
                 <v-chip>{{ l.remark?? $t('client.' + l.type) }}</v-chip><br />
-                <QrcodeVue :value="l.uri" :size="size" @click="copyToClipboard(l.uri)" :margin="1" style="border-radius: .5rem;" />
+                <QrcodeVue :value="l.uri" :size="size" @click="copyToClipboard(l.uri)" :margin="1" style="border-radius: .5rem; cursor: copy;" />
               </v-col>
             </v-row>
           </v-window-item>
@@ -62,13 +68,21 @@ import { i18n } from '@/locales'
 import { push } from 'notivue'
 
 export default {
-  props: ['index', 'visible'],
+  props: ['id', 'visible'],
   data() {
     return {
       tab: "sub",
+      client: <any>{},
+      loading: false,
     }
   },
   methods: {
+    async load() {
+      this.loading = true
+      const newData = await Data().loadClients(this.$props.id)
+      this.client = newData
+      this.loading = false
+    },
     copyToClipboard(txt:string) {
       const hiddenButton = document.createElement('button')
       hiddenButton.className = 'clipboard-btn'
@@ -101,11 +115,6 @@ export default {
     }
   },
   computed: {
-    clients() { return Data().clients },
-    client() {
-      if ( typeof this.$props.index != 'number' ) return <any>{}
-      return this.clients[this.$props.index]
-    },
     clientSub() {
       return Data().subURI + this.client.name
     },
@@ -126,6 +135,7 @@ export default {
     visible(v) {
       if (v) {
         this.tab = "sub"
+        this.load()
       }
     },
   },

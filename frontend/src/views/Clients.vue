@@ -20,7 +20,7 @@
   <QrCode
     v-model="qrcode.visible"
     :visible="qrcode.visible"
-    :index="qrcode.index"
+    :id="qrcode.id"
     @close="closeQrCode"
   />
   <Stats
@@ -319,12 +319,11 @@ const delClient = async (id: number) => {
 
 const qrcode = ref({
   visible: false,
-  index: 0,
+  id: 0,
 })
 
 const showQrCode = (id: number) => {
-  const clientIndex = clients.value.findIndex(c => c.id === id)
-  qrcode.value.index = clientIndex
+  qrcode.value.id = id
   qrcode.value.visible = true
 }
 const closeQrCode = () => {
