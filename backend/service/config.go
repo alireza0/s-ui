@@ -116,7 +116,7 @@ func (s *ConfigService) StopCore() error {
 	return nil
 }
 
-func (s *ConfigService) Save(obj string, act string, data json.RawMessage, loginUser string, hostname string) ([]string, error) {
+func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initUsers string, loginUser string, hostname string) ([]string, error) {
 	var err error
 	var inboundIds []uint
 	var inboundId uint
@@ -139,7 +139,7 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, login
 	case "tls":
 		inboundIds, err = s.TlsService.Save(tx, act, data)
 	case "inbounds":
-		inboundId, err = s.InboundService.Save(tx, act, data, hostname)
+		inboundId, err = s.InboundService.Save(tx, act, data, initUsers, hostname)
 	case "outbounds":
 		err = s.OutboundService.Save(tx, act, data)
 	case "endpoints":
@@ -173,7 +173,6 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, login
 	// Commit changes so far
 	tx.Commit()
 	LastUpdate = time.Now().Unix()
-	var objs []string = []string{obj}
 	tx = db.Begin()
 
 	// Update side changes
@@ -186,8 +185,10 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, login
 		}
 		objs = append(objs, "clients")
 	}
-	if obj == "inbounds" && act != "add" {
+	if obj == "inbounds" {
 		switch act {
+		case "new":
+			err = s.ClientService.UpdateClientsOnInboundAdd(tx, initUsers, inboundId, hostname)
 		case "edit":
 			err = s.ClientService.UpdateLinksByInboundChange(tx, []uint{inboundId}, hostname)
 		case "del":

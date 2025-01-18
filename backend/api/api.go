@@ -88,7 +88,8 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		obj := c.Request.FormValue("object")
 		act := c.Request.FormValue("action")
 		data := c.Request.FormValue("data")
-		objs, err := a.ConfigService.Save(obj, act, json.RawMessage(data), loginUser, hostname)
+		initUsers := c.Request.FormValue("initUsers")
+		objs, err := a.ConfigService.Save(obj, act, json.RawMessage(data), initUsers, loginUser, hostname)
 		if err != nil {
 			jsonMsg(c, "save", err)
 			return

@@ -7,6 +7,7 @@ import (
 	"s-ui/logger"
 	"s-ui/util"
 	"s-ui/util/common"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -149,6 +150,56 @@ func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*mod
 		}
 
 		clients[index].Links, err = json.MarshalIndent(newClientLinks, "", "  ")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *ClientService) UpdateClientsOnInboundAdd(tx *gorm.DB, initIds string, inboundId uint, hostname string) error {
+	clientIds := strings.Split(initIds, ",")
+	var clients []model.Client
+	err := tx.Model(model.Client{}).Where("id in ?", clientIds).Find(&clients).Error
+	if err != nil {
+		return err
+	}
+	var inbound model.Inbound
+	err = tx.Model(model.Inbound{}).Preload("Tls").Where("id = ?", inboundId).Find(&inbound).Error
+	if err != nil {
+		return err
+	}
+	for _, client := range clients {
+		// Add inbounds
+		var clientInbounds []uint
+		json.Unmarshal(client.Inbounds, &clientInbounds)
+		clientInbounds = append(clientInbounds, inboundId)
+		client.Inbounds, err = json.MarshalIndent(clientInbounds, "", "  ")
+		if err != nil {
+			return err
+		}
+		// Add links
+		var clientLinks, newClientLinks []map[string]string
+		json.Unmarshal(client.Links, &clientLinks)
+		newLinks := util.LinkGenerator(client.Config, &inbound, hostname)
+		for _, newLink := range newLinks {
+			newClientLinks = append(newClientLinks, map[string]string{
+				"remark": inbound.Tag,
+				"type":   "local",
+				"uri":    newLink,
+			})
+		}
+		for _, clientLink := range clientLinks {
+			if clientLink["remark"] != inbound.Tag {
+				newClientLinks = append(newClientLinks, clientLink)
+			}
+		}
+
+		client.Links, err = json.MarshalIndent(newClientLinks, "", "  ")
+		if err != nil {
+			return err
+		}
+		err = tx.Save(&client).Error
 		if err != nil {
 			return err
 		}

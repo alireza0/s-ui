@@ -2,34 +2,41 @@
   <v-card :subtitle="$t('pages.clients')">
     <v-row>
       <v-col cols="12" sm="6" md="4">
-        <v-switch 
-          v-model="hasUser"
-          @change="() => {inbound.users = hasUser? [] : undefined}"
-          color="primary"
-          :label="$t('in.clients')"
-          hide-details></v-switch>
+        <v-select v-model="data.model" :items="initUsersModels" @update:model-value="data.values = []" hide-details></v-select>
+      </v-col>
+      <v-col cols="12" sm="6" md="4" v-if="data.model == 'group'">
+        <v-select v-model="data.values" multiple chips :items="groupNames" :label="$t('client.group')" hide-details></v-select>
+      </v-col>
+      <v-col cols="12" sm="8" v-if="data.model == 'client'">
+        <v-select v-model="data.values" multiple chips :items="clientNames" :label="$t('pages.clients')" hide-details></v-select>
       </v-col>
     </v-row>
   </v-card>
 </template>
 
 <script lang="ts">
+import { i18n } from '@/locales';
+
 
 export default {
-  props: ['inbound'],
+  props: ['data', 'clients'],
   data() {
     return {
-      hasUser: false,
+      initUsersModels: [
+        { title: i18n.global.t('none'), value: 'none' },
+        { title: i18n.global.t('all'), value: 'all' },
+        { title: i18n.global.t('client.group'), value: 'group' },
+        { title: i18n.global.t('pages.clients'), value: 'client' },
+      ],
     }
   },
   computed: {
-    cardTitle() {
-      this.hasUser = Object.hasOwn(this.$props.inbound,'users')
-      return this.$props.inbound?.type.toUpperCase()
+    clientNames() {
+      return this.$props.clients.map((c:any) => { return { title: c.name, value: c.id } } )
     },
-  },
-  mounted() {
-    this.hasUser = Object.hasOwn(this.$props.inbound,'users')
+    groupNames() {
+      return Array.from(new Set(this.$props.clients.map((c:any) => c.group)))
+    },
   }
 }
 </script>

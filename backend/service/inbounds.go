@@ -96,7 +96,7 @@ func (s *InboundService) FromIds(ids []uint) ([]*model.Inbound, error) {
 	return inbounds, nil
 }
 
-func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, hostname string) (uint, error) {
+func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, initUsers string, hostname string) (uint, error) {
 	var err error
 	var id uint
 
@@ -107,13 +107,23 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, hos
 		if err != nil {
 			return 0, err
 		}
-		id = inbound.Id
 		if inbound.TlsId > 0 {
 			err = tx.Model(model.Tls{}).Where("id = ?", inbound.TlsId).Find(&inbound.Tls).Error
 			if err != nil {
 				return 0, err
 			}
 		}
+
+		err = util.FillOutJson(&inbound, hostname)
+		if err != nil {
+			return 0, err
+		}
+
+		err = tx.Save(&inbound).Error
+		if err != nil {
+			return 0, err
+		}
+		id = inbound.Id
 
 		if corePtr.IsRunning() {
 			if act == "edit" {
@@ -133,7 +143,11 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, hos
 				return 0, err
 			}
 
-			inboundConfig, err = s.addUsers(tx, inboundConfig, inbound.Id, inbound.Type)
+			if act == "edit" {
+				inboundConfig, err = s.addUsers(tx, inboundConfig, inbound.Id, inbound.Type)
+			} else {
+				inboundConfig, err = s.initUsers(tx, inboundConfig, initUsers, inbound.Id, inbound.Type)
+			}
 			if err != nil {
 				return 0, err
 			}
@@ -142,16 +156,6 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, hos
 			if err != nil {
 				return 0, err
 			}
-		}
-
-		err = util.FillOutJson(&inbound, hostname)
-		if err != nil {
-			return 0, err
-		}
-
-		err = tx.Save(&inbound).Error
-		if err != nil {
-			return 0, err
 		}
 	case "del":
 		var tag string
@@ -263,7 +267,56 @@ func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uin
 		inbound["users"] = usersJson
 	}
 
-	inbound["users"] = usersJson
+	return json.Marshal(inbound)
+}
+
+func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds string, inboundId uint, inboundType string) ([]byte, error) {
+	ClientIds := strings.Split(clientIds, ",")
+	if len(ClientIds) == 0 {
+		return inboundJson, nil
+	}
+	switch inboundType {
+	case "mixed", "socks", "http", "shadowsocks", "vmess", "trojan", "naive", "hysteria", "shadowtls", "tuic", "hysteria2", "vless":
+		break
+	default:
+		return inboundJson, nil
+	}
+
+	var inbound map[string]interface{}
+	err := json.Unmarshal(inboundJson, &inbound)
+	if err != nil {
+		return nil, err
+	}
+
+	if inboundType == "shadowtls" {
+		version, _ := inbound["version"].(float64)
+		if int(version) < 3 {
+			return inboundJson, nil
+		}
+	}
+	if inboundType == "shadowsocks" {
+		method, _ := inbound["method"].(string)
+		if method == "2022-blake3-aes-128-gcm" {
+			inboundType = "shadowsocks16"
+		}
+	}
+	var users []string
+	err = db.Raw(`SELECT json_extract(clients.config, ?)
+								FROM clients
+								WHERE enable = true AND id in ?`,
+		"$."+inboundType, ClientIds).Scan(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	var usersJson []json.RawMessage
+	for _, user := range users {
+		usersJson = append(usersJson, json.RawMessage(user))
+	}
+
+	if len(usersJson) > 0 || inboundType != "shadowsocks" {
+		inbound["users"] = usersJson
+	}
+
 	return json.Marshal(inbound)
 }
 

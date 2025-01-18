@@ -50,7 +50,7 @@
               <Tun v-if="inbound.type == inTypes.Tun" :data="inbound" />
               <TProxy v-if="inbound.type == inTypes.TProxy" :inbound="inbound" />
               <Transport v-if="Object.hasOwn(inbound,'transport')" :data="inbound" />
-              <Users v-if="HasOptionalUser.includes(inbound.type)" :inbound="inbound" />
+              <Users v-if="hasUser" :clients="clients" :data="initUsers" />
               <InTls v-if="HasTls.includes(inbound.type)"  :inbound="inbound" :tlsConfigs="tlsConfigs" :tls_id="inbound.tls_id" />
               <Multiplex v-if="Object.hasOwn(inbound,'multiplex')" direction="in" :data="inbound" />
             </v-window-item>
@@ -95,7 +95,7 @@
 </template>
 
 <script lang="ts">
-import { InTypes, createInbound, Addr } from '@/types/inbounds'
+import { InTypes, createInbound, Addr, inboundWithUsers, ShadowTLS } from '@/types/inbounds'
 import RandomUtil from '@/plugins/randomUtil'
 
 import Listen from '@/components/Listen.vue'
@@ -125,7 +125,11 @@ export default {
       loading: false,
       side: "s",
       inTypes: InTypes,
-      HasOptionalUser: [InTypes.Mixed,InTypes.SOCKS,InTypes.HTTP,InTypes.Shadowsocks],
+      inboundWithUsers: inboundWithUsers,
+      initUsers: {
+        model: 'none',
+        values: <any>[],
+      },
       HasInData: [
         InTypes.SOCKS,
         InTypes.HTTP,
@@ -179,6 +183,10 @@ export default {
         this.loading = false
       }
       this.side = "s"
+      this.initUsers = {
+        model: 'none',
+        values: [],
+      }
     },
     changeType() {
       if (!this.inbound.listen_port) this.inbound.listen_port = RandomUtil.randomIntRange(10000, 60000)
@@ -205,7 +213,22 @@ export default {
     },
     saveChanges() {
       this.loading = true
-      this.$emit('save', this.inbound)
+      if (this.hasUser) {
+        let clientIds = []
+        switch (this.initUsers.model) {
+          case 'all':
+            clientIds = this.clients.map((c:any) => c.id)
+            break
+          case 'group':
+            clientIds = this.clients.filter((c:any) => this.initUsers.values.includes(c.group)).map((c:any) => c.id)
+            break
+          case 'user':
+            clientIds = this.initUsers.values
+        }
+        this.$emit('save', this.inbound, clientIds.length > 0 ? clientIds : undefined)
+      } else {
+        this.$emit('save', this.inbound)
+      }
       this.loading = false
     },
   },
@@ -217,6 +240,15 @@ export default {
       if (this.OnlyTLS.includes(this.inbound.type) && this.inbound.tls_id == 0) return false
       return true
     },
+    clients() {
+      return Data().clients?? []
+    },
+    hasUser() {
+      if (this.$props.id > 0) return false
+      if (!inboundWithUsers.includes(this.inbound.type)) return false
+      if (this.inbound.type == InTypes.ShadowTLS && (<ShadowTLS>this.inbound).version < 3 ) return false
+      return true
+    }
   },
   watch: {
     visible(newValue) {
