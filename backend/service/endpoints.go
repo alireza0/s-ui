@@ -10,7 +10,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type EndpointService struct{}
+type EndpointService struct {
+	WarpService
+}
 
 func (o *EndpointService) GetAll() (*[]map[string]interface{}, error) {
 	db := database.GetDB()
@@ -25,6 +27,7 @@ func (o *EndpointService) GetAll() (*[]map[string]interface{}, error) {
 			"id":   endpoint.Id,
 			"type": endpoint.Type,
 			"tag":  endpoint.Tag,
+			"ext":  endpoint.Ext,
 		}
 		if endpoint.Options != nil {
 			var restFields map[string]json.RawMessage
@@ -66,6 +69,25 @@ func (s *EndpointService) Save(tx *gorm.DB, act string, data json.RawMessage) er
 		err = endpoint.UnmarshalJSON(data)
 		if err != nil {
 			return err
+		}
+
+		if endpoint.Type == "warp" {
+			if act == "new" {
+				err = s.WarpService.RegisterWarp(&endpoint)
+				if err != nil {
+					return err
+				}
+			} else {
+				var old_license string
+				err = tx.Model(model.Endpoint{}).Select("json_extract(ext, '$.license_key')").Where("id = ?", endpoint.Id).Find(&old_license).Error
+				if err != nil {
+					return err
+				}
+				err = s.WarpService.SetWarpLicense(old_license, &endpoint)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		if corePtr.IsRunning() {

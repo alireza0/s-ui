@@ -9,6 +9,7 @@ type Endpoint struct {
 	Type    string          `json:"type" form:"type"`
 	Tag     string          `json:"tag" form:"tag" gorm:"unique"`
 	Options json.RawMessage `json:"-" form:"-"`
+	Ext     json.RawMessage `json:"ext" form:"ext"`
 }
 
 func (o *Endpoint) UnmarshalJSON(data []byte) error {
@@ -27,9 +28,11 @@ func (o *Endpoint) UnmarshalJSON(data []byte) error {
 	delete(raw, "type")
 	o.Tag = raw["tag"].(string)
 	delete(raw, "tag")
+	o.Ext, _ = json.MarshalIndent(raw["ext"], "", "  ")
+	delete(raw, "ext")
 
 	// Remaining fields
-	o.Options, err = json.Marshal(raw)
+	o.Options, err = json.MarshalIndent(raw, "", "  ")
 	return err
 }
 
@@ -37,7 +40,12 @@ func (o *Endpoint) UnmarshalJSON(data []byte) error {
 func (o Endpoint) MarshalJSON() ([]byte, error) {
 	// Combine fixed fields and dynamic fields into one map
 	combined := make(map[string]interface{})
-	combined["type"] = o.Type
+	switch o.Type {
+	case "warp":
+		combined["type"] = "wireguard"
+	default:
+		combined["type"] = o.Type
+	}
 	combined["tag"] = o.Tag
 
 	if o.Options != nil {

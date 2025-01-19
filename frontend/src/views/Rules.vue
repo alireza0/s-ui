@@ -223,7 +223,7 @@ const outboundTags = computed((): string[] => {
 })
 
 const inboundTags = computed((): string[] => {
-  return [...Data().inbounds?.map((o:any) => o.tag), ...Data().endpoints?.map((e:any) => e.tag)]
+  return [...Data().inbounds?.map((o:any) => o.tag), ...Data().endpoints?.filter((e:any) => e.listen_port > 0).map((e:any) => e.tag)]
 })
 
 let delRuleOverlay = ref(new Array<boolean>)

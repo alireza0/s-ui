@@ -21,6 +21,7 @@
           </v-col>
         </v-row>
         <Wireguard v-if="endpoint.type == epTypes.Wireguard" :data="endpoint" :options="options" @getWgPubKey="getWgPubKey" @newWgKey="newWgKey" />
+        <Warp v-if="endpoint.type == epTypes.Warp" :data="endpoint" />
         <Dial :dial="endpoint" :outTags="tags" />
       </v-card-text>
       <v-card-actions>
@@ -50,6 +51,7 @@ import { EpTypes, createEndpoint } from '@/types/endpoints'
 import RandomUtil from '@/plugins/randomUtil'
 import Dial from '@/components/Dial.vue'
 import Wireguard from '@/components/protocols/Wireguard.vue'
+import Warp from '@/components/protocols/Warp.vue'
 import HttpUtils from '@/plugins/httputil'
 import { push } from 'notivue'
 import { i18n } from '@/locales'
@@ -151,6 +153,6 @@ export default {
       }
     },
   },
-  components: { Dial, Wireguard }
+  components: { Dial, Wireguard, Warp }
 }
 </script>

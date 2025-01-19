@@ -38,7 +38,7 @@
           <v-row>
             <v-col>{{ $t('in.port') }}</v-col>
             <v-col>
-              {{ item.listen_port?? '-' }}
+              {{ item.listen_port>0 ? item.listen_port : '-' }}
             </v-col>
           </v-row>
           <v-row>
