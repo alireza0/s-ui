@@ -247,7 +247,7 @@ func migrateTls(db *gorm.DB) error {
 		if err != nil {
 			continue
 		}
-		for key, _ := range tlsClient {
+		for key := range tlsClient {
 			switch key {
 			case "insecure", "disable_sni", "utls", "ech", "reality":
 				continue
@@ -291,6 +291,10 @@ func migrateClients(db *gorm.DB) error {
 	return db.Save(oldClients).Error
 }
 
+func migrateChanges(db *gorm.DB) error {
+	return db.Migrator().DropColumn(&model.Changes{}, "index")
+}
+
 func to1_2(db *gorm.DB) error {
 	err := moveJsonToDb(db)
 	if err != nil {
@@ -304,5 +308,9 @@ func to1_2(db *gorm.DB) error {
 	if err != nil {
 		return err
 	}
-	return migrateClients(db)
+	err = migrateClients(db)
+	if err != nil {
+		return err
+	}
+	return migrateChanges(db)
 }

@@ -49,9 +49,8 @@ type Stats struct {
 type Changes struct {
 	Id       uint64          `json:"id" gorm:"primaryKey;autoIncrement"`
 	DateTime int64           `json:"dateTime"`
-	Actor    string          `json:"Actor"`
-	Key      string          `json:"key" form:"key"`
-	Action   string          `json:"action" form:"action"`
-	Index    uint            `json:"index" form:"index"`
-	Obj      json.RawMessage `json:"obj" form:"obj"`
+	Actor    string          `json:"actor"`
+	Key      string          `json:"key"`
+	Action   string          `json:"action"`
+	Obj      json.RawMessage `json:"obj"`
 }
