@@ -2,50 +2,54 @@
   <v-card subtitle="Warp">
     <template v-if="data.id>0">
       <table dir="ltr" width="100%">
-        <tr>
-          <td>Device ID</td>
-          <td>{{ data.ext.device_id }}</td>
-        </tr>
-        <tr>
-          <td>Access Token</td>
-          <td>{{ data.ext.access_token }}</td>
-        </tr>
-        <tr>
-          <td>{{ $t('types.wg.privKey') }}</td>
-          <td>{{ data.private_key }}</td>
-        </tr>
-        <tr>
-          <td>{{ $t('types.wg.localIp') }}</td>
-          <td>{{ data.address.join(',') }}</td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <v-text-field
-              v-model="data.ext.license_key"
-              label="License Key"
-              hide-details>
-            </v-text-field>
-          </td>
-        </tr>
+        <tbody>
+          <tr>
+            <td>Device ID</td>
+            <td>{{ data.ext.device_id }}</td>
+          </tr>
+          <tr>
+            <td>Access Token</td>
+            <td>{{ data.ext.access_token }}</td>
+          </tr>
+          <tr>
+            <td>{{ $t('types.wg.privKey') }}</td>
+            <td>{{ data.private_key }}</td>
+          </tr>
+          <tr>
+            <td>{{ $t('types.wg.localIp') }}</td>
+            <td>{{ data.address.join(',') }}</td>
+          </tr>
+          <tr>
+            <td colspan="2">
+              <v-text-field
+                v-model="data.ext.license_key"
+                label="License Key"
+                hide-details>
+              </v-text-field>
+            </td>
+          </tr>
+        </tbody>
       </table>
       <v-card :subtitle="$t('types.wg.peer')">
         <table dir="ltr" width="100%">
-          <tr>
-            <td>{{ $t('out.addr') }}</td>
-            <td>{{ data.peers[0].address + ":" + data.peers[0].port }}</td>
-          </tr>
-          <tr>
-            <td>{{ $t('types.wg.pubKey') }}</td>
-            <td>{{ data.peers[0].public_key }}</td>
-          </tr>
-          <tr>
-            <td>{{ $t('types.wg.allowedIp') }}</td>
-            <td>{{ data.peers[0].allowed_ips.join(',') }}</td>
-          </tr>
-          <tr>
-            <td>Reserved</td>
-            <td>[{{ data.peers[0].reserved.join(',') }}]</td>
-          </tr>
+          <tbody>
+            <tr>
+              <td>{{ $t('out.addr') }}</td>
+              <td>{{ data.peers[0].address + ":" + data.peers[0].port }}</td>
+            </tr>
+            <tr>
+              <td>{{ $t('types.wg.pubKey') }}</td>
+              <td>{{ data.peers[0].public_key }}</td>
+            </tr>
+            <tr>
+              <td>{{ $t('types.wg.allowedIp') }}</td>
+              <td>{{ data.peers[0].allowed_ips.join(',') }}</td>
+            </tr>
+            <tr>
+              <td>Reserved</td>
+              <td>[{{ data.peers[0].reserved.join(',') }}]</td>
+            </tr>
+          </tbody>
         </table>
       </v-card>
     </template>

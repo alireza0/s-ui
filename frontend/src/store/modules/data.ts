@@ -3,8 +3,6 @@ import { defineStore } from 'pinia'
 import { push } from 'notivue'
 import { i18n } from '@/locales'
 import { Inbound } from '@/types/inbounds'
-import { Outbound } from '@/types/outbounds'
-import { Endpoint } from '@/types/endpoints'
 import { Client } from '@/types/clients'
 
 const Data = defineStore('Data', {
@@ -15,8 +13,8 @@ const Data = defineStore('Data', {
     onlines: {inbound: <string[]>[], outbound: <string[]>[], user: <string[]>[]},
     config: <any>{},
     inbounds: <any[]>[],
-    outbounds: <Outbound[]>[],
-    endpoints: <Endpoint[]>[],
+    outbounds: <any[]>[],
+    endpoints: <any[]>[],
     clients: <any>[],
     tlsConfigs: <any[]>[],
   }),

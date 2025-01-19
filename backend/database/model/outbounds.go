@@ -27,7 +27,7 @@ func (o *Outbound) UnmarshalJSON(data []byte) error {
 	delete(raw, "tag")
 
 	// Remaining fields
-	o.Options, err = json.Marshal(raw)
+	o.Options, err = json.MarshalIndent(raw, "", "  ")
 	return err
 }
 

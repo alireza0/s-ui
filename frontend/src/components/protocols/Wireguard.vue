@@ -13,7 +13,7 @@
       <v-col cols="12" sm="8">
         <v-text-field
           v-model="options.public_key"
-          disabled
+          readonly
           :label="$t('tls.pubKey')"
           append-icon="mdi-refresh"
           @click:append="getWgPubKey()"
