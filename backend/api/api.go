@@ -2,12 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"s-ui/database"
 	"s-ui/logger"
 	"s-ui/service"
 	"s-ui/util"
 	"s-ui/util/common"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -109,6 +111,15 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		link := c.Request.FormValue("link")
 		result, _, err := util.GetOutbound(link, 0)
 		jsonObj(c, result, err)
+	case "importdb":
+		file, _, err := c.Request.FormFile("db")
+		if err != nil {
+			jsonMsg(c, "", err)
+			return
+		}
+		defer file.Close()
+		err = database.ImportDB(file)
+		jsonMsg(c, "", err)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
@@ -188,6 +199,16 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		options := c.Query("o")
 		keypair := a.ServerService.GenKeypair(kType, options)
 		jsonObj(c, keypair, nil)
+	case "getdb":
+		exclude := c.Query("exclude")
+		db, err := database.GetDb(exclude)
+		if err != nil {
+			jsonMsg(c, "", err)
+			return
+		}
+		c.Header("Content-Type", "application/octet-stream")
+		c.Header("Content-Disposition", "attachment; filename=s-ui_"+time.Now().Format("20060102-150405")+".db")
+		c.Writer.Write(db)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}

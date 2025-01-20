@@ -72,6 +72,13 @@ export default {
       threads: "Threads",
       memory: "Memory",
       running: "Running"
+    },
+    backup: {
+      title: "Backup & Restore",
+      backup: "Download Backup",
+      restore: "Restore",
+      exclStats: "Exclude graphs",
+      exclChanges: "Exclude changes",
     }
   },
   objects: {

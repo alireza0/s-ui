@@ -72,7 +72,14 @@ export default {
       threads: "نخ‌ها",
       memory: "حافظه",
       running: "اجرا"
-    }
+    },
+    backup: {
+      title: "پشتیبان‌گیری و بازیابی",
+      backup: "دریافت پشتیبان",
+      restore: "بازیابی",
+      exclStats: "بدون گراف‌ها",
+      exclChanges: "بدون تغییرات",
+    },
   },
   objects: {
     inbound: "ورودی‌",

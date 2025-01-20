@@ -72,6 +72,13 @@ export default {
       threads: "Потоки",
       memory: "Память",
       running: "Работает"
+    },
+    backup: {
+      title: "Резервное копирование и восстановление",
+      backup: "Скачать резервную копию",
+      restore: "Восстановить",
+      exclStats: "Исключить графики",
+      exclChanges: "Исключить изменения",
     }
   },
   objects: {

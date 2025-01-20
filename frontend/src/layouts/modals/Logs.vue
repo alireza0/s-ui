@@ -6,7 +6,7 @@
           <v-col>{{ $t('basic.log.title') }}</v-col>
           <v-spacer></v-spacer>
           <v-col cols="auto">
-            <v-icon icon="mdi-close" @click="$emit('close')" />
+            <v-icon icon="mdi-close" @click="control.visible = false" />
           </v-col>
         </v-row>
       </v-card-title>
@@ -48,10 +48,10 @@
 </template>
 
 <script lang="ts">
-import HttpUtils from '@/plugins/httputil';
+import HttpUtils from '@/plugins/httputil'
 
 export default {
-  props: ['visible'],
+  props: ['control', 'visible'],
   data() {
     return {
       loading: false,
@@ -77,11 +77,11 @@ export default {
     }
   },
   watch: {
-    visible(newValue) {
+    visible(v) {
       this.lines = []
       this.logLevel = 'info'
       this.logCount = 10
-      if (newValue) {
+      if (v) {
         this.loadData()
       }
     },

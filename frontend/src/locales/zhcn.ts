@@ -70,7 +70,14 @@ export default {
       threads: "线程",
       memory: "内存",
       running: "运行状态"
-    }
+    },
+    backup: {
+      title: "备份与恢复",
+      backup: "下载备份",
+      restore: "恢复",
+      exclStats: "排除图表数据",
+      exclChanges: "排除变更数据",
+    },
   },
   objects: {
     inbound: "入站",

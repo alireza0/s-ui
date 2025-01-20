@@ -1,3 +1,5 @@
+import { title } from "process";
+
 export default {
   message: "Chào mừng OHB",
   success: "Thành công",
@@ -70,6 +72,13 @@ export default {
       threads: "Luồng",
       memory: "Bộ nhớ",
       running: "Đang chạy"
+    },
+    backup: {
+      title: "Sao lưu và khôi phục",
+      backup: "Tải xuống bản sao lưu",
+      restore: "Khôi phục",
+      exclStats: "Loại trừ các biểu đồ",
+      exclChanges: "Loại trừ các thay đổi",
     }
   },
   objects: {

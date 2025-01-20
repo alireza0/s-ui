@@ -71,7 +71,14 @@ export default {
       threads: "線程",
       memory: "內存",
       running: "運行狀態"
-    }
+    },
+    backup: {
+      title: "備份與恢復",
+      backup: "下載備份",
+      restore: "恢復",
+      exclStats: "排除圖表記錄",
+      exclChanges: "排除更改記錄",
+    },
   },
   objects: {
     inbound: "入站",

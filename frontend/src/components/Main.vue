@@ -1,9 +1,6 @@
 <template>
-  <LogVue
-  v-model="logModal.visible"
-  :visible="logModal.visible"
-  @close="closeLogs"
-  />
+  <LogVue v-model="logModal.visible" :control="logModal" :visible="logModal.visible" />
+  <Backup v-model="backupModal.visible" :control="backupModal" :visible="backupModal.visible" />
   <v-container class="fill-height" :loading="loading">
     <v-responsive :class="reloadItems.length>0 ? 'fill-height text-center' : 'align-center'" >
       <v-row class="d-flex align-center justify-center">
@@ -46,6 +43,8 @@
               </v-row>
             </v-card>
           </v-dialog>
+          <v-btn variant="tonal" hide-details style="margin-inline-start: 10px;" @click="backupModal.visible = true">{{ $t('main.backup.title') }} <v-icon icon="mdi-backup-restore" /></v-btn>
+          <v-btn variant="tonal" hide-details style="margin-inline-start: 10px;" @click="logModal.visible = true">{{ $t('basic.log.title') }} <v-icon icon="mdi-list-box-outline" /></v-btn>
         </v-col>
       </v-row>
       <v-row>
@@ -86,17 +85,7 @@
                   <v-col cols="3">S-UI</v-col>
                   <v-col cols="9">
                     <v-chip density="compact" color="blue">
-                      <v-tooltip activator="parent" location="top">
-                        {{ $t('main.info.threads') }}: {{ tilesData.sys?.appThreads }}<br />
-                        {{ $t('main.info.memory') }}: {{ HumanReadable.sizeFormat(tilesData.sys?.appMem) }}
-                      </v-tooltip>
                       v{{ tilesData.sys?.appVersion }}
-                    </v-chip>
-                    <v-chip density="compact" color="transparent" style="cursor: pointer;" @click="openLogs()">
-                      <v-tooltip activator="parent" location="top">
-                        {{ $t('basic.log.title') + " - S-UI" }}
-                      </v-tooltip>
-                      <v-icon icon="mdi-list-box-outline" color="blue" />
                     </v-chip>
                   </v-col>
                   <v-col cols="3">{{ $t('main.info.uptime') }}</v-col>
@@ -166,6 +155,7 @@ import History from '@/components/tiles/History.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { i18n } from '@/locales'
 import LogVue from '@/layouts/modals/Logs.vue'
+import Backup from '@/layouts/modals/Backup.vue'
 
 const loading = ref(false)
 const menu = ref(false)
@@ -235,17 +225,9 @@ onBeforeUnmount(() => {
   stopTimer()
 })
 
-const logModal = ref({
-  visible: false,
-})
+const logModal = ref({ visible: false })
 
-const openLogs = () => {
-  logModal.value.visible = true
-}
-
-const closeLogs = () => {
-  logModal.value.visible = false
-}
+const backupModal = ref({ visible: false })
 
 const restartSingbox = async () => {
   loading.value = true
