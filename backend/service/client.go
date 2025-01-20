@@ -251,7 +251,7 @@ func (s *ClientService) UpdateClientsOnInboundDelete(tx *gorm.DB, id uint, tag s
 func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounIds []uint, hostname string) error {
 	var inbounds []model.Inbound
 	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inbounIds, util.InboundTypeWithLink).Find(&inbounds).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil && database.IsNotFound(err) {
 		return err
 	}
 	for _, inbound := range inbounds {

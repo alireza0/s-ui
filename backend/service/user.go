@@ -6,8 +6,6 @@ import (
 	"s-ui/logger"
 	"s-ui/util/common"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -63,7 +61,7 @@ func (s *UserService) CheckUser(username string, password string, remoteIP strin
 		Where("username = ? and password = ?", username, password).
 		First(user).
 		Error
-	if err == gorm.ErrRecordNotFound {
+	if database.IsNotFound(err) {
 		return nil
 	} else if err != nil {
 		logger.Warning("check user err:", err, " IP: ", remoteIP)

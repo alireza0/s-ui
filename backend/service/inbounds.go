@@ -96,7 +96,7 @@ func (s *InboundService) FromIds(ids []uint) ([]*model.Inbound, error) {
 	return inbounds, nil
 }
 
-func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, initUsers string, hostname string) (uint, error) {
+func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, initUserIds string, hostname string) (uint, error) {
 	var err error
 	var id uint
 
@@ -146,7 +146,7 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 			if act == "edit" {
 				inboundConfig, err = s.addUsers(tx, inboundConfig, inbound.Id, inbound.Type)
 			} else {
-				inboundConfig, err = s.initUsers(tx, inboundConfig, initUsers, inbound.Id, inbound.Type)
+				inboundConfig, err = s.initUsers(tx, inboundConfig, initUserIds, inbound.Type)
 			}
 			if err != nil {
 				return 0, err
@@ -270,7 +270,7 @@ func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uin
 	return json.Marshal(inbound)
 }
 
-func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds string, inboundId uint, inboundType string) ([]byte, error) {
+func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds string, inboundType string) ([]byte, error) {
 	ClientIds := strings.Split(clientIds, ",")
 	if len(ClientIds) == 0 {
 		return inboundJson, nil
