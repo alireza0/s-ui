@@ -101,8 +101,8 @@ export default {
           tooltip: {
             callbacks: {
               text: (ctx:any) => {
-                const {axis = 'xy', intersect, mode} = ctx.chart.options.interaction;
-                return 'Mode: ' + mode + ', axis: ' + axis + ', intersect: ' + intersect;
+                const {axis = 'xy', intersect, mode} = ctx.chart.options.interaction
+                return 'Mode: ' + mode + ', axis: ' + axis + ', intersect: ' + intersect
               },
               footer: (items:any[]) => {
                 return HumanReadable.sizeFormat(items.reduce((acc, c) => acc + c.raw, 0))

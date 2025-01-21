@@ -95,10 +95,10 @@
 import Data from '@/store/modules/data'
 import OutboundVue from '@/layouts/modals/Outbound.vue'
 import Stats from '@/layouts/modals/Stats.vue'
-import { Outbound } from '@/types/outbounds';
+import { Outbound } from '@/types/outbounds'
 import { computed, ref } from 'vue'
-import { i18n } from '@/locales';
-import { push } from 'notivue';
+import { i18n } from '@/locales'
+import { push } from 'notivue'
 
 const outbounds = computed((): Outbound[] => {
   return <Outbound[]> Data().outbounds
@@ -166,9 +166,5 @@ const showStats = (tag: string) => {
 }
 const closeStats = () => {
   stats.value.visible = false
-}
-
-function awaitData() {
-  throw new Error('Function not implemented.');
 }
 </script>

@@ -59,7 +59,7 @@ export default {
   computed: {
     optionTLS: {
       get(): boolean { return this.$props.addr.tls != undefined },
-      set(v:boolean) { this.$props.addr.tls = v ? { enabled: true } : undefined; }
+      set(v:boolean) { this.$props.addr.tls = v ? { enabled: true } : undefined }
     },
     optionRemark: {
       get(): boolean { return this.$props.addr.remark != undefined },

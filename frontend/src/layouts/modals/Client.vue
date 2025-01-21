@@ -191,7 +191,7 @@
 import { createClient, randomConfigs, updateConfigs, Link, Client } from '@/types/clients'
 import DatePick from '@/components/DateTime.vue'
 import { HumanReadable } from '@/plugins/utils'
-import Data from '@/store/modules/data';
+import Data from '@/store/modules/data'
 
 export default {
   props: ['visible', 'id', 'inboundTags', 'groups'],

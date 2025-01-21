@@ -63,7 +63,7 @@ export default {
   },
   computed: {
     packet_encoding: {
-      get() { return this.$props.data.packet_encoding != undefined ? this.$props.data.packet_encoding : 'none'; },
+      get() { return this.$props.data.packet_encoding != undefined ? this.$props.data.packet_encoding : 'none' },
       set(newValue:string) { this.$props.data.packet_encoding = newValue != "none" ? newValue : undefined }
     },
   },

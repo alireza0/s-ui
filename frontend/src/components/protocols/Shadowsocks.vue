@@ -33,8 +33,8 @@
 
 <script lang="ts">
 import Network from '@/components/Network.vue'
-import UoT from '@/components/UoT.vue';
-import RandomUtil from '@/plugins/randomUtil';
+import UoT from '@/components/UoT.vue'
+import RandomUtil from '@/plugins/randomUtil'
 
 export default {
   props: ['direction','data'],

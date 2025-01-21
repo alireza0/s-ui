@@ -169,7 +169,6 @@
 <script lang="ts">
 import { logicalRule, rule, actionKeys } from '@/types/rules'
 import RuleOptions from '@/components/Rule.vue'
-import { title } from 'process';
 export default {
   props: ['visible', 'data', 'index', 'clients', 'inTags', 'outTags', 'rsTags'],
   emits: ['close', 'save'],

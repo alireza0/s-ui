@@ -9,12 +9,12 @@
 
 <script lang="ts" setup>
 import { ref } from "vue"
-import { useTheme } from "vuetify"
-import { useRoute } from "vue-router";
+import { useTheme } from 'vuetify'
+import { useRoute } from 'vue-router'
 
 defineProps(['isMobile'])
 
-const route = useRoute();
+const route = useRoute()
 const theme = useTheme()
 const darkMode = ref(localStorage.getItem('theme') == "dark")
 

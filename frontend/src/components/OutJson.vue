@@ -114,7 +114,7 @@ export default {
     needNetwork():boolean { return this.haveNetwork.includes(this.$props.type) },
     needUot():boolean { return this.havUoT.includes(this.$props.type) },
     packet_encoding: {
-      get() { return this.$props.inData.out_json.packet_encoding != undefined ? this.$props.inData.out_json.packet_encoding : 'none'; },
+      get() { return this.$props.inData.out_json.packet_encoding != undefined ? this.$props.inData.out_json.packet_encoding : 'none' },
       set(v:string) { this.$props.inData.out_json.packet_encoding = v != "none" ? v : undefined }
     },
   },

@@ -17,7 +17,7 @@
 import { Notivue, Notification, NotivueSwipe, outlinedIcons, pastelTheme, darkTheme } from 'notivue'
 import { computed } from 'vue'
 import { useTheme } from 'vuetify'
-import vuetify from '@/plugins/vuetify';
+import vuetify from '@/plugins/vuetify'
 
 const Theme = useTheme()
 

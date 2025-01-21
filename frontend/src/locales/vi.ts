@@ -1,5 +1,3 @@
-import { title } from "process";
-
 export default {
   message: "Chào mừng OHB",
   success: "Thành công",

@@ -1,5 +1,3 @@
-import { en } from "vuetify/lib/locale/index.mjs";
-
 export default {
   message: "Welcome",
   success: "success",

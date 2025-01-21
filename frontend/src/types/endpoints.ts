@@ -43,7 +43,7 @@ export interface Warp extends WireGuard {
 type InterfaceMap = {
   [Key in keyof typeof EpTypes]: {
     type: string
-    [otherProperties: string]: any; // You can add other properties as needed
+    [otherProperties: string]: any // You can add other properties as needed
   }
 }
 

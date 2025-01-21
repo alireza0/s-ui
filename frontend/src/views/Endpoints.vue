@@ -95,10 +95,10 @@
 import Data from '@/store/modules/data'
 import EndpointVue from '@/layouts/modals/Endpoint.vue'
 import Stats from '@/layouts/modals/Stats.vue'
-import { Endpoint } from '@/types/endpoints';
+import { Endpoint } from '@/types/endpoints'
 import { computed, ref } from 'vue'
-import { i18n } from '@/locales';
-import { push } from 'notivue';
+import { i18n } from '@/locales'
+import { push } from 'notivue'
 
 const endpoints = computed((): Endpoint[] => {
   return <Endpoint[]> Data().endpoints

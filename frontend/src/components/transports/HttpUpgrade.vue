@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts">
-import Headers from '../Headers.vue';
+import Headers from '../Headers.vue'
 export default {
   props: ['transport'],
   data() {

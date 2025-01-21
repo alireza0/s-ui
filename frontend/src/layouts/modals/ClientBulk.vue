@@ -89,7 +89,7 @@ import DatePick from '@/components/DateTime.vue'
 import { push } from 'notivue'
 import RandomUtil from '@/plugins/randomUtil'
 import { Client, createClient, randomConfigs } from '@/types/clients'
-import { i18n } from '@/locales';
+import { i18n } from '@/locales'
 
 export default {
   props: ['visible', 'inboundTags', 'groups'],

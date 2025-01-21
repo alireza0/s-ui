@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts">
-import { i18n } from '@/locales';
+import { i18n } from '@/locales'
 
 
 export default {

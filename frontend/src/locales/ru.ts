@@ -1,5 +1,3 @@
-import { config } from "process";
-
 export default {
   message: "Добро пожаловать",
   success: "успех",

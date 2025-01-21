@@ -223,7 +223,7 @@ export interface URLTest extends OutboundBasics {
 type InterfaceMap = {
   [Key in keyof typeof OutTypes]: {
     type: string
-    [otherProperties: string]: any; // You can add other properties as needed
+    [otherProperties: string]: any // You can add other properties as needed
   }
 }
 

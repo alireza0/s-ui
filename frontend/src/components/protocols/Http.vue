@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts">
-import Headers from '@/components/Headers.vue';
+import Headers from '@/components/Headers.vue'
 
 export default {
   props: ['data'],

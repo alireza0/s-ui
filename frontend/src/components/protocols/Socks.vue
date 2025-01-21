@@ -37,7 +37,7 @@
 
 <script lang="ts">
 import Network from '@/components/Network.vue'
-import UoT from '@/components/UoT.vue';
+import UoT from '@/components/UoT.vue'
 
 export default {
   props: ['data'],

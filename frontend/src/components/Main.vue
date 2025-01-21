@@ -209,7 +209,7 @@ const startTimer = () => {
 
 const stopTimer = () => {
   if (intervalId) {
-    clearInterval(intervalId);
+    clearInterval(intervalId)
     intervalId = null
   }
 }

@@ -111,13 +111,16 @@ export default {
   },
   computed: {
     version: {
-      get() { this.version = this.Inbound.version; return this.Inbound.version; },
+      get() {
+        this.version = this.Inbound.version
+        return this.Inbound.version
+      },
       set(newValue: any) {
         switch (newValue) {
         case 1:
           delete this.Inbound.password
           delete this.Inbound.handshake_for_server_name
-          break;
+          break
         case 2:
           if (!this.Inbound.password) {
             this.Inbound.password = ""
@@ -125,23 +128,23 @@ export default {
           if (!this.Inbound.handshake_for_server_name) {
             this.Inbound.handshake_for_server_name = {}
           }
-          break;
+          break
         case 3:
           delete this.Inbound.password
           if (!this.Inbound.handshake_for_server_name) {
             this.Inbound.handshake_for_server_name = {}
           }
-          break;
+          break
         }
-        this.Inbound.version = newValue;
+        this.Inbound.version = newValue
       }
     },
     Inbound(): ShadowTLS {
-      return <ShadowTLS>this.$props.data;
+      return <ShadowTLS>this.$props.data
     },
     server_port: {
-      get() { return this.Inbound.handshake.server_port ? this.Inbound.handshake.server_port : 443; },
-      set(newValue: any) { this.Inbound.handshake.server_port = newValue.length == 0 || newValue == 0 ? 443 : parseInt(newValue); }
+      get() { return this.Inbound.handshake.server_port ? this.Inbound.handshake.server_port : 443 },
+      set(newValue: any) { this.Inbound.handshake.server_port = newValue.length == 0 || newValue == 0 ? 443 : parseInt(newValue) }
     },
   },
   components: { Dial }

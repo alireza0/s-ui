@@ -46,8 +46,6 @@
 </template>
 
 <script lang="ts">
-import { KeepAlive } from 'vue';
-
 export default {
   props: ['data'],
   data() {

@@ -291,19 +291,19 @@ const delRuleset = (index: number) => {
   delRulesetOverlay.value[index] = false
 }
 
-const draggedItemIndex = ref(null);
+const draggedItemIndex = ref(null)
 
 const onDragStart = (index: any) => {
-  draggedItemIndex.value = index;
+  draggedItemIndex.value = index
 }
 
 const onDrop = (index: any) => {
   if (draggedItemIndex.value !== null) {
     // Swap the dragged item with the dropped one
-    const draggedItem = rules.value[draggedItemIndex.value];
-    rules.value.splice(draggedItemIndex.value, 1);
-    rules.value.splice(index, 0, draggedItem);
-    draggedItemIndex.value = null;
+    const draggedItem = rules.value[draggedItemIndex.value]
+    rules.value.splice(draggedItemIndex.value, 1)
+    rules.value.splice(index, 0, draggedItem)
+    draggedItemIndex.value = null
   }
 }
 </script>

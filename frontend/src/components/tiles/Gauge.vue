@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { HumanReadable } from '@/plugins/utils';
-import { computed } from 'vue';
+import { HumanReadable } from '@/plugins/utils'
+import { computed } from 'vue'
 
 const props = defineProps({
   tilesData: <any>{},
