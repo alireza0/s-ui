@@ -71,7 +71,7 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 			if inbound.Type == "shadowtls" && shadowtls_version < 3 {
 				break
 			}
-			var users []string
+			users := []string{}
 			err = db.Raw("SELECT clients.name FROM clients, json_each(clients.inbounds) as je WHERE je.value = ?", inbound.Id).Scan(&users).Error
 			if err != nil {
 				return nil, err
