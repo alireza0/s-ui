@@ -307,7 +307,7 @@ func (s *ClientService) DepleteClients() error {
 		if err == nil {
 			tx.Commit()
 			if len(inboundIds) > 0 && corePtr.IsRunning() {
-				err1 := s.InboundService.RestartInbounds(tx, inboundIds)
+				err1 := s.InboundService.RestartInbounds(db, inboundIds)
 				if err1 != nil {
 					logger.Error("unable to restart inbounds: ", err1)
 				}

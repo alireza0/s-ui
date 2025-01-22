@@ -127,6 +127,16 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 	defer func() {
 		if err == nil {
 			tx.Commit()
+			if len(inboundIds) > 0 && corePtr.IsRunning() {
+				err1 := s.InboundService.RestartInbounds(db, inboundIds)
+				if err1 != nil {
+					logger.Error("unable to restart inbounds: ", err1)
+				}
+			}
+			// Try to start core if it is not running
+			if !corePtr.IsRunning() {
+				s.StartCore("")
+			}
 		} else {
 			tx.Rollback()
 		}
@@ -212,17 +222,6 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 			return nil, common.NewError("unable to update out_json of inbounds: ", err.Error())
 		}
 		objs = append(objs, "inbounds")
-	}
-
-	if len(inboundIds) > 0 && corePtr.IsRunning() {
-		err1 := s.InboundService.RestartInbounds(tx, inboundIds)
-		if err1 != nil {
-			logger.Error("unable to restart inbounds: ", err1)
-		}
-	}
-	// Try to start core if it is not running
-	if !corePtr.IsRunning() {
-		s.StartCore("")
 	}
 
 	return objs, nil
