@@ -122,6 +122,8 @@
         :headers="headers"
         :items="filterSettings.enabled ? filterSettings.filteredClients : clients"
         :hide-default-footer="filterSettings.enabled ? filterSettings.filteredClients.length<=10 : clients.length<=10"
+        :items-per-page="itemPerPage"
+        @update:items-per-page="setItemPerPage($event)"
         hide-no-data
         fixed-header
         item-value="name"
@@ -281,6 +283,14 @@ const headers = [
   { title: i18n.global.t('online'), key: 'online' },
   { key: 'data-table-group', width: 0 },
 ]
+
+const itemPerPage = computed(() => {
+  return localStorage.getItem('items-per-page') || 10
+})
+
+const setItemPerPage = (items: number) => {
+  localStorage.setItem('items-per-page', items.toString())
+}
 
 const modal = ref({
   visible: false,
