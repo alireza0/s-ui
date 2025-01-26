@@ -272,6 +272,7 @@ const filterItems = [
 
 const headers = [
   { title: i18n.global.t('client.name'), key: 'name' },
+  { title: i18n.global.t('client.desc'), key: 'desc' },
   { title: i18n.global.t('client.group'), key: 'group' },
   { title: i18n.global.t('pages.inbounds'), key: 'inbounds', width: 10 },
   { title: i18n.global.t('actions.action'), key: 'actions', sortable: false},
