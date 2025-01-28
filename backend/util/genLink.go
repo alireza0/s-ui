@@ -442,7 +442,7 @@ func vmessLink(
 
 	for _, addr := range addrs {
 		obj := baseParams
-		obj["addr"], _ = addr["server"].(string)
+		obj["add"], _ = addr["server"].(string)
 		port, _ := addr["server_port"].(float64)
 		obj["port"] = uint(port)
 		obj["ps"], _ = addr["remark"].(string)
