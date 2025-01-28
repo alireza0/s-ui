@@ -100,16 +100,20 @@ func GetDb(exclude string) ([]byte, error) {
 		if err := db.Model(&model.Stats{}).Scan(&stats).Error; err != nil {
 			return nil, err
 		}
-		if err := backupDb.Save(stats).Error; err != nil {
-			return nil, err
+		if len(stats) > 0 {
+			if err := backupDb.Save(stats).Error; err != nil {
+				return nil, err
+			}
 		}
 	}
 	if !exclude_changes {
 		if err := db.Model(&model.Changes{}).Scan(&changes).Error; err != nil {
 			return nil, err
 		}
-		if err := backupDb.Save(changes).Error; err != nil {
-			return nil, err
+		if len(changes) > 0 {
+			if err := backupDb.Save(changes).Error; err != nil {
+				return nil, err
+			}
 		}
 	}
 
