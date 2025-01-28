@@ -5,10 +5,12 @@ backup/
 bin/
 db/
 sui
+web/html
 main
 tmp
 .sync*
 *.tar.gz
+frontend/
 
 # local env files
 .env.local

@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -58,7 +60,8 @@ jobs:
           npm install
           npm run build
           cd ..
-          mv frontend/dist backend/web/html
+          mv frontend/dist web/html
+          rm -fr frontend
 
       - name: Build s-ui
         run: |
@@ -89,9 +92,7 @@ jobs:
           fi
 
           ### Build s-ui
-          cd backend
-          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_ech,with_utls,with_reality_server,with_acme,with_gvisor" -o ../sui main.go
-          cd ..
+          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_ech,with_utls,with_reality_server,with_acme,with_gvisor" -o sui main.go
 
           mkdir s-ui
           cp sui s-ui/

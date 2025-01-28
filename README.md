@@ -4,6 +4,7 @@
 ![](https://img.shields.io/github/v/release/alireza0/s-ui.svg)
 ![S-UI Docker pull](https://img.shields.io/docker/pulls/alireza7/s-ui.svg)
 ![S-UI-Singbox Docker pull](https://img.shields.io/docker/pulls/alireza7/s-ui-singbox.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/alireza0/s-ui)](https://goreportcard.com/report/github.com/alireza0/s-ui)
 [![Downloads](https://img.shields.io/github/downloads/alireza0/s-ui/total.svg)](https://img.shields.io/github/downloads/alireza0/s-ui/total.svg)
 [![License](https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -63,16 +64,13 @@ VERSION=1.0.0 && bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui
 ```sh
 sudo -i
 
-systemctl disable sing-box --now
 systemctl disable s-ui  --now
 
-rm -f /etc/systemd/system/s-ui.service
 rm -f /etc/systemd/system/sing-box.service
 systemctl daemon-reload
 
 rm -fr /usr/local/s-ui
 rm /usr/bin/s-ui
-
 ```
 
 ## Install using Docker
@@ -98,7 +96,7 @@ wget -q https://raw.githubusercontent.com/alireza0/s-ui/master/docker-compose.ym
 docker compose up -d
 ```
 
-> Use docker for s-ui only
+> Use docker
 
 ```shell
 mkdir s-ui && cd s-ui
@@ -113,6 +111,8 @@ docker run -itd \
 > Build your own image
 
 ```shell
+git clone https://github.com/alireza0/s-ui
+git submodule update --init --recursive
 docker build -t s-ui .
 ```
 
@@ -128,37 +128,30 @@ docker build -t s-ui .
 ./runSUI.sh
 ```
 
+### Clone the repository
+```shell
+# clone repository
+git clone https://github.com/alireza0/s-ui
+# clone submodules
+git submodule update --init --recursive
+```
+
+
 ### - Frontend
 
-Frontend codes are in `frontend` folder in the root of repository.
-
-To run it locally for instant development you can use (apply automatic changes on file save):
-```shell
-cd frontend
-npm run dev
-```
-> By this command it will run a `vite` web server on separate port `3000`, with backend proxy to `http://localhost:2095`. You can change it in `frontend/vite.config.mts`.
-
-To build frontend:
-```shell
-cd frontend
-npm run build
-```
+Visit [s-ui-frontend](https://github.com/alireza0/s-ui-frontend) for frontend code
 
 ### - Backend
-Backend codes are in `backend` folder in the root of repository.
 > Please build frontend once before!
 
 To build backend:
 ```shell
-cd backend
-
 # remove old frontend compiled files
 rm -fr web/html/*
 # apply new frontend compiled files
-cp -R ../frontend/dist/ web/html/
+cp -R frontend/dist/ web/html/
 # build
-go build -o ../sui main.go
+go build -o sui main.go
 ```
 
 To run backend (from root folder of repository):
@@ -182,7 +175,7 @@ To run backend (from root folder of repository):
 - Supported protocols:
   - General:  Mixed, SOCKS, HTTP, HTTPS, Direct, Redirect, TProxy
   - V2Ray based: VLESS, VMess, Trojan, Shadowsocks
-  - Other protocols: ShadowTLS, Hysteria, Hysteri2, Naive, TUIC
+  - Other protocols: ShadowTLS, Hysteria, Hysteria2, Naive, TUIC
 - Supports XTLS protocols
 - An advanced interface for routing traffic, incorporating PROXY Protocol, External, and Transparent Proxy, SSL Certificate, and Port
 - An advanced interface for inbound and outbound configuration

@@ -8,16 +8,11 @@ require (
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sagernet/sing v0.6.0-beta.12
-	github.com/sagernet/sing-box v1.11.0-beta.24
+	github.com/sagernet/sing-box v1.11.0-rc.1
 	github.com/sagernet/sing-dns v0.4.0-beta.2
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
-)
-
-require (
-	github.com/ebitengine/purego v0.8.1 // indirect
-	google.golang.org/grpc v1.67.1 // indirect
 )
 
 require (
@@ -30,6 +25,7 @@ require (
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/cretz/bine v0.2.0 // indirect
+	github.com/ebitengine/purego v0.8.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.6 // indirect
 	github.com/gin-contrib/sessions v1.0.1
@@ -123,6 +119,7 @@ require (
 	golang.org/x/tools v0.24.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
+	google.golang.org/grpc v1.67.1 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.3.0 // indirect
