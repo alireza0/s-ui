@@ -41,6 +41,7 @@ export namespace LinkUtil {
     const userPass = inbound.method == "2022-blake3-aes-128-gcm" ? user.config.shadowsocks16?.password : user.config.shadowsocks?.password
     const password = [userPass]
     if (inbound.method.startsWith('2022')) password.push(inbound.password)
+    password.reverse()
     const params = {
       tfo: inbound.tcp_fast_open? 1 : null,
       network: inbound.network?? null
