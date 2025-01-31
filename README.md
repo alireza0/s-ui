@@ -182,7 +182,7 @@ To run backend (from root folder of repository):
 - Supported protocols:
   - General:  Mixed, SOCKS, HTTP, HTTPS, Direct, Redirect, TProxy
   - V2Ray based: VLESS, VMess, Trojan, Shadowsocks
-  - Other protocols: ShadowTLS, Hysteria, Hysteri2, Naive, TUIC
+  - Other protocols: ShadowTLS, Hysteria, Hysteria2, Naive, TUIC
 - Supports XTLS protocols
 - An advanced interface for routing traffic, incorporating PROXY Protocol, External, and Transparent Proxy, SSL Certificate, and Port
 - An advanced interface for inbound and outbound configuration
