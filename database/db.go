@@ -79,6 +79,7 @@ func InitDB(dbPath string) error {
 		&model.Outbound{},
 		&model.Endpoint{},
 		&model.User{},
+		&model.Tokens{},
 		&model.Stats{},
 		&model.Client{},
 		&model.Changes{},

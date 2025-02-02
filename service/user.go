@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/logger"
@@ -98,4 +99,62 @@ func (s *UserService) ChangePass(id string, oldPass string, newUser string, newP
 	user.Username = newUser
 	user.Password = newPass
 	return db.Save(user).Error
+}
+
+func (s *UserService) LoadTokens() ([]byte, error) {
+	db := database.GetDB()
+	var tokens []model.Tokens
+	err := db.Model(model.Tokens{}).Preload("User").Where("expiry == 0 or expiry > ?", time.Now().Unix()).Find(&tokens).Error
+	if err != nil {
+		return nil, err
+	}
+	var result []map[string]interface{}
+	for _, t := range tokens {
+		result = append(result, map[string]interface{}{
+			"token":    t.Token,
+			"expiry":   t.Expiry,
+			"username": t.User.Username,
+		})
+	}
+	jsonResult, _ := json.MarshalIndent(result, "", "  ")
+	return jsonResult, nil
+}
+
+func (s *UserService) GetUserTokens(username string) (*[]model.Tokens, error) {
+	db := database.GetDB()
+	var token []model.Tokens
+	err := db.Model(model.Tokens{}).Select("id,desc,'****' as token,expiry,user_id").Where("user_id = (select id from users where username = ?)", username).Find(&token).Error
+	if err != nil && !database.IsNotFound(err) {
+		println(err.Error())
+		return nil, err
+	}
+	return &token, nil
+}
+
+func (s *UserService) AddToken(username string, expiry int64, desc string) (string, error) {
+	db := database.GetDB()
+	var userId uint
+	err := db.Model(model.User{}).Where("username = ?", username).Select("id").Scan(&userId).Error
+	if err != nil {
+		return "", err
+	}
+	if expiry > 0 {
+		expiry = expiry*86400 + time.Now().Unix()
+	}
+	token := &model.Tokens{
+		Token:  common.Random(32),
+		Desc:   desc,
+		Expiry: expiry,
+		UserId: userId,
+	}
+	err = db.Create(token).Error
+	if err != nil {
+		return "", err
+	}
+	return token.Token, nil
+}
+
+func (s *UserService) DeleteToken(id string) error {
+	db := database.GetDB()
+	return db.Model(model.Tokens{}).Where("id = ?", id).Delete(&model.Tokens{}).Error
 }

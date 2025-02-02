@@ -146,7 +146,10 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 }
 
 func (s *ServerService) GetLogs(count string, level string) []string {
-	c, _ := strconv.Atoi(count)
+	c, err := strconv.Atoi(count)
+	if err != nil {
+		c = 10
+	}
 	return logger.GetLogs(c, level)
 }
 
@@ -171,6 +174,9 @@ func (s *ServerService) GenKeypair(keyType string, options string) []string {
 
 func (s *ServerService) generateECHKeyPair(options string) []string {
 	parts := strings.Split(options, ",")
+	if len(parts) != 2 {
+		return []string{"Failed to generate ECH keypair: ", "invalid options"}
+	}
 	configPem, keyPem, err := tls.ECHKeygenDefault(parts[0], parts[1] == "true")
 	if err != nil {
 		return []string{"Failed to generate ECH keypair: ", err.Error()}

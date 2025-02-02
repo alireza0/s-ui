@@ -102,8 +102,11 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 
 	engine.StaticFS(assetsBasePath, http.FS(assetsFS))
 
+	group_apiv2 := engine.Group(base_url + "apiv2")
+	apiv2 := api.NewAPIv2Handler(group_apiv2)
+
 	group_api := engine.Group(base_url + "api")
-	api.NewAPIHandler(group_api)
+	api.NewAPIHandler(group_api, apiv2)
 
 	// Serve index.html as the entry point
 	// Handle all other routes by serving index.html

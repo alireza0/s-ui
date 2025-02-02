@@ -54,3 +54,12 @@ type Changes struct {
 	Action   string          `json:"action"`
 	Obj      json.RawMessage `json:"obj"`
 }
+
+type Tokens struct {
+	Id     uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Desc   string `json:"desc" form:"desc"`
+	Token  string `json:"token" form:"token"`
+	Expiry int64  `json:"expiry" form:"expiry"`
+	UserId uint   `json:"userId" form:"userId"`
+	User   *User  `json:"user" gorm:"foreignKey:UserId;references:Id"`
+}
