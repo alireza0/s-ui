@@ -111,6 +111,10 @@ func shadowsocksLink(
 
 	var userPass []string
 	method, _ := inbound["method"].(string)
+	if strings.HasPrefix(method, "2022") {
+		inbPass, _ := inbound["password"].(string)
+		userPass = append(userPass, inbPass)
+	}
 	var pass string
 	if method == "2022-blake3-aes-128-gcm" {
 		pass, _ = userConfig["shadowsocks16"]["password"].(string)
@@ -118,11 +122,6 @@ func shadowsocksLink(
 		pass, _ = userConfig["shadowsocks"]["password"].(string)
 	}
 	userPass = append(userPass, pass)
-
-	if strings.HasPrefix(method, "2022") {
-		inbPass, _ := inbound["password"].(string)
-		userPass = append(userPass, inbPass)
-	}
 
 	uriBase := fmt.Sprintf("ss://%s", toBase64([]byte(fmt.Sprintf("%s:%s", method, strings.Join(userPass, ":")))))
 
