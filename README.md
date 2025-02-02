@@ -26,7 +26,11 @@
 | Client & Traffic & System Status       | :heavy_check_mark: |
 | Subscription Service (link/json + info)| :heavy_check_mark: |
 | Dark/Light Theme                       | :heavy_check_mark: |
+| API Interface                          | :heavy_check_mark: |
 
+## API Documentation
+
+[API-Documentation Wiki](https://github.com/alireza0/s-ui/wiki/API-Documentation)
 
 ## Default Installation Information
 - Panel Port: 2095
