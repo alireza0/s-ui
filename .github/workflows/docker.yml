@@ -7,10 +7,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.1
+      with:
+        submodules: recursive
    
     - name: Docker meta
       id: meta

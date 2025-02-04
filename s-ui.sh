@@ -172,7 +172,7 @@ custom_version() {
 }
 
 uninstall() {
-    confirm "Are you sure you want to uninstall the panel? sing-box will also uninstalled!" "n"
+    confirm "Are you sure you want to uninstall the panel?" "n"
     if [[ $? != 0 ]]; then
         if [[ $# == 0 ]]; then
             show_menu
@@ -181,10 +181,7 @@ uninstall() {
     fi
     systemctl stop s-ui
     systemctl disable s-ui
-    systemctl stop sing-box
-    systemctl disable sing-box
     rm /etc/systemd/system/s-ui.service -f
-    rm /etc/systemd/system/sing-box.service -f
     systemctl daemon-reload
     systemctl reset-failed
     rm /etc/s-ui/ -rf
@@ -254,7 +251,18 @@ set_setting() {
 
 view_setting() {
     /usr/local/s-ui/sui setting -show
+    view_uri
     before_show_menu
+}
+
+view_uri() {
+    info=$(/usr/local/s-ui/sui uri)
+    if [[ $? != 0 ]]; then
+        LOGE "Get current uri error"
+        before_show_menu
+    fi
+    LOGI "You may access the Panel with following URL(s):"
+    echo -e "${green}${info}${plain}"
 }
 
 start() {
@@ -315,7 +323,6 @@ restart() {
 
 status() {
     systemctl status s-ui -l
-    systemctl status sing-box -l
     if [[ $# == 0 ]]; then
         before_show_menu
     fi
@@ -763,10 +770,10 @@ show_usage() {
     echo -e "------------------------------------------"
     echo -e "SUBCOMMANDS:" 
     echo -e "s-ui              - Admin Management Script"
-    echo -e "s-ui start        - Start s-ui and sing-box"
-    echo -e "s-ui stop         - Stop s-ui and sing-box"
-    echo -e "s-ui restart      - Restart s-ui and sing-box"
-    echo -e "s-ui status       - Current Status of s-ui and sing-box"
+    echo -e "s-ui start        - Start s-ui"
+    echo -e "s-ui stop         - Stop s-ui"
+    echo -e "s-ui restart      - Restart s-ui"
+    echo -e "s-ui status       - Current Status of s-ui"
     echo -e "s-ui enable       - Enable Autostart on OS Startup"
     echo -e "s-ui disable      - Disable Autostart on OS Startup"
     echo -e "s-ui log          - Check s-ui Logs"
@@ -804,22 +811,13 @@ show_menu() {
   ${green}16.${plain} S-UI Enable Autostart
   ${green}17.${plain} S-UI Disable Autostart
 ————————————————————————————————
-  ${green}18.${plain} Sing-Box Start
-  ${green}19.${plain} Sing-Box Stop
-  ${green}20.${plain} Sing-Box Restart
-  ${green}21.${plain} Sing-Box Check State
-  ${green}22.${plain} Sing-Box Check Logs
-  ${green}23.${plain} Sing-Box Enable Autostart
-  ${green}24.${plain} Sing-Box Disable Autostart
-————————————————————————————————
-  ${green}25.${plain} Enable or Disable BBR
-  ${green}26.${plain} SSL Certificate Management
-  ${green}27.${plain} Cloudflare SSL Certificate
+  ${green}18.${plain} Enable or Disable BBR
+  ${green}19.${plain} SSL Certificate Management
+  ${green}20.${plain} Cloudflare SSL Certificate
 ————————————————————————————————
  "
     show_status s-ui
-    show_status sing-box
-    echo && read -p "Please enter your selection [0-27]: " num
+    echo && read -p "Please enter your selection [0-20]: " num
 
     case "${num}" in
     0)
@@ -877,37 +875,16 @@ show_menu() {
         check_install && disable s-ui
         ;;
     18)
-        check_install && start sing-box
-        ;;
-    19)
-        check_install && stop sing-box
-        ;;
-    20)
-        check_install && restart sing-box
-        ;;
-    21)
-        check_install && status sing-box
-        ;;
-    22)
-        check_install && show_log sing-box
-        ;;
-    23)
-        check_install && enable sing-box
-        ;;
-    24)
-        check_install && disable sing-box
-        ;;
-    25)
         bbr_menu
         ;;
-    26)
+    19)
         ssl_cert_issue_main
         ;;
-    27)
+    20)
         ssl_cert_issue_CF
         ;;
     *)
-        LOGE "Please enter the correct number [0-27]"
+        LOGE "Please enter the correct number [0-20]"
         ;;
     esac
 }
@@ -915,22 +892,22 @@ show_menu() {
 if [[ $# > 0 ]]; then
     case $1 in
     "start")
-        check_install 0 && start s-ui 0 && start sing-box 0
+        check_install 0 && start s-ui 0
         ;;
     "stop")
-        check_install 0 && stop s-ui 0 && stop sing-box 0
+        check_install 0 && stop s-ui 0
         ;;
     "restart")
-        check_install 0 && restart s-ui 0 && restart sing-box 0
+        check_install 0 && restart s-ui 0
         ;;
     "status")
         check_install 0 && status 0
         ;;
     "enable")
-        check_install 0 && enable s-ui 0 && enable sing-box 0
+        check_install 0 && enable s-ui 0
         ;;
     "disable")
-        check_install 0 && disable s-ui 0 && disable sing-box 0
+        check_install 0 && disable s-ui 0
         ;;
     "log")
         check_install 0 && show_log s-ui 0

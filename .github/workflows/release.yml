@@ -18,16 +18,18 @@ jobs:
           - armv5
           - 386
           - s390x
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           cache: false
-          go-version-file: backend/go.mod
+          go-version-file: go.mod
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -58,9 +60,10 @@ jobs:
           npm install
           npm run build
           cd ..
-          mv frontend/dist backend/web/html
+          mv frontend/dist web/html
+          rm -fr frontend
 
-      - name: Build s-ui & singbox
+      - name: Build s-ui
         run: |
           export CGO_ENABLED=1
           export GOOS=linux
@@ -88,27 +91,13 @@ jobs:
             export CC=s390x-linux-gnu-gcc
           fi
 
-          #### Build Sing-Box
-          export VERSION=v1.10.1
-          git clone -b $VERSION https://github.com/SagerNet/sing-box
-          cd sing-box
-          go build -tags with_quic,with_grpc,with_wireguard,with_ech,with_utls,with_reality_server,with_acme,with_v2ray_api,with_clash_api,with_gvisor \
-          -v -trimpath -ldflags "-X 'github.com/sagernet/sing-box/constant.Version=${VERSION}' -s -w -buildid=" \
-          -o sing-box ./cmd/sing-box
-          cd ..
-
           ### Build s-ui
-          cd backend
-          go build -o ../sui main.go
-          cd ..
+          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_ech,with_utls,with_reality_server,with_acme,with_gvisor" -o sui main.go
 
           mkdir s-ui
           cp sui s-ui/
           cp s-ui.service s-ui/
-          cp sing-box.service s-ui/
-          mkdir s-ui/bin
-          cp sing-box/sing-box s-ui/bin/
-          cp core/runSingbox.sh s-ui/bin/
+          cp s-ui.sh s-ui/
 
       - name: Package
         run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
