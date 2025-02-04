@@ -28,7 +28,7 @@ require (
 	github.com/ebitengine/purego v0.8.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.6 // indirect
-	github.com/gin-contrib/sessions v1.0.1
+	github.com/gin-contrib/sessions v1.0.2
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/go-chi/render v1.0.3 // indirect
@@ -111,7 +111,7 @@ require (
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.20.0 // indirect
-	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
