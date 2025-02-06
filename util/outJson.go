@@ -14,6 +14,10 @@ func FillOutJson(i *model.Inbound, hostname string) error {
 		return err
 	}
 
+	if outJson == nil {
+		outJson = make(map[string]interface{})
+	}
+
 	if i.TlsId > 0 {
 		addTls(&outJson, i.Tls)
 	} else {
