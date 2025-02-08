@@ -9,7 +9,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sagernet/sing v0.6.0
 	github.com/sagernet/sing-box v1.11.0
-	github.com/sagernet/sing-dns v0.4.0-beta.2
+	github.com/sagernet/sing-dns v0.4.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
