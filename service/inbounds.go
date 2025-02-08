@@ -336,6 +336,9 @@ func (s *InboundService) RestartInbounds(tx *gorm.DB, ids []uint) error {
 			return err
 		}
 		inboundConfig, err = s.addUsers(tx, inboundConfig, inbound.Id, inbound.Type)
+		if err != nil {
+			return err
+		}
 		err = corePtr.AddInbound(inboundConfig)
 		if err != nil {
 			return err

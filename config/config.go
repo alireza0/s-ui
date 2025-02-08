@@ -51,7 +51,7 @@ func GetDBFolderPath() string {
 	if dbFolderPath == "" {
 		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 		if err != nil {
-			dbFolderPath = "/usr/local/s-ui/db"
+			return "/usr/local/s-ui/db"
 		}
 		dbFolderPath = dir + "/db"
 	}

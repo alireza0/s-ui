@@ -185,7 +185,7 @@ func (s *ServerService) generateECHKeyPair(options string) []string {
 }
 
 func (s *ServerService) generateTLSKeyPair(serverName string) []string {
-	privateKeyPem, publicKeyPem, err := tls.GenerateKeyPair(time.Now, serverName, time.Now().AddDate(0, 12, 0))
+	privateKeyPem, publicKeyPem, err := tls.GenerateCertificate(nil, nil, time.Now, serverName, time.Now().AddDate(0, 12, 0))
 	if err != nil {
 		return []string{"Failed to generate TLS keypair: ", err.Error()}
 	}

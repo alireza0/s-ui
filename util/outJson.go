@@ -25,6 +25,9 @@ func FillOutJson(i *model.Inbound, hostname string) error {
 	}
 
 	inbound, err := i.MarshalFull()
+	if err != nil {
+		return err
+	}
 
 	outJson["type"] = i.Type
 	outJson["tag"] = i.Tag
