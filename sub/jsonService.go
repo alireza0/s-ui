@@ -98,7 +98,7 @@ func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, er
 		return nil, nil, err
 	}
 	var inbounds []*model.Inbound
-	err = db.Model(model.Inbound{}).Where("id in ?", clientInbounds).Find(&inbounds).Error
+	err = db.Model(model.Inbound{}).Preload("Tls").Where("id in ?", clientInbounds).Find(&inbounds).Error
 	if err != nil {
 		return nil, nil, err
 	}
@@ -159,13 +159,16 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 				newOut["server_port"] = int(port)
 
 				// Override TLS
-				outTls, _ := newOut["tls"].(map[string]interface{})
 				if addrTls, ok := addr["tls"].(map[string]interface{}); ok {
+					outTls, _ := newOut["tls"].(map[string]interface{})
+					if outTls == nil {
+						outTls = make(map[string]interface{})
+					}
 					for key, value := range addrTls {
 						outTls[key] = value
 					}
+					newOut["tls"] = outTls
 				}
-				newOut["tls"] = outTls
 
 				remark, _ := addr["remark"].(string)
 				newTag := fmt.Sprintf("%d.%s%s", index+1, tag, remark)
