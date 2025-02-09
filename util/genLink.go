@@ -159,7 +159,7 @@ func naiveLink(
 				params["alpn"] = strings.Join(alpnList, ",")
 			}
 			if insecure, ok := tls["insecure"].(bool); ok && insecure {
-				params["allowInsecure"] = "1"
+				params["insecure"] = "1"
 			}
 		}
 		if tfo, ok := inbound["tcp_fast_open"].(bool); ok && tfo {
@@ -206,7 +206,7 @@ func hysteriaLink(
 				params["alpn"] = strings.Join(alpnList, ",")
 			}
 			if insecure, ok := tls["insecure"].(bool); ok && insecure {
-				params["allowInsecure"] = "1"
+				params["insecure"] = "1"
 			}
 		}
 		if obfs, ok := inbound["obfs"].(string); ok {
@@ -255,7 +255,7 @@ func hysteria2Link(
 				params["alpn"] = strings.Join(alpnList, ",")
 			}
 			if insecure, ok := tls["insecure"].(bool); ok && insecure {
-				params["allowInsecure"] = "1"
+				params["insecure"] = "1"
 			}
 		}
 		if obfs, ok := inbound["obfs"].(map[string]interface{}); ok {
@@ -304,10 +304,10 @@ func tuicLink(
 				params["alpn"] = strings.Join(alpnList, ",")
 			}
 			if insecure, ok := tls["insecure"].(bool); ok && insecure {
-				params["allowInsecure"] = "1"
+				params["insecure"] = "1"
 			}
 			if disableSni, ok := tls["disable_sni"].(bool); ok && disableSni {
-				params["disableSni"] = "1"
+				params["disable_sni"] = "1"
 			}
 		}
 		if congestionControl, ok := inbound["congestion_control"].(string); ok {
@@ -350,6 +350,9 @@ func vlessLink(
 				if flow, ok := userConfig["flow"].(string); ok {
 					params["flow"] = flow
 				}
+			}
+			if utls, ok := tls["utls"].(map[string]interface{}); ok {
+				params["fingerprint"], _ = utls["fingerprint"].(string)
 			}
 			if sni, ok := tls["server_name"].(string); ok {
 				params["sni"] = sni
@@ -395,6 +398,9 @@ func trojanLink(
 				if insecure, ok := tls["insecure"].(bool); ok && insecure {
 					params["allowInsecure"] = "1"
 				}
+			}
+			if utls, ok := tls["utls"].(map[string]interface{}); ok {
+				params["fingerprint"], _ = utls["fingerprint"].(string)
 			}
 			if sni, ok := tls["server_name"].(string); ok {
 				params["sni"] = sni
@@ -458,6 +464,9 @@ func vmessLink(
 			}
 			if sni, ok := tls["server_name"].(string); ok {
 				obj["sni"] = sni
+			}
+			if utls, ok := tls["utls"].(map[string]interface{}); ok {
+				obj["fp"], _ = utls["fingerprint"].(string)
 			}
 		} else {
 			obj["tls"] = "none"
