@@ -347,9 +347,9 @@ func vlessLink(
 				if insecure, ok := tls["insecure"].(bool); ok && insecure {
 					params["allowInsecure"] = "1"
 				}
-				if flow, ok := userConfig["flow"].(string); ok {
-					params["flow"] = flow
-				}
+			}
+			if flow, ok := userConfig["flow"].(string); ok {
+				params["flow"] = flow
 			}
 			if utls, ok := tls["utls"].(map[string]interface{}); ok {
 				params["fingerprint"], _ = utls["fingerprint"].(string)
