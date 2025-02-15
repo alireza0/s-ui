@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"s-ui/cmd/migration"
 	"s-ui/config"
 )
@@ -52,7 +53,16 @@ func ParseCmd() {
 
 	flag.Parse()
 	if showVersion {
-		fmt.Println(config.GetVersion())
+		fmt.Println("S-UI Panel\t", config.GetVersion())
+		info, ok := debug.ReadBuildInfo()
+		if ok {
+			for _, dep := range info.Deps {
+				if dep.Path == "github.com/sagernet/sing-box" {
+					fmt.Println("Sing-Box\t", dep.Version)
+					break
+				}
+			}
+		}
 		return
 	}
 
