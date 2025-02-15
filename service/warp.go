@@ -19,24 +19,18 @@ import (
 
 type WarpService struct{}
 
-func (s *WarpService) getWarpInfo(ep *model.Endpoint) ([]byte, error) {
-	var warpData map[string]string
-	err := json.Unmarshal(ep.Ext, &warpData)
-	if err != nil {
-		return nil, err
-	}
-
-	url := fmt.Sprintf("https://api.cloudflareclient.com/v0a2158/reg/%s", warpData["device_id"])
+func (s *WarpService) getWarpInfo(deviceId string, accessToken string) ([]byte, error) {
+	url := fmt.Sprintf("https://api.cloudflareclient.com/v0a2158/reg/%s", deviceId)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+warpData["access_token"])
+	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil || resp.StatusCode != 200 {
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -69,7 +63,7 @@ func (s *WarpService) RegisterWarp(ep *model.Endpoint) error {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil || resp.StatusCode != 200 {
 		return err
 	}
 	defer resp.Body.Close()
@@ -94,18 +88,7 @@ func (s *WarpService) RegisterWarp(ep *model.Endpoint) error {
 		return err
 	}
 
-	warpData := map[string]string{
-		"access_token": token,
-		"device_id":    deviceId,
-		"license_key":  license,
-	}
-
-	ep.Ext, err = json.MarshalIndent(warpData, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	warpInfo, err := s.getWarpInfo(ep)
+	warpInfo, err := s.getWarpInfo(deviceId, token)
 	if err != nil {
 		return err
 	}
@@ -140,6 +123,17 @@ func (s *WarpService) RegisterWarp(ep *model.Endpoint) error {
 			"allowed_ips": []string{"0.0.0.0/0", "::/0"},
 			"reserved":    reserved,
 		},
+	}
+
+	warpData := map[string]interface{}{
+		"access_token": token,
+		"device_id":    deviceId,
+		"license_key":  license,
+	}
+
+	ep.Ext, err = json.MarshalIndent(warpData, "", "  ")
+	if err != nil {
+		return err
 	}
 
 	var epOptions map[string]interface{}
