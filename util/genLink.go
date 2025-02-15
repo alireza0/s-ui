@@ -352,7 +352,7 @@ func vlessLink(
 				params["flow"] = flow
 			}
 			if utls, ok := tls["utls"].(map[string]interface{}); ok {
-				params["fingerprint"], _ = utls["fingerprint"].(string)
+				params["fp"], _ = utls["fingerprint"].(string)
 			}
 			if sni, ok := tls["server_name"].(string); ok {
 				params["sni"] = sni
@@ -400,7 +400,7 @@ func trojanLink(
 				}
 			}
 			if utls, ok := tls["utls"].(map[string]interface{}); ok {
-				params["fingerprint"], _ = utls["fingerprint"].(string)
+				params["fp"], _ = utls["fingerprint"].(string)
 			}
 			if sni, ok := tls["server_name"].(string); ok {
 				params["sni"] = sni
