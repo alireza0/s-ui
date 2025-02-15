@@ -139,6 +139,12 @@ func shadowTlsOut(out *map[string]interface{}, inbound map[string]interface{}) {
 }
 
 func hysteriaOut(out *map[string]interface{}, inbound map[string]interface{}) {
+	delete(*out, "down_mbps")
+	delete(*out, "up_mbps")
+	delete(*out, "obfs")
+	delete(*out, "recv_window_conn")
+	delete(*out, "disable_mtu_discovery")
+
 	if upMbps, ok := inbound["down_mbps"]; ok {
 		(*out)["up_mbps"] = upMbps
 	}
@@ -157,6 +163,10 @@ func hysteriaOut(out *map[string]interface{}, inbound map[string]interface{}) {
 }
 
 func hysteria2Out(out *map[string]interface{}, inbound map[string]interface{}) {
+	delete(*out, "down_mbps")
+	delete(*out, "up_mbps")
+	delete(*out, "obfs")
+
 	if upMbps, ok := inbound["down_mbps"]; ok {
 		(*out)["up_mbps"] = upMbps
 	}
@@ -169,6 +179,8 @@ func hysteria2Out(out *map[string]interface{}, inbound map[string]interface{}) {
 }
 
 func tuicOut(out *map[string]interface{}, inbound map[string]interface{}) {
+	delete(*out, "zero_rtt_handshake")
+	delete(*out, "heartbeat")
 	if congestionControl, ok := inbound["congestion_control"].(string); ok {
 		(*out)["congestion_control"] = congestionControl
 	} else {
@@ -183,18 +195,21 @@ func tuicOut(out *map[string]interface{}, inbound map[string]interface{}) {
 }
 
 func vlessOut(out *map[string]interface{}, inbound map[string]interface{}) {
+	delete(*out, "transport")
 	if transport, ok := inbound["transport"]; ok {
 		(*out)["transport"] = transport
 	}
 }
 
 func trojanOut(out *map[string]interface{}, inbound map[string]interface{}) {
+	delete(*out, "transport")
 	if transport, ok := inbound["transport"]; ok {
 		(*out)["transport"] = transport
 	}
 }
 
 func vmessOut(out *map[string]interface{}, inbound map[string]interface{}) {
+	delete(*out, "transport")
 	if transport, ok := inbound["transport"]; ok {
 		(*out)["transport"] = transport
 	}
