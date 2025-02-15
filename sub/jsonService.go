@@ -212,11 +212,16 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	rules := []interface{}{
 		map[string]interface{}{
+			"action": "sniff",
+		},
+		map[string]interface{}{
 			"clash_mode": "Direct",
+			"action":     "route",
 			"outbound":   "direct",
 		},
 		map[string]interface{}{
 			"clash_mode": "Global",
+			"action":     "route",
 			"outbound":   "proxy",
 		},
 	}

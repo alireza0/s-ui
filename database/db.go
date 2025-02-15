@@ -67,7 +67,6 @@ func InitDB(dbPath string) error {
 		db.Migrator().CreateTable(&model.Outbound{})
 		defaultOutbound := []model.Outbound{
 			{Type: "direct", Tag: "direct", Options: json.RawMessage(`{}`)},
-			{Type: "dns", Tag: "dns-out", Options: json.RawMessage(`{}`)},
 		}
 		db.Create(&defaultOutbound)
 	}
