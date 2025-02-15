@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"s-ui/database"
 	"s-ui/database/model"
@@ -224,11 +225,46 @@ func (s *InboundService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 	return inboundsJson, nil
 }
 
-func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uint, inboundType string) ([]byte, error) {
+func (s *InboundService) hasUser(inboundType string) bool {
 	switch inboundType {
 	case "mixed", "socks", "http", "shadowsocks", "vmess", "trojan", "naive", "hysteria", "shadowtls", "tuic", "hysteria2", "vless":
-		break
-	default:
+		return true
+	}
+	return false
+}
+
+func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition string, inbound map[string]interface{}) ([]json.RawMessage, error) {
+	if inboundType == "shadowtls" {
+		version, _ := inbound["version"].(float64)
+		if int(version) < 3 {
+			return nil, nil
+		}
+	}
+	if inboundType == "shadowsocks" {
+		method, _ := inbound["method"].(string)
+		if method == "2022-blake3-aes-128-gcm" {
+			inboundType = "shadowsocks16"
+		}
+	}
+
+	var users []string
+	err := db.Raw(`SELECT json_extract(clients.config, ?) FROM clients WHERE enable = true AND ?`,
+		"$."+inboundType, condition).Scan(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	var usersJson []json.RawMessage
+	for _, user := range users {
+		if inboundType == "vless" && inbound["tls"] == nil {
+			user = strings.Replace(user, "xtls-rprx-vision", "", -1)
+		}
+		usersJson = append(usersJson, json.RawMessage(user))
+	}
+	return usersJson, nil
+}
+
+func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uint, inboundType string) ([]byte, error) {
+	if !s.hasUser(inboundType) {
 		return inboundJson, nil
 	}
 
@@ -238,29 +274,10 @@ func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uin
 		return nil, err
 	}
 
-	if inboundType == "shadowtls" {
-		version, _ := inbound["version"].(float64)
-		if int(version) < 3 {
-			return inboundJson, nil
-		}
-	}
-	if inboundType == "shadowsocks" {
-		method, _ := inbound["method"].(string)
-		if method == "2022-blake3-aes-128-gcm" {
-			inboundType = "shadowsocks16"
-		}
-	}
-	var users []string
-	err = db.Raw(`SELECT json_extract(clients.config, ?)
-								FROM clients, json_each(clients.inbounds) as je
-								WHERE clients.enable = true AND je.value = ?;`,
-		"$."+inboundType, inboundId).Scan(&users).Error
+	condition := fmt.Sprintf("%d IN (SELECT json_each.value FROM json_each(clients.inbounds))", inboundId)
+	usersJson, err := s.fetchUsers(db, inboundType, condition, inbound)
 	if err != nil {
 		return nil, err
-	}
-	var usersJson []json.RawMessage
-	for _, user := range users {
-		usersJson = append(usersJson, json.RawMessage(user))
 	}
 
 	if len(usersJson) > 0 || inboundType != "shadowsocks" {
@@ -275,10 +292,8 @@ func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds st
 	if len(ClientIds) == 0 {
 		return inboundJson, nil
 	}
-	switch inboundType {
-	case "mixed", "socks", "http", "shadowsocks", "vmess", "trojan", "naive", "hysteria", "shadowtls", "tuic", "hysteria2", "vless":
-		break
-	default:
+
+	if !s.hasUser(inboundType) {
 		return inboundJson, nil
 	}
 
@@ -288,29 +303,10 @@ func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds st
 		return nil, err
 	}
 
-	if inboundType == "shadowtls" {
-		version, _ := inbound["version"].(float64)
-		if int(version) < 3 {
-			return inboundJson, nil
-		}
-	}
-	if inboundType == "shadowsocks" {
-		method, _ := inbound["method"].(string)
-		if method == "2022-blake3-aes-128-gcm" {
-			inboundType = "shadowsocks16"
-		}
-	}
-	var users []string
-	err = db.Raw(`SELECT json_extract(clients.config, ?)
-								FROM clients
-								WHERE enable = true AND id in ?`,
-		"$."+inboundType, ClientIds).Scan(&users).Error
+	condition := fmt.Sprintf("id IN (%s)", strings.Join(ClientIds, ","))
+	usersJson, err := s.fetchUsers(db, inboundType, condition, inbound)
 	if err != nil {
 		return nil, err
-	}
-	var usersJson []json.RawMessage
-	for _, user := range users {
-		usersJson = append(usersJson, json.RawMessage(user))
 	}
 
 	if len(usersJson) > 0 || inboundType != "shadowsocks" {
