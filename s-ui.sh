@@ -698,12 +698,12 @@ ssl_cert_issue_CF() {
     LOGI "4.The script applies for a certificate. The default installation path is /root/cert "
     confirm "Confirmed?[y/n]" "y"
     if [ $? -eq 0 ]; then
-        # Check for acme.sh first
+        # check for acme.sh first
         if ! command -v ~/.acme.sh/acme.sh &>/dev/null; then
-            echo "acme.sh could not be found. We will install it."
+            echo "acme.sh could not be found. we will install it"
             install_acme
             if [ $? -ne 0 ]; then
-                LOGE "Install acme failed, please check logs."
+                LOGE "install acme failed, please check logs"
                 exit 1
             fi
         fi
@@ -735,7 +735,7 @@ ssl_cert_issue_CF() {
         # Set the default CA to Let's Encrypt
         ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
         if [ $? -ne 0 ]; then
-            LOGE "Default CA, Let'sEncrypt fail, script exiting..."
+            LOGE "Default CA, Lets'Encrypt fail, script exiting..."
             exit 1
         fi
 
@@ -748,7 +748,7 @@ ssl_cert_issue_CF() {
             LOGE "Certificate issuance failed, script exiting..."
             exit 1
         else
-            LOGI "Certificate issued successfully, Installing..."
+            LOGI "Certificate issued Successfully, Installing..."
         fi
 
         # Install the certificate
@@ -766,7 +766,7 @@ ssl_cert_issue_CF() {
             LOGE "Certificate installation failed, script exiting..."
             exit 1
         else
-            LOGI "Certificate installed successfully, Turning on automatic updates..."
+            LOGI "Certificate installed Successfully, Turning on automatic updates..."
         fi
 
         # Enable auto-update
