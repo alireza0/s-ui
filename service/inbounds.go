@@ -67,8 +67,7 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 				json.Unmarshal(restFields["version"], &shadowtls_version)
 			}
 		}
-		switch inbound.Type {
-		case "mixed", "socks", "http", "shadowsocks", "vmess", "trojan", "naive", "hysteria", "shadowtls", "tuic", "hysteria2", "vless":
+		if s.hasUser(inbound.Type) {
 			if inbound.Type == "shadowtls" && shadowtls_version < 3 {
 				break
 			}
@@ -77,9 +76,7 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-			if len(users) > 0 || inbound.Type != "shadowsocks" {
-				inbData["users"] = users
-			}
+			inbData["users"] = users
 		}
 
 		data = append(data, inbData)
@@ -275,13 +272,9 @@ func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uin
 	}
 
 	condition := fmt.Sprintf("%d IN (SELECT json_each.value FROM json_each(clients.inbounds))", inboundId)
-	usersJson, err := s.fetchUsers(db, inboundType, condition, inbound)
+	inbound["users"], err = s.fetchUsers(db, inboundType, condition, inbound)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(usersJson) > 0 || inboundType != "shadowsocks" {
-		inbound["users"] = usersJson
 	}
 
 	return json.Marshal(inbound)
@@ -304,13 +297,9 @@ func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds st
 	}
 
 	condition := fmt.Sprintf("id IN (%s)", strings.Join(ClientIds, ","))
-	usersJson, err := s.fetchUsers(db, inboundType, condition, inbound)
+	inbound["users"], err = s.fetchUsers(db, inboundType, condition, inbound)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(usersJson) > 0 || inboundType != "shadowsocks" {
-		inbound["users"] = usersJson
 	}
 
 	return json.Marshal(inbound)
