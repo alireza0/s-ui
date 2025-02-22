@@ -14,13 +14,13 @@ func (c *Core) AddInbound(config []byte) error {
 	}
 	var err error
 	var inbound_config option.Inbound
-	err = inbound_config.UnmarshalJSONContext(globalCtx, config)
+	err = inbound_config.UnmarshalJSONContext(c.GetCtx(), config)
 	if err != nil {
 		return err
 	}
 
 	err = inbound_manager.Create(
-		globalCtx,
+		c.GetCtx(),
 		router,
 		factory.NewLogger("inbound/"+inbound_config.Type+"["+inbound_config.Tag+"]"),
 		inbound_config.Tag,
@@ -48,7 +48,7 @@ func (c *Core) AddOutbound(config []byte) error {
 	var err error
 	var outbound_config option.Outbound
 
-	err = outbound_config.UnmarshalJSONContext(globalCtx, config)
+	err = outbound_config.UnmarshalJSONContext(c.GetCtx(), config)
 	if err != nil {
 		return err
 	}
@@ -86,13 +86,13 @@ func (c *Core) AddEndpoint(config []byte) error {
 	var err error
 	var endpoint_config option.Endpoint
 
-	err = endpoint_config.UnmarshalJSONContext(globalCtx, config)
+	err = endpoint_config.UnmarshalJSONContext(c.GetCtx(), config)
 	if err != nil {
 		return err
 	}
 
 	err = endpoint_manager.Create(
-		globalCtx,
+		c.GetCtx(),
 		router,
 		factory.NewLogger("endpoint/"+endpoint_config.Type+"["+endpoint_config.Tag+"]"),
 		endpoint_config.Tag,
