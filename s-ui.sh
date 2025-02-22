@@ -689,9 +689,9 @@ ssl_cert_issue() {
 }
 
 ssl_cert_issue_CF() {
-    echo "\nSelect an option:"
-    echo "1) Issue a new certificate from Cloudflare"
-    echo "2) Force reissue or renew existing certificates"
+    LOGD "******Instructions for use******"
+    echo "1) New certificate from Cloudflare"
+    echo "2) Force renew existing Certificates"
     echo "3) Back to Menu"
     read -p "Enter your choice [1-3]: " choice
 
