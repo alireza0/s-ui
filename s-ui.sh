@@ -690,28 +690,17 @@ ssl_cert_issue() {
 
 ssl_cert_issue_CF() {
     echo "\nSelect an option:"
-    echo "1) Show existing certificates"
-    echo "2) Issue a new certificate from Cloudflare"
-    echo "3) Force reissue or renew existing certificates"
-    echo "4) Exit"
-    read -p "Enter your choice [1-4]: " choice
+    echo "1) Issue a new certificate from Cloudflare"
+    echo "2) Force reissue or renew existing certificates"
+    echo "3) Back to Menu"
+    read -p "Enter your choice [1-3]: " choice
 
     certPath="/root/cert-CF"
 
     case $choice in
-        1)
-            echo "Checking for existing certificates..."
-            if [ -d "$certPath" ] && [ "$(ls -A $certPath)" ]; then
-                echo "Existing certificates:"
-                ls -lah $certPath
-            else
-                echo "No certificates found."
-            fi
-            show_menu
-            ;;
-        2|3)
+        1|2)
             force_flag=""
-            if [ "$choice" -eq 3 ]; then
+            if [ "$choice" -eq 2 ]; then
                 force_flag="--force"
                 echo "Forcing SSL certificate reissuance..."
             else
@@ -754,68 +743,13 @@ ssl_cert_issue_CF() {
                 LOGD "Your API key is: ${CF_GlobalKey}"
 
                 LOGD "Please set up registered email:"
-ssl_cert_issue_CF() {
-    echo -e "\n${yellow}Select an option:${plain}"
-    echo -e "${green}1) Issue a new certificate from Cloudflare${plain}"
-    echo -e "${green}2) Force reissue or renew existing certificates${plain}"
-    echo -e "${red}3) Exit${plain}"
-    read -p "Enter your choice [1-3]: " choice
-
-    certPath="/root/cert-CF"
-
-    case $choice in
-        1|2)
-            force_flag=""
-            if [ "$choice" -eq 2 ]; then
-                force_flag="--force"
-                echo -e "${yellow}Forcing SSL certificate reissuance...${plain}"
-            else
-                echo -e "${yellow}Starting SSL certificate issuance...${plain}"
-            fi
-            
-            LOGD "******Instructions for use******"
-            LOGI "This Acme script requires the following data:"
-            LOGI "1.Cloudflare Registered e-mail"
-            LOGI "2.Cloudflare Global API Key"
-            LOGI "3.The domain name that has been resolved DNS to the current server by Cloudflare"
-            LOGI "4.The script applies for a certificate. The default installation path is /root/cert "
-            confirm "Confirmed?[y/n]" "y"
-            if [ $? -eq 0 ]; then
-                if ! command -v ~/.acme.sh/acme.sh &>/dev/null; then
-                    echo "acme.sh could not be found. Installing..."
-                    install_acme
-                    if [ $? -ne 0 ]; then
-                        LOGE "Install acme failed, please check logs"
-                        show_menu
-                    fi
-                fi
-
-                CF_Domain=""
-                if [ ! -d "$certPath" ]; then
-                    mkdir -p $certPath
-                else
-                    rm -rf $certPath
-                    mkdir -p $certPath
-                fi
-
-                LOGD "Please set a domain name:"
-                read -p "Input your domain here: " CF_Domain
-                LOGD "Your domain name is set to: ${CF_Domain}"
-
-                CF_GlobalKey=""
-                CF_AccountEmail=""
-                LOGD "Please set the API key:"
-                read -p "Input your key here: " CF_GlobalKey
-                LOGD "Your API key is: ${CF_GlobalKey}"
-
-                LOGD "Please set up registered email:"
                 read -p "Input your email here: " CF_AccountEmail
                 LOGD "Your registered email address is: ${CF_AccountEmail}"
 
                 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
                 if [ $? -ne 0 ]; then
-                    LOGE "Default CA, Let's Encrypt failed, returning to menu..."
-                    show_menu
+                    LOGE "Default CA, Let's Encrypt failed, script exiting..."
+                    exit 1
                 fi
 
                 export CF_Key="${CF_GlobalKey}"
@@ -823,8 +757,8 @@ ssl_cert_issue_CF() {
 
                 ~/.acme.sh/acme.sh --issue --dns dns_cf -d ${CF_Domain} -d *.${CF_Domain} $force_flag --log
                 if [ $? -ne 0 ]; then
-                    LOGE "Certificate issuance failed, returning to menu..."
-                    show_menu
+                    LOGE "Certificate issuance failed, script exiting..."
+                    exit 1
                 else
                     LOGI "Certificate issued Successfully, Installing..."
                 fi
@@ -832,7 +766,7 @@ ssl_cert_issue_CF() {
                 mkdir -p ${certPath}/${CF_Domain}
                 if [ $? -ne 0 ]; then
                     LOGE "Failed to create directory: ${certPath}/${CF_Domain}"
-                    show_menu
+                    exit 1
                 fi
 
                 ~/.acme.sh/acme.sh --installcert -d ${CF_Domain} -d *.${CF_Domain} \
@@ -840,16 +774,16 @@ ssl_cert_issue_CF() {
                     --key-file ${certPath}/${CF_Domain}/privkey.pem
 
                 if [ $? -ne 0 ]; then
-                    LOGE "Certificate installation failed, returning to menu..."
-                    show_menu
+                    LOGE "Certificate installation failed, script exiting..."
+                    exit 1
                 else
                     LOGI "Certificate installed Successfully, Turning on automatic updates..."
                 fi
 
                 ~/.acme.sh/acme.sh --upgrade --auto-upgrade
                 if [ $? -ne 0 ]; then
-                    LOGE "Auto update setup failed, returning to menu..."
-                    show_menu
+                    LOGE "Auto update setup failed, script exiting..."
+                    exit 1
                 else
                     LOGI "The certificate is installed and auto-renewal is turned on."
                     ls -lah ${certPath}/${CF_Domain}
@@ -859,11 +793,11 @@ ssl_cert_issue_CF() {
             show_menu
             ;;
         3)
-            echo -e "${red}Returning to menu...${plain}"
+            echo "Exiting..."
             show_menu
             ;;
         *)
-            echo -e "${red}Invalid choice, please select again.${plain}"
+            echo "Invalid choice, please select again."
             show_menu
             ;;
     esac
