@@ -689,119 +689,129 @@ ssl_cert_issue() {
 }
 
 ssl_cert_issue_CF() {
-    echo -E ""
-    LOGD "******Instructions for use******"
-    LOGI "This Acme script requires the following data:"
-    LOGI "1.Cloudflare Registered e-mail"
-    LOGI "2.Cloudflare Global API Key"
-    LOGI "3.The domain name that has been resolved dns to the current server by Cloudflare"
-    LOGI "4.The script applies for a certificate. The default installation path is /root/cert "
-    confirm "Confirmed?[y/n]" "y"
-    if [ $? -eq 0 ]; then
-        # check for acme.sh first
-        if ! command -v ~/.acme.sh/acme.sh &>/dev/null; then
-            echo "acme.sh could not be found. we will install it"
-            install_acme
-            if [ $? -ne 0 ]; then
-                LOGE "install acme failed, please check logs"
-                exit 1
-            fi
-        fi
+    echo "\nSelect an option:"
+    echo "1) Show existing certificates"
+    echo "2) Issue a new certificate from Cloudflare"
+    echo "3) Force reissue or renew existing certificates"
+    echo "4) Exit"
+    read -p "Enter your choice [1-4]: " choice
 
-        CF_Domain=""
-        certPath="/root/cert-CF"
-        if [ ! -d "$certPath" ]; then
-            mkdir -p $certPath
-        else
-            rm -rf $certPath
-            mkdir -p $certPath
-        fi
+    certPath="/root/cert-CF"
 
-        LOGD "Please set a domain name:"
-        read -p "Input your domain here: " CF_Domain
-        LOGD "Your domain name is set to: ${CF_Domain}"
-
-        # Set up Cloudflare API details
-        CF_GlobalKey=""
-        CF_AccountEmail=""
-        LOGD "Please set the API key:"
-        read -p "Input your key here: " CF_GlobalKey
-        LOGD "Your API key is: ${CF_GlobalKey}"
-
-        LOGD "Please set up registered email:"
-        read -p "Input your email here: " CF_AccountEmail
-        LOGD "Your registered email address is: ${CF_AccountEmail}"
-
-        # Set the default CA to Let's Encrypt
-        ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
-        if [ $? -ne 0 ]; then
-            LOGE "Default CA, Lets'Encrypt fail, script exiting..."
-            exit 1
-        fi
-
-        export CF_Key="${CF_GlobalKey}"
-        export CF_Email="${CF_AccountEmail}"
-
-        # Issue the certificate using Cloudflare DNS
-        ~/.acme.sh/acme.sh --issue --dns dns_cf -d ${CF_Domain} -d *.${CF_Domain} --log
-        if [ $? -ne 0 ]; then
-            LOGE "Certificate issuance failed, script exiting..."
-            exit 1
-        else
-            LOGI "Certificate issued Successfully, Installing..."
-        fi
-
-        # Install the certificate
-        mkdir -p ${certPath}/${CF_Domain}
-        if [ $? -ne 0 ]; then
-            LOGE "Failed to create directory: ${certPath}/${CF_Domain}"
-            exit 1
-        fi
-
-        ~/.acme.sh/acme.sh --installcert -d ${CF_Domain} -d *.${CF_Domain} \
-            --fullchain-file ${certPath}/${CF_Domain}/fullchain.pem \
-            --key-file ${certPath}/${CF_Domain}/privkey.pem
-
-        if [ $? -ne 0 ]; then
-            LOGE "Certificate installation failed, script exiting..."
-            exit 1
-        else
-            LOGI "Certificate installed Successfully, Turning on automatic updates..."
-        fi
-
-        # Enable auto-update
-        ~/.acme.sh/acme.sh --upgrade --auto-upgrade
-        if [ $? -ne 0 ]; then
-            LOGE "Auto update setup failed, script exiting..."
-            exit 1
-        else
-            LOGI "The certificate is installed and auto-renewal is turned on. Specific information is as follows:"
-            ls -lah ${certPath}/${CF_Domain}
-            chmod 755 ${certPath}/${CF_Domain}
-        fi
-
-        # Prompt user to set panel paths after successful certificate installation
-        read -p "Would you like to set this certificate for the panel? (y/n): " setPanel
-        if [[ "$setPanel" == "y" || "$setPanel" == "Y" ]]; then
-            local webCertFile="${certPath}/${CF_Domain}/fullchain.pem"
-            local webKeyFile="${certPath}/${CF_Domain}/privkey.pem"
-
-            if [[ -f "$webCertFile" && -f "$webKeyFile" ]]; then
-                /usr/local/s-ui/s-ui cert -webCert "$webCertFile" -webCertKey "$webKeyFile"
-                LOGI "Panel paths set for domain: $CF_Domain"
-                LOGI "  - Certificate File: $webCertFile"
-                LOGI "  - Private Key File: $webKeyFile"
-                echo -e "${green}Access URL: https://${CF_Domain}:${existing_port}${existing_webBasePath}${plain}"
-                restart
+    case $choice in
+        1)
+            echo "Checking for existing certificates..."
+            if [ -d "$certPath" ] && [ "$(ls -A $certPath)" ]; then
+                echo "Existing certificates:"
+                ls -lah $certPath
             else
-                LOGE "Error: Certificate or private key file not found for domain: $CF_Domain."
+                echo "No certificates found."
             fi
-        else
-            LOGI "Skipping panel path setting."
-        fi
-    else
-        show_menu
-    fi
+            show_menu
+            ;;
+        2|3)
+            force_flag=""
+            if [ "$choice" -eq 3 ]; then
+                force_flag="--force"
+                echo "Forcing SSL certificate reissuance..."
+            else
+                echo "Starting SSL certificate issuance..."
+            fi
+            
+            LOGD "******Instructions for use******"
+            LOGI "This Acme script requires the following data:"
+            LOGI "1.Cloudflare Registered e-mail"
+            LOGI "2.Cloudflare Global API Key"
+            LOGI "3.The domain name that has been resolved DNS to the current server by Cloudflare"
+            LOGI "4.The script applies for a certificate. The default installation path is /root/cert "
+            confirm "Confirmed?[y/n]" "y"
+            if [ $? -eq 0 ]; then
+                if ! command -v ~/.acme.sh/acme.sh &>/dev/null; then
+                    echo "acme.sh could not be found. Installing..."
+                    install_acme
+                    if [ $? -ne 0 ]; then
+                        LOGE "Install acme failed, please check logs"
+                        exit 1
+                    fi
+                fi
+
+                CF_Domain=""
+                if [ ! -d "$certPath" ]; then
+                    mkdir -p $certPath
+                else
+                    rm -rf $certPath
+                    mkdir -p $certPath
+                fi
+
+                LOGD "Please set a domain name:"
+                read -p "Input your domain here: " CF_Domain
+                LOGD "Your domain name is set to: ${CF_Domain}"
+
+                CF_GlobalKey=""
+                CF_AccountEmail=""
+                LOGD "Please set the API key:"
+                read -p "Input your key here: " CF_GlobalKey
+                LOGD "Your API key is: ${CF_GlobalKey}"
+
+                LOGD "Please set up registered email:"
+                read -p "Input your email here: " CF_AccountEmail
+                LOGD "Your registered email address is: ${CF_AccountEmail}"
+
+                ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
+                if [ $? -ne 0 ]; then
+                    LOGE "Default CA, Let's Encrypt failed, script exiting..."
+                    exit 1
+                fi
+
+                export CF_Key="${CF_GlobalKey}"
+                export CF_Email="${CF_AccountEmail}"
+
+                ~/.acme.sh/acme.sh --issue --dns dns_cf -d ${CF_Domain} -d *.${CF_Domain} $force_flag --log
+                if [ $? -ne 0 ]; then
+                    LOGE "Certificate issuance failed, script exiting..."
+                    exit 1
+                else
+                    LOGI "Certificate issued Successfully, Installing..."
+                fi
+
+                mkdir -p ${certPath}/${CF_Domain}
+                if [ $? -ne 0 ]; then
+                    LOGE "Failed to create directory: ${certPath}/${CF_Domain}"
+                    exit 1
+                fi
+
+                ~/.acme.sh/acme.sh --installcert -d ${CF_Domain} -d *.${CF_Domain} \
+                    --fullchain-file ${certPath}/${CF_Domain}/fullchain.pem \
+                    --key-file ${certPath}/${CF_Domain}/privkey.pem
+
+                if [ $? -ne 0 ]; then
+                    LOGE "Certificate installation failed, script exiting..."
+                    exit 1
+                else
+                    LOGI "Certificate installed Successfully, Turning on automatic updates..."
+                fi
+
+                ~/.acme.sh/acme.sh --upgrade --auto-upgrade
+                if [ $? -ne 0 ]; then
+                    LOGE "Auto update setup failed, script exiting..."
+                    exit 1
+                else
+                    LOGI "The certificate is installed and auto-renewal is turned on."
+                    ls -lah ${certPath}/${CF_Domain}
+                    chmod 755 ${certPath}/${CF_Domain}
+                fi
+            fi
+            show_menu
+            ;;
+        4)
+            echo "Exiting..."
+            exit 0
+            ;;
+        *)
+            echo "Invalid choice, please select again."
+            show_menu
+            ;;
+    esac
 }
 
 show_usage() {
