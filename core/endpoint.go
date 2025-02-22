@@ -4,6 +4,7 @@ import (
 	"s-ui/logger"
 	"s-ui/util/common"
 
+	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/option"
 )
 
@@ -52,8 +53,12 @@ func (c *Core) AddOutbound(config []byte) error {
 		return err
 	}
 
+	outboundCtx := adapter.WithContext(c.GetCtx(), &adapter.InboundContext{
+		Outbound: outbound_config.Tag,
+	})
+
 	err = outbound_manager.Create(
-		globalCtx,
+		outboundCtx,
 		router,
 		factory.NewLogger("outbound/"+outbound_config.Type+"["+outbound_config.Tag+"]"),
 		outbound_config.Tag,
