@@ -689,6 +689,7 @@ ssl_cert_issue() {
 }
 
 ssl_cert_issue_CF() {
+    echo -E ""
     LOGD "******Instructions for use******"
     echo "1) New certificate from Cloudflare"
     echo "2) Force renew existing Certificates"
