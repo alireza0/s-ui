@@ -4,9 +4,11 @@ services:
     image: alireza7/s-ui
     container_name: s-ui
     hostname: "s-ui"
+    mem_limit: 512m
+    memswap_limit: 512m
     volumes:
-      - "./db:/app/db"
-      - "./cert:/app/cert"
+      - "./db:/usr/local/s-ui/db"
+      - "./cert:/root/cert"
     tty: true
     restart: unless-stopped
     ports:
@@ -14,9 +16,16 @@ services:
       - "2096:2096"
     networks:
       - s-ui
-    entrypoint: "./entrypoint.sh"
+    entrypoint: ["./entrypoint.sh"]
+    environment:
+      - PANEL_PORT=2095
+      - PANEL_PATH=/app
+      - SUB_PORT=2096
+      - SUB_PATH=/sub
 
 networks:
   s-ui:
+    name: s_ui
     driver: bridge
+  
   
