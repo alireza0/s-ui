@@ -5,7 +5,7 @@ go 1.23.2
 toolchain go1.24.1
 
 require (
-	github.com/gin-contrib/gzip v1.2.2
+	github.com/gin-contrib/gzip v1.2.3
 	github.com/gin-gonic/gin v1.10.0
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
