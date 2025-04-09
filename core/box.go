@@ -219,7 +219,7 @@ func NewBox(options Options) (*Box, error) {
 	if connTracker == nil {
 		connTracker = NewConnTracker()
 	}
-	router.SetTracker(connTracker)
+	router.AppendTracker(connTracker)
 
 	var services []adapter.LifecycleService
 
