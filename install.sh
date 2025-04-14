@@ -245,4 +245,4 @@ install_s-ui() {
 
 echo -e "${green}Executing...${plain}"
 install_base
-install_s-ui $1 
+install_s-ui $1
