@@ -1,0 +1,27 @@
+name: Replace alireza0/s-ui with shellgate/sui
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  replace-links:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Replace URLs
+      run: |
+        find . -type f -not -path "./.git/*" -exec sed -i 's/github\.com\/alireza0\/s-ui/github.com\/shellgate\/sui/g' {} +
+        find . -type f -not -path "./.git/*" -exec sed -i 's/alireza0\/s-ui/shellgate\/sui/g' {} +
+        find . -type f -not -path "./.git/*" -exec sed -i 's/alireza0/shellgate/g' {} +
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name "Auto Replace Bot"
+        git config --global user.email "bot@shellgate.dev"
+        git add .
+        git commit -m "Auto: replaced all alireza0/s-ui links with shellgate/sui"
+        git push
