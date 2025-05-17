@@ -112,17 +112,6 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 			}
 		}
 
-		err = util.FillOutJson(&inbound, hostname)
-		if err != nil {
-			return 0, err
-		}
-
-		err = tx.Save(&inbound).Error
-		if err != nil {
-			return 0, err
-		}
-		id = inbound.Id
-
 		if corePtr.IsRunning() {
 			if act == "edit" {
 				var oldTag string
@@ -155,6 +144,17 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 				return 0, err
 			}
 		}
+
+		err = util.FillOutJson(&inbound, hostname)
+		if err != nil {
+			return 0, err
+		}
+
+		err = tx.Save(&inbound).Error
+		if err != nil {
+			return 0, err
+		}
+		id = inbound.Id
 	case "del":
 		var tag string
 		err = json.Unmarshal(data, &tag)
