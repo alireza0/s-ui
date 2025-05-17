@@ -95,7 +95,7 @@ func prepareTls(t *model.Tls) map[string]interface{} {
 			reality := v.(map[string]interface{})
 			clientReality := oTls["reality"].(map[string]interface{})
 			clientReality["enabled"] = reality["enabled"]
-			if short_ids, hasSIds := reality["short_ids"].([]interface{}); hasSIds && len(short_ids) > 0 {
+			if short_ids, hasSIds := reality["short_id"].([]interface{}); hasSIds && len(short_ids) > 0 {
 				clientReality["short_id"] = short_ids[common.RandomInt(len(short_ids))]
 			}
 			oTls["reality"] = clientReality
