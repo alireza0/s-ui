@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	suiLog "s-ui/logger"
+	"time"
 
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing/common"
@@ -176,6 +177,10 @@ func (l *observableLogger) Log(ctx context.Context, level log.Level, args []any)
 		suiLog.Error(l.tag, msg)
 	default:
 		suiLog.Debug(l.tag, msg)
+	}
+	if (l.filePath != "" || l.writer != os.Stderr) && l.writer != nil {
+		message := l.formatter.Format(ctx, level, l.tag, msg, time.Now())
+		l.writer.Write([]byte(message))
 	}
 }
 
