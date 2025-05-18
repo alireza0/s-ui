@@ -172,12 +172,8 @@ func (s *ServerService) GenKeypair(keyType string, options string) []string {
 	return []string{"Failed to generate keypair"}
 }
 
-func (s *ServerService) generateECHKeyPair(options string) []string {
-	parts := strings.Split(options, ",")
-	if len(parts) != 2 {
-		return []string{"Failed to generate ECH keypair: ", "invalid options"}
-	}
-	configPem, keyPem, err := tls.ECHKeygenDefault(parts[0], parts[1] == "true")
+func (s *ServerService) generateECHKeyPair(serverName string) []string {
+	configPem, keyPem, err := tls.ECHKeygenDefault(serverName)
 	if err != nil {
 		return []string{"Failed to generate ECH keypair: ", err.Error()}
 	}
