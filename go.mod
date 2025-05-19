@@ -10,7 +10,7 @@ require (
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sagernet/sing v0.6.10-0.20250505040842-ba62fee9470f
-	github.com/sagernet/sing-box v1.11.10
+	github.com/sagernet/sing-box v1.11.11
 	github.com/sagernet/sing-dns v0.4.3
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gorm.io/driver/sqlite v1.5.7
@@ -20,7 +20,12 @@ require (
 require (
 	github.com/caddyserver/zerossl v0.1.3 // indirect
 	github.com/metacubex/utls v1.7.0-alpha.2 // indirect
+	github.com/mholt/acmez v1.2.0 // indirect
 	github.com/mholt/acmez/v3 v3.1.2 // indirect
+	github.com/oschwald/maxminddb-golang v1.12.0 // indirect
+	github.com/sagernet/cloudflare-tls v0.0.0-20231208171750-a4483c1b7cd1 // indirect
+	github.com/sagernet/reality v0.0.0-20230406110435-ee17307e7691 // indirect
+	github.com/sagernet/utls v1.6.7 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
 )
 
