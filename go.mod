@@ -9,7 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sagernet/sing v0.6.10-0.20250505040842-ba62fee9470f
+	github.com/sagernet/sing v0.6.10
 	github.com/sagernet/sing-box v1.11.11
 	github.com/sagernet/sing-dns v0.4.3
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
