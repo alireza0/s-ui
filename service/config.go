@@ -22,6 +22,7 @@ type ConfigService struct {
 	SettingService
 	InboundService
 	OutboundService
+	ServicesService
 	EndpointService
 }
 
@@ -31,6 +32,7 @@ type SingBoxConfig struct {
 	Ntp          json.RawMessage   `json:"ntp"`
 	Inbounds     []json.RawMessage `json:"inbounds"`
 	Outbounds    []json.RawMessage `json:"outbounds"`
+	Services     []json.RawMessage `json:"services"`
 	Endpoints    []json.RawMessage `json:"endpoints"`
 	Route        json.RawMessage   `json:"route"`
 	Experimental json.RawMessage   `json:"experimental"`
@@ -60,6 +62,10 @@ func (s *ConfigService) GetConfig(data string) (*SingBoxConfig, error) {
 		return nil, err
 	}
 	singboxConfig.Outbounds, err = s.OutboundService.GetAllConfig(database.GetDB())
+	if err != nil {
+		return nil, err
+	}
+	singboxConfig.Services, err = s.ServicesService.GetAllConfig(database.GetDB())
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +125,7 @@ func (s *ConfigService) StopCore() error {
 func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initUsers string, loginUser string, hostname string) ([]string, error) {
 	var err error
 	var inboundIds []uint
+	var serviceIds []uint
 	var inboundId uint
 	var objs []string = []string{obj}
 
@@ -131,6 +138,12 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 				err1 := s.InboundService.RestartInbounds(db, inboundIds)
 				if err1 != nil {
 					logger.Error("unable to restart inbounds: ", err1)
+				}
+			}
+			if len(serviceIds) > 0 && corePtr.IsRunning() {
+				err1 := s.ServicesService.RestartServices(db, serviceIds)
+				if err1 != nil {
+					logger.Error("unable to restart services: ", err1)
 				}
 			}
 			// Try to start core if it is not running
@@ -147,11 +160,13 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 		inboundIds, err = s.ClientService.Save(tx, act, data, hostname)
 		objs = append(objs, "inbounds")
 	case "tls":
-		inboundIds, err = s.TlsService.Save(tx, act, data)
+		serviceIds, inboundIds, err = s.TlsService.Save(tx, act, data)
 	case "inbounds":
 		inboundId, err = s.InboundService.Save(tx, act, data, initUsers, hostname)
 	case "outbounds":
 		err = s.OutboundService.Save(tx, act, data)
+	case "services":
+		err = s.ServicesService.Save(tx, act, data)
 	case "endpoints":
 		err = s.EndpointService.Save(tx, act, data)
 	case "config":

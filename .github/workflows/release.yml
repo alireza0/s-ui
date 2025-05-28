@@ -92,7 +92,7 @@ jobs:
           fi
 
           ### Build s-ui
-          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_ech,with_utls,with_reality_server,with_acme,with_gvisor" -o sui main.go
+          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui main.go
 
           mkdir s-ui
           cp sui s-ui/
