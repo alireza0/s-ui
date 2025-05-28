@@ -66,6 +66,9 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 			if inbound.Type == "shadowtls" {
 				json.Unmarshal(restFields["version"], &shadowtls_version)
 			}
+			if inbound.Type == "shadowsocks" {
+				inbData["managed"] = restFields["managed"]
+			}
 		}
 		if s.hasUser(inbound.Type) {
 			if inbound.Type == "shadowtls" && shadowtls_version < 3 {
