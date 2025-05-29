@@ -50,6 +50,7 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 	var data []map[string]interface{}
 	for _, inbound := range inbounds {
 		var shadowtls_version uint
+		ss_managed := false
 		inbData := map[string]interface{}{
 			"id":     inbound.Id,
 			"type":   inbound.Type,
@@ -67,13 +68,12 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 				json.Unmarshal(restFields["version"], &shadowtls_version)
 			}
 			if inbound.Type == "shadowsocks" {
-				inbData["managed"] = restFields["managed"]
+				json.Unmarshal(restFields["managed"], &ss_managed)
 			}
 		}
-		if s.hasUser(inbound.Type) {
-			if inbound.Type == "shadowtls" && shadowtls_version < 3 {
-				break
-			}
+		if s.hasUser(inbound.Type) &&
+			!(inbound.Type == "shadowtls" && shadowtls_version < 3) &&
+			!(inbound.Type == "shadowsocks" && ss_managed) {
 			users := []string{}
 			err = db.Raw("SELECT clients.name FROM clients, json_each(clients.inbounds) as je WHERE je.value = ?", inbound.Id).Scan(&users).Error
 			if err != nil {
