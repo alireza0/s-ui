@@ -19,6 +19,7 @@ import (
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/dns"
 	"github.com/sagernet/sing-box/dns/transport/local"
+	"github.com/sagernet/sing-box/experimental"
 	"github.com/sagernet/sing-box/experimental/cachefile"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
@@ -125,8 +126,16 @@ func NewBox(options Options) (*Box, error) {
 	ctx = pause.WithDefaultManager(ctx)
 	experimentalOptions := sbCommon.PtrValueOrDefault(options.Experimental)
 	var needCacheFile bool
+	var needClashAPI bool
+	var needV2RayAPI bool
 	if experimentalOptions.CacheFile != nil && experimentalOptions.CacheFile.Enabled {
 		needCacheFile = true
+	}
+	if experimentalOptions.ClashAPI != nil {
+		needClashAPI = true
+	}
+	if experimentalOptions.V2RayAPI != nil && experimentalOptions.V2RayAPI.Listen != "" {
+		needV2RayAPI = true
 	}
 	platformInterface := service.FromContext[platform.Interface](ctx)
 	var defaultLogWriter io.Writer
@@ -325,6 +334,28 @@ func NewBox(options Options) (*Box, error) {
 		service.MustRegister[adapter.CacheFile](ctx, cacheFile)
 		internalServices = append(internalServices, cacheFile)
 	}
+	if needClashAPI {
+		clashAPIOptions := sbCommon.PtrValueOrDefault(experimentalOptions.ClashAPI)
+		clashAPIOptions.ModeList = experimental.CalculateClashModeList(options.Options)
+		clashServer, err := experimental.NewClashServer(ctx, logFactory.(log.ObservableFactory), clashAPIOptions)
+		if err != nil {
+			return nil, common.NewError(err, "create clash-server")
+		}
+		router.AppendTracker(clashServer)
+		service.MustRegister[adapter.ClashServer](ctx, clashServer)
+		internalServices = append(internalServices, clashServer)
+	}
+	if needV2RayAPI {
+		v2rayServer, err := experimental.NewV2RayServer(logFactory.NewLogger("v2ray-api"), sbCommon.PtrValueOrDefault(experimentalOptions.V2RayAPI))
+		if err != nil {
+			return nil, common.NewError(err, "create v2ray-server")
+		}
+		if v2rayServer.StatsService() != nil {
+			router.AppendTracker(v2rayServer.StatsService())
+			internalServices = append(internalServices, v2rayServer)
+			service.MustRegister[adapter.V2RayServer](ctx, v2rayServer)
+		}
+	}
 	ntpOptions := sbCommon.PtrValueOrDefault(options.NTP)
 	if ntpOptions.Enabled {
 		ntpDialer, err := dialer.New(ctx, ntpOptions.DialerOptions, ntpOptions.ServerIsDomain())
@@ -405,7 +436,7 @@ func (s *Box) preStart() error {
 	if err != nil {
 		return common.NewError(err, "start logger")
 	}
-	err = adapter.StartNamed(adapter.StartStateInitialize, s.internalService) // cache-file
+	err = adapter.StartNamed(adapter.StartStateInitialize, s.internalService) // cache-file clash-api v2ray-api
 	if err != nil {
 		return err
 	}
@@ -460,7 +491,7 @@ func (s *Box) Close() error {
 		close(s.done)
 	}
 	err := sbCommon.Close(
-		s.endpoint, s.inbound, s.outbound, s.router, s.connection, s.dnsRouter, s.dnsTransport, s.network,
+		s.endpoint, s.inbound, s.outbound, s.router, s.connection, s.dnsRouter, s.dnsTransport, s.network, s.service,
 	)
 	for _, lifecycleService := range s.internalService {
 		err1 := lifecycleService.Close()
