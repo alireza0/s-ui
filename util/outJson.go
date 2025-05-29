@@ -39,7 +39,7 @@ func FillOutJson(i *model.Inbound, hostname string) error {
 	outJson["server_port"] = (*inbound)["listen_port"]
 
 	switch i.Type {
-	case "http", "socks", "mixed":
+	case "http", "socks", "mixed", "anytls":
 	case "shadowsocks":
 		shadowsocksOut(&outJson, *inbound)
 		return nil
