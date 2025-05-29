@@ -4,17 +4,17 @@ go 1.24.3
 
 require (
 	github.com/gin-contrib/gzip v1.2.3
-	github.com/gin-contrib/sessions v1.0.3
-	github.com/gin-gonic/gin v1.10.0
+	github.com/gin-contrib/sessions v1.0.4
+	github.com/gin-gonic/gin v1.10.1
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sagernet/sing v0.6.11-0.20250521033217-30d675ea099b
 	github.com/sagernet/sing-box v1.12.0-beta.19
-	github.com/sagernet/sing-dns v0.4.2
+	github.com/sagernet/sing-dns v0.4.5
 	github.com/shirou/gopsutil/v4 v4.25.4
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gorm.io/driver/sqlite v1.5.7
-	gorm.io/gorm v1.26.0
+	gorm.io/gorm v1.30.0
 )
 
 require (
