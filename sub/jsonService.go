@@ -211,7 +211,7 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 }
 
 func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
-	rules := []interface{}{
+	rules_start := []interface{}{
 		map[string]interface{}{
 			"action": "sniff",
 		},
@@ -220,6 +220,8 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 			"action":     "route",
 			"outbound":   "direct",
 		},
+	}
+	rules_end := []interface{}{
 		map[string]interface{}{
 			"clash_mode": "Global",
 			"action":     "route",
@@ -229,7 +231,7 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	route := map[string]interface{}{
 		"auto_detect_interface": true,
 		"final":                 "proxy",
-		"rules":                 rules,
+		"rules":                 rules_start,
 	}
 
 	othersStr, err := j.SettingService.GetSubJsonExt()
@@ -261,7 +263,11 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 		route["rule_set"] = othersJson["rule_set"]
 	}
 	if settingRules, ok := othersJson["rules"].([]interface{}); ok {
-		route["rules"] = append(rules, settingRules...)
+		rules := append(rules_start, settingRules...)
+		route["rules"] = append(rules, rules_end...)
+	}
+	if defaultDomainResolver, ok := othersJson["default_domain_resolver"].(string); ok {
+		route["default_domain_resolver"] = defaultDomainResolver
 	}
 	(*jsonConfig)["route"] = route
 
