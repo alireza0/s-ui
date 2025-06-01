@@ -46,17 +46,17 @@ type JsonService struct {
 	LinkService
 }
 
-func (j *JsonService) GetJson(subId string, format string) (*string, error) {
+func (j *JsonService) GetJson(subId string, format string) (*string, []string, error) {
 	var jsonConfig map[string]interface{}
 
 	client, inDatas, err := j.getData(subId)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	outbounds, outTags, err := j.getOutbounds(client.Config, inDatas)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	links := j.LinkService.GetLinks(&client.Links, "external", "")
@@ -72,7 +72,7 @@ func (j *JsonService) GetJson(subId string, format string) (*string, error) {
 
 	err = json.Unmarshal([]byte(defaultJson), &jsonConfig)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	jsonConfig["outbounds"] = outbounds
@@ -82,7 +82,11 @@ func (j *JsonService) GetJson(subId string, format string) (*string, error) {
 
 	result, _ := json.MarshalIndent(jsonConfig, "", "  ")
 	resultStr := string(result)
-	return &resultStr, nil
+
+	updateInterval, _ := j.SettingService.GetSubUpdates()
+	headers := util.GetHeaders(client, updateInterval)
+
+	return &resultStr, headers, nil
 }
 
 func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, error) {

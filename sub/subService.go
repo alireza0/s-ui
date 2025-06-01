@@ -6,6 +6,7 @@ import (
 	"s-ui/database"
 	"s-ui/database/model"
 	"s-ui/service"
+	"s-ui/util"
 	"strings"
 	"time"
 )
@@ -34,11 +35,8 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 	linksArray := s.LinkService.GetLinks(&client.Links, "all", clientInfo)
 	result := strings.Join(linksArray, "\n")
 
-	var headers []string
 	updateInterval, _ := s.SettingService.GetSubUpdates()
-	headers = append(headers, fmt.Sprintf("upload=%d; download=%d; total=%d; expire=%d", client.Up, client.Down, client.Volume, client.Expiry))
-	headers = append(headers, fmt.Sprintf("%d", updateInterval))
-	headers = append(headers, subId)
+	headers := util.GetHeaders(client, updateInterval)
 
 	subEncode, _ := s.SettingService.GetSubEncode()
 	if subEncode {

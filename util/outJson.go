@@ -209,6 +209,7 @@ func trojanOut(out *map[string]interface{}, inbound map[string]interface{}) {
 }
 
 func vmessOut(out *map[string]interface{}, inbound map[string]interface{}) {
+	(*out)["alter_id"] = 0
 	delete(*out, "transport")
 	if transport, ok := inbound["transport"]; ok {
 		(*out)["transport"] = transport
