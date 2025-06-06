@@ -112,8 +112,37 @@ func remove_outbound_strategy(db *gorm.DB) error {
 	return nil
 }
 
+func anytls_user_config(db *gorm.DB) error {
+	var clients []model.Client
+	err := db.Model(model.Client{}).Find(&clients).Error
+	if err != nil {
+		return err
+	}
+	for index, client := range clients {
+		var configs map[string]json.RawMessage
+		if err := json.Unmarshal(client.Config, &configs); err != nil {
+			return err
+		}
+		if configs["anytls"] != nil {
+			continue
+		}
+		configs["anytls"] = configs["trojan"]
+		configJson, err := json.MarshalIndent(configs, "", "  ")
+		if err != nil {
+			return err
+		}
+		clients[index].Config = configJson
+		db.Save(&clients[index])
+	}
+	return nil
+}
+
 func to1_3(db *gorm.DB) error {
-	err := migrate_dns(db)
+	err := anytls_user_config(db)
+	if err != nil {
+		return err
+	}
+	err = migrate_dns(db)
 	if err != nil {
 		return err
 	}
