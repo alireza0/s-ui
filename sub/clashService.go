@@ -245,7 +245,7 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 					proxy["h2-opts"] = httpOpts
 				} else {
 					proxy["network"] = "http"
-					proxy["http-opts"] = httpOpts
+					proxy["http-opts"] = map[string]interface{}{"path": []interface{}{httpOpts["path"]}, "host": httpOpts["host"]}
 				}
 			case "ws", "httpupgrade":
 				proxy["network"] = "ws"
