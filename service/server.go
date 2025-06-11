@@ -12,6 +12,7 @@ import (
 
 	"github.com/sagernet/sing-box/common/tls"
 	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/host"
 	"github.com/shirou/gopsutil/v4/mem"
 	"github.com/shirou/gopsutil/v4/net"
@@ -29,6 +30,12 @@ func (s *ServerService) GetStatus(request string) *map[string]interface{} {
 			status["cpu"] = s.GetCpuPercent()
 		case "mem":
 			status["mem"] = s.GetMemInfo()
+		case "dsk":
+			status["dsk"] = s.GetDiskInfo()
+		case "dio":
+			status["dio"] = s.GetDiskIO()
+		case "swp":
+			status["swp"] = s.GetSwapInfo()
 		case "net":
 			status["net"] = s.GetNetInfo()
 		case "sys":
@@ -69,6 +76,49 @@ func (s *ServerService) GetMemInfo() map[string]interface{} {
 	} else {
 		info["current"] = memInfo.Used
 		info["total"] = memInfo.Total
+	}
+	return info
+}
+
+func (s *ServerService) GetDiskInfo() map[string]interface{} {
+	info := make(map[string]interface{}, 0)
+	diskInfo, err := disk.Usage("/")
+	if err != nil {
+		logger.Warning("get disk usage failed:", err)
+	} else {
+		info["current"] = diskInfo.Used
+		info["total"] = diskInfo.Total
+	}
+	return info
+}
+
+func (s *ServerService) GetDiskIO() map[string]interface{} {
+	info := make(map[string]interface{}, 0)
+	ioStats, err := disk.IOCounters()
+	if err != nil {
+		logger.Warning("get disk io counters failed:", err)
+	} else if len(ioStats) > 0 {
+		infoR, infoW := uint64(0), uint64(0)
+		for _, ioStat := range ioStats {
+			infoR += ioStat.ReadBytes
+			infoW += ioStat.WriteBytes
+		}
+		info["read"] = infoR
+		info["write"] = infoW
+	} else {
+		logger.Warning("can not find disk io counters")
+	}
+	return info
+}
+
+func (s *ServerService) GetSwapInfo() map[string]interface{} {
+	info := make(map[string]interface{}, 0)
+	swapInfo, err := mem.SwapMemory()
+	if err != nil {
+		logger.Warning("get swap memory failed:", err)
+	} else {
+		info["current"] = swapInfo.Used
+		info["total"] = swapInfo.Total
 	}
 	return info
 }
