@@ -9,10 +9,11 @@ require (
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sagernet/sing v0.6.11-0.20250521033217-30d675ea099b
-	github.com/sagernet/sing-box v1.12.0-beta.21
+	github.com/sagernet/sing-box v1.12.0-beta.24
 	github.com/sagernet/sing-dns v0.4.5
 	github.com/shirou/gopsutil/v4 v4.25.4
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.30.0
 )
@@ -111,8 +112,8 @@ require (
 	github.com/sagernet/sing-shadowsocks v0.2.8 // indirect
 	github.com/sagernet/sing-shadowsocks2 v0.2.1 // indirect
 	github.com/sagernet/sing-shadowtls v0.2.1-0.20250503051639-fcd445d33c11 // indirect
-	github.com/sagernet/sing-tun v0.6.6-0.20250428031943-0686f8c4f210 // indirect
-	github.com/sagernet/sing-vmess v0.2.4-0.20250527060135-661c827800bc // indirect
+	github.com/sagernet/sing-tun v0.6.6-0.20250610083027-da0a50057fb5 // indirect
+	github.com/sagernet/sing-vmess v0.2.4-0.20250605032146-38cc72672c88 // indirect
 	github.com/sagernet/smux v1.5.34-mod.2 // indirect
 	github.com/sagernet/tailscale v1.80.3-mod.5 // indirect
 	github.com/sagernet/wireguard-go v0.0.1-beta.7 // indirect
@@ -155,6 +156,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	google.golang.org/grpc v1.72.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.3.0 // indirect
 )
