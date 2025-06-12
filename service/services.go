@@ -126,6 +126,9 @@ func (s *ServicesService) Save(tx *gorm.DB, act string, data json.RawMessage) er
 }
 
 func (s *ServicesService) RestartServices(tx *gorm.DB, ids []uint) error {
+	if !corePtr.IsRunning() {
+		return nil
+	}
 	var services []*model.Service
 	err := tx.Model(model.Service{}).Preload("Tls").Where("id in ?", ids).Find(&services).Error
 	if err != nil {

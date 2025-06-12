@@ -13,7 +13,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type InboundService struct{}
+type InboundService struct {
+	ClientService
+}
 
 func (s *InboundService) Get(ids string) (*[]map[string]interface{}, error) {
 	if ids == "" {
@@ -97,40 +99,41 @@ func (s *InboundService) FromIds(ids []uint) ([]*model.Inbound, error) {
 	return inbounds, nil
 }
 
-func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, initUserIds string, hostname string) (uint, error) {
+func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, initUserIds string, hostname string) error {
 	var err error
-	var id uint
 
 	switch act {
 	case "new", "edit":
 		var inbound model.Inbound
 		err = inbound.UnmarshalJSON(data)
 		if err != nil {
-			return 0, err
+			return err
 		}
 		if inbound.TlsId > 0 {
 			err = tx.Model(model.Tls{}).Where("id = ?", inbound.TlsId).Find(&inbound.Tls).Error
 			if err != nil {
-				return 0, err
+				return err
+			}
+		}
+		var oldTag string
+		if act == "edit" {
+			err = tx.Model(model.Inbound{}).Select("tag").Where("id = ?", inbound.Id).Find(&oldTag).Error
+			if err != nil {
+				return err
 			}
 		}
 
 		if corePtr.IsRunning() {
 			if act == "edit" {
-				var oldTag string
-				err = tx.Model(model.Inbound{}).Select("tag").Where("id = ?", inbound.Id).Find(&oldTag).Error
-				if err != nil {
-					return 0, err
-				}
 				err = corePtr.RemoveInbound(oldTag)
 				if err != nil && err != os.ErrInvalid {
-					return 0, err
+					return err
 				}
 			}
 
 			inboundConfig, err := inbound.MarshalJSON()
 			if err != nil {
-				return 0, err
+				return err
 			}
 
 			if act == "edit" {
@@ -139,49 +142,62 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 				inboundConfig, err = s.initUsers(tx, inboundConfig, initUserIds, inbound.Type)
 			}
 			if err != nil {
-				return 0, err
+				return err
 			}
 
 			err = corePtr.AddInbound(inboundConfig)
 			if err != nil {
-				return 0, err
+				return err
 			}
 		}
 
 		err = util.FillOutJson(&inbound, hostname)
 		if err != nil {
-			return 0, err
+			return err
 		}
 
 		err = tx.Save(&inbound).Error
 		if err != nil {
-			return 0, err
+			return err
 		}
-		id = inbound.Id
+		switch act {
+		case "new":
+			err = s.ClientService.UpdateClientsOnInboundAdd(tx, initUserIds, inbound.Id, hostname)
+		case "edit":
+			err = s.ClientService.UpdateLinksByInboundChange(tx, &[]model.Inbound{inbound}, hostname, oldTag)
+		}
+		if err != nil {
+			return err
+		}
 	case "del":
 		var tag string
 		err = json.Unmarshal(data, &tag)
 		if err != nil {
-			return 0, err
+			return err
 		}
 		if corePtr.IsRunning() {
 			err = corePtr.RemoveInbound(tag)
 			if err != nil && err != os.ErrInvalid {
-				return 0, err
+				return err
 			}
 		}
+		var id uint
 		err = tx.Model(model.Inbound{}).Select("id").Where("tag = ?", tag).Scan(&id).Error
 		if err != nil {
-			return 0, err
+			return err
+		}
+		err = s.ClientService.UpdateClientsOnInboundDelete(tx, id, tag)
+		if err != nil {
+			return err
 		}
 		err = tx.Where("tag = ?", tag).Delete(model.Inbound{}).Error
 		if err != nil {
-			return 0, err
+			return err
 		}
 	default:
-		return 0, common.NewErrorf("unknown action: %s", act)
+		return common.NewErrorf("unknown action: %s", act)
 	}
-	return id, nil
+	return nil
 }
 
 func (s *InboundService) UpdateOutJsons(tx *gorm.DB, inboundIds []uint, hostname string) error {
@@ -312,6 +328,9 @@ func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds st
 }
 
 func (s *InboundService) RestartInbounds(tx *gorm.DB, ids []uint) error {
+	if !corePtr.IsRunning() {
+		return nil
+	}
 	var inbounds []*model.Inbound
 	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ?", ids).Find(&inbounds).Error
 	if err != nil {

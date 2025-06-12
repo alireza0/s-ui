@@ -13,9 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ClientService struct {
-	InboundService
-}
+type ClientService struct{}
 
 func (s *ClientService) Get(id string) (*[]model.Client, error) {
 	if id == "" {
@@ -248,13 +246,9 @@ func (s *ClientService) UpdateClientsOnInboundDelete(tx *gorm.DB, id uint, tag s
 	return nil
 }
 
-func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounIds []uint, hostname string) error {
-	var inbounds []model.Inbound
-	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inbounIds, util.InboundTypeWithLink).Find(&inbounds).Error
-	if err != nil && database.IsNotFound(err) {
-		return err
-	}
-	for _, inbound := range inbounds {
+func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounds *[]model.Inbound, hostname string, oldTag string) error {
+	var err error
+	for _, inbound := range *inbounds {
 		var clients []model.Client
 		err = tx.Table("clients").
 			Where("EXISTS (SELECT 1 FROM json_each(clients.inbounds) WHERE json_each.value = ?)", inbound.Id).
@@ -274,7 +268,7 @@ func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounIds []uint
 				})
 			}
 			for _, clientLink := range clientLinks {
-				if clientLink["remark"] != inbound.Tag {
+				if clientLink["remark"] != inbound.Tag && clientLink["remark"] != oldTag {
 					newClientLinks = append(newClientLinks, clientLink)
 				}
 			}
@@ -292,7 +286,7 @@ func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounIds []uint
 	return nil
 }
 
-func (s *ClientService) DepleteClients() error {
+func (s *ClientService) DepleteClients() ([]uint, error) {
 	var err error
 	var clients []model.Client
 	var changes []model.Changes
@@ -306,12 +300,6 @@ func (s *ClientService) DepleteClients() error {
 	defer func() {
 		if err == nil {
 			tx.Commit()
-			if len(inboundIds) > 0 && corePtr.IsRunning() {
-				err1 := s.InboundService.RestartInbounds(db, inboundIds)
-				if err1 != nil {
-					logger.Error("unable to restart inbounds: ", err1)
-				}
-			}
 		} else {
 			tx.Rollback()
 		}
@@ -319,7 +307,7 @@ func (s *ClientService) DepleteClients() error {
 
 	err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", now).Scan(&clients).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	dt := time.Now().Unix()
@@ -342,16 +330,16 @@ func (s *ClientService) DepleteClients() error {
 	if len(changes) > 0 {
 		err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", now).Update("enable", false).Error
 		if err != nil {
-			return err
+			return nil, err
 		}
 		err = tx.Model(model.Changes{}).Create(&changes).Error
 		if err != nil {
-			return err
+			return nil, err
 		}
 		LastUpdate = dt
 	}
 
-	return nil
+	return inboundIds, nil
 }
 
 // avoid duplicate inboundIds
