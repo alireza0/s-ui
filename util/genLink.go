@@ -333,14 +333,15 @@ func vlessLink(
 
 	for _, addr := range addrs {
 		params := baseParams
+
 		if tls, ok := addr["tls"].(map[string]interface{}); ok && tls["enabled"].(bool) {
 			if reality, ok := tls["reality"].(map[string]interface{}); ok && reality["enabled"].(bool) {
 				params["security"] = "reality"
 				if pbk, ok := reality["public_key"].(string); ok {
 					params["pbk"] = pbk
 				}
-				if sid, ok := reality["short_id"].(string); ok {
-					params["sid"] = sid
+				if sid, ok := reality["short_id"].(string); ok && sid != "" {
+				    params["sid"] = sid
 				}
 			} else {
 				params["security"] = "tls"
@@ -367,7 +368,7 @@ func vlessLink(
 		}
 		port, _ := addr["server_port"].(float64)
 		uri := fmt.Sprintf("vless://%s@%s:%d", uuid, addr["server"].(string), uint(port))
-		uri = addParams(uri, params, addr["remark"].(string))
+		uri = addParams(uri, params, userConfig["name"].(string))
 		links = append(links, uri)
 	}
 
