@@ -9,6 +9,13 @@ WorkingDirectory=/usr/local/s-ui/
 ExecStart=/usr/local/s-ui/sui
 Restart=on-failure
 RestartSec=10s
+LimitNOFILE=1048576
+Nice=-20
+IOSchedulingClass=real-time
+IOSchedulingPriority=0
+CPUSchedulingPolicy=rr
+CPUSchedulingPriority=99
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
