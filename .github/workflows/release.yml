@@ -65,35 +65,56 @@ jobs:
 
       - name: Build s-ui
         run: |
+          set -e
           export CGO_ENABLED=1
           export GOOS=linux
           export GOARCH=${{ matrix.platform }}
-          if [ "${{ matrix.platform }}" == "arm64" ]; then
-            export GOARCH=arm64
-            export CC=aarch64-linux-gnu-gcc
-          elif [ "${{ matrix.platform }}" == "armv7" ]; then
-            export GOARCH=arm
-            export GOARM=7
-            export CC=arm-linux-gnueabihf-gcc
-          elif [ "${{ matrix.platform }}" == "armv6" ]; then
-            export GOARCH=arm
-            export GOARM=6
-            export CC=arm-linux-gnueabihf-gcc
-          elif [ "${{ matrix.platform }}" == "armv5" ]; then
-            export GOARCH=arm
-            export GOARM=5
-            export CC=arm-linux-gnueabi-gcc
-          elif [ "${{ matrix.platform }}" == "386" ]; then
-            export GOARCH=386
-            export CC=i686-linux-gnu-gcc
-          elif [ "${{ matrix.platform }}" == "s390x" ]; then
-            export GOARCH=s390x
-            export CC=s390x-linux-gnu-gcc
-          fi
+
+          TOOLCHAIN_URL=""
+          case "${{ matrix.platform }}" in
+            amd64)
+              TOOLCHAIN_URL="https://musl.cc/x86_64-linux-musl-cross.tgz"
+              ;;
+            arm64)
+              TOOLCHAIN_URL="https://musl.cc/aarch64-linux-musl-cross.tgz"
+              ;;
+            armv7)
+              TOOLCHAIN_URL="https://musl.cc/armv7l-linux-musleabihf-cross.tgz"
+              export GOARCH=arm
+              export GOARM=7
+              ;;
+            armv6)
+              TOOLCHAIN_URL="https://musl.cc/armv6-linux-musleabihf-cross.tgz"
+              export GOARCH=arm
+              export GOARM=6
+              ;;
+            armv5)
+              TOOLCHAIN_URL="https://musl.cc/arm-linux-musleabi-cross.tgz"
+              export GOARCH=arm
+              export GOARM=5
+              ;;
+            386)
+              TOOLCHAIN_URL="https://musl.cc/i686-linux-musl-cross.tgz"
+              ;;
+            s390x)
+              TOOLCHAIN_URL="https://musl.cc/s390x-linux-musl-cross.tgz"
+              ;;
+          esac
+
+          echo "Downloading musl toolchain for ${{ matrix.platform }}"
+          curl -LO "$TOOLCHAIN_URL"
+          tar -xf *.tgz
+          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -name "*-musl-cross" | head -n1)
+          export PATH="$PWD/$TOOLCHAIN_DIR/bin:$PATH"
+
+          # Detect compiler
+          export CC=$(find $TOOLCHAIN_DIR/bin -name '*-musl-gcc' | head -n1)
+          echo "Using CC=$CC"
 
           ### Build s-ui
           go build -ldflags="-w -s -linkmode external -extldflags '-static'" -tags "with_quic,with_grpc,with_ech,with_utls,with_reality_server,with_acme,with_gvisor" -o sui main.go
           file sui
+          ldd sui || echo "Static binary confirmed"
           mkdir s-ui
           cp sui s-ui/
           cp s-ui.service s-ui/
