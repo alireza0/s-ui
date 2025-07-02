@@ -56,36 +56,36 @@ jobs:
           TOOLCHAIN_URL=""
           case "${{ matrix.platform }}" in
             amd64)
-              TOOLCHAIN_URL="https://musl.cc/x86_64-linux-musl-cross.tgz"
+              TOOLCHAIN_URL="https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/x86_64-linux-musl-cross.tgz"
               ;;
             arm64)
-              TOOLCHAIN_URL="https://musl.cc/aarch64-linux-musl-cross.tgz"
+              TOOLCHAIN_URL="https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz"
               ;;
             armv7)
-              TOOLCHAIN_URL="https://musl.cc/armv7l-linux-musleabihf-cross.tgz"
+              TOOLCHAIN_URL="https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/armv7l-linux-musleabihf-cross.tgz"
               export GOARCH=arm
               export GOARM=7
               ;;
             armv6)
-              TOOLCHAIN_URL="https://musl.cc/armv6-linux-musleabihf-cross.tgz"
+              TOOLCHAIN_URL="https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/armv6-linux-musleabihf-cross.tgz"
               export GOARCH=arm
               export GOARM=6
               ;;
             armv5)
-              TOOLCHAIN_URL="https://musl.cc/arm-linux-musleabi-cross.tgz"
+              TOOLCHAIN_URL="https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/arm-linux-musleabi-cross.tgz"
               export GOARCH=arm
               export GOARM=5
               ;;
             386)
-              TOOLCHAIN_URL="https://musl.cc/i686-linux-musl-cross.tgz"
+              TOOLCHAIN_URL="https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/i686-linux-musl-cross.tgz"
               ;;
             s390x)
-              TOOLCHAIN_URL="https://musl.cc/s390x-linux-musl-cross.tgz"
+              TOOLCHAIN_URL="https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/s390x-linux-musl-cross.tgz"
               ;;
           esac
 
           echo "Downloading musl toolchain for ${{ matrix.platform }}"
-          wget "$TOOLCHAIN_URL"
+          wget -4 "$TOOLCHAIN_URL"
           tar -xf *.tgz
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -name "*-musl-cross" | head -n1)
           export PATH="$PWD/$TOOLCHAIN_DIR/bin:$PATH"
