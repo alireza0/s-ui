@@ -85,7 +85,7 @@ jobs:
           esac
 
           echo "Downloading musl toolchain for ${{ matrix.platform }}"
-          wget -4 "$TOOLCHAIN_URL"
+          curl -LO "$TOOLCHAIN_URL"
           tar -xf *.tgz
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -name "*-musl-cross" | head -n1)
           TOOLCHAIN_DIR=$(realpath "$TOOLCHAIN_DIR")
