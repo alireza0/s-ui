@@ -88,7 +88,8 @@ jobs:
           wget -4 "$TOOLCHAIN_URL"
           tar -xf *.tgz
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -name "*-musl-cross" | head -n1)
-          export PATH="$PWD/$TOOLCHAIN_DIR/bin:$PATH"
+          TOOLCHAIN_DIR=$(realpath "$TOOLCHAIN_DIR")
+          export PATH="$TOOLCHAIN_DIR/bin:$PATH"
 
           # Detect compiler
           export CC=$(find $TOOLCHAIN_DIR/bin -name '*-musl-gcc' | head -n1)
