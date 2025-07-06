@@ -8,14 +8,16 @@ Type=simple
 WorkingDirectory=/usr/local/s-ui/
 ExecStart=/usr/local/s-ui/sui
 Restart=on-failure
-RestartSec=10s
+RestartSec=5s
 LimitNOFILE=1048576
-Nice=-20
-IOSchedulingClass=real-time
-IOSchedulingPriority=0
-CPUSchedulingPolicy=rr
-CPUSchedulingPriority=99
+Nice=-10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=2
+CPUSchedulingPolicy=other
+CPUSchedulingPriority=0
+CPUQuota=98%
 NoNewPrivileges=true
+LimitCORE=0
 
 [Install]
 WantedBy=multi-user.target
