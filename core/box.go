@@ -491,7 +491,7 @@ func (s *Box) Close() error {
 		close(s.done)
 	}
 	err := sbCommon.Close(
-		s.endpoint, s.inbound, s.outbound, s.router, s.connection, s.dnsRouter, s.dnsTransport, s.network, s.service,
+		s.service, s.endpoint, s.inbound, s.outbound, s.router, s.connection, s.dnsRouter, s.dnsTransport, s.network,
 	)
 	for _, lifecycleService := range s.internalService {
 		err1 := lifecycleService.Close()
