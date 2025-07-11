@@ -54,8 +54,8 @@ elif [[ "${release}" == "centos" ]]; then
         echo -e "${red} Please use CentOS 8 or higher ${plain}\n" && exit 1
     fi
 elif [[ "${release}" == "ubuntu" ]]; then
-    if [[ ${os_version} -lt 20 ]]; then
-        echo -e "${red} Please use Ubuntu 20 or higher version!${plain}\n" && exit 1
+    if [[ ${os_version} -lt 22 ]]; then
+        echo -e "${red} Please use Ubuntu 22 or higher version!${plain}\n" && exit 1
     fi
 elif [[ "${release}" == "fedora" ]]; then
     if [[ ${os_version} -lt 36 ]]; then
@@ -80,7 +80,7 @@ elif [[ "${release}" == "oracle" ]]; then
 else
     echo -e "${red}Your operating system is not supported by this script.${plain}\n"
     echo "Please ensure you are using one of the following supported operating systems:"
-    echo "- Ubuntu 20.04+"
+    echo "- Ubuntu 22.04+"
     echo "- Debian 11+"
     echo "- CentOS 8+"
     echo "- Fedora 36+"
