@@ -778,12 +778,12 @@ ssl_cert_issue_CF() {
 generate_self_signed_cert() {
     cert_dir="/etc/sing-box"
     mkdir -p "$cert_dir"
-    echo "Choose certificate type:"
-    echo "1) Ed25519 (recommended)"
-    echo "2) RSA 2048"
-    echo "3) RSA 4096"
-    echo "4) ECDSA prime256v1"
-    echo "5) ECDSA secp384r1"
+    LOGI "Choose certificate type:"
+    echo -e "${green}\t1.${plain} Ed25519 (*recommended*)"
+    echo -e "${green}\t2.${plain} RSA 2048"
+    echo -e "${green}\t3.${plain} RSA 4096"
+    echo -e "${green}\t4.${plain} ECDSA prime256v1"
+    echo -e "${green}\t5.${plain} ECDSA secp384r1"
     read -p "Enter your choice [1-5, default 1]: " cert_type
     cert_type=${cert_type:-1}
 
