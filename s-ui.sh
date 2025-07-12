@@ -778,8 +778,44 @@ ssl_cert_issue_CF() {
 generate_self_signed_cert() {
     cert_dir="/etc/sing-box"
     mkdir -p "$cert_dir"
-    LOGI "Generating self-signed certificate..."
-    sudo openssl req -x509 -nodes -days 3650 -newkey ed25519 \
+    echo "Choose certificate type:"
+    echo "1) Ed25519 (recommended)"
+    echo "2) RSA 2048"
+    echo "3) RSA 4096"
+    echo "4) ECDSA prime256v1"
+    echo "5) ECDSA secp384r1"
+    read -p "Enter your choice [1-5, default 1]: " cert_type
+    cert_type=${cert_type:-1}
+
+    case "$cert_type" in
+        1)
+            algo="ed25519"
+            key_opt="-newkey ed25519"
+            ;;
+        2)
+            algo="rsa"
+            key_opt="-newkey rsa:2048"
+            ;;
+        3)
+            algo="rsa"
+            key_opt="-newkey rsa:4096"
+            ;;
+        4)
+            algo="ecdsa"
+            key_opt="-newkey ec -pkeyopt ec_paramgen_curve:prime256v1"
+            ;;
+        5)
+            algo="ecdsa"
+            key_opt="-newkey ec -pkeyopt ec_paramgen_curve:secp384r1"
+            ;;
+        *)
+            algo="ed25519"
+            key_opt="-newkey ed25519"
+            ;;
+    esac
+
+    LOGI "Generating self-signed certificate ($algo)..."
+    sudo openssl req -x509 -nodes -days 3650 $key_opt \
         -keyout "${cert_dir}/self.key" \
         -out "${cert_dir}/self.crt" \
         -subj "/CN=myserver"
