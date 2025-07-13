@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"s-ui/database"
 	"s-ui/database/model"
@@ -54,13 +55,21 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
-		err = json.Unmarshal(client.Inbounds, &inboundIds)
-		if err != nil {
-			return nil, err
-		}
 		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, inboundIds, hostname)
 		if err != nil {
 			return nil, err
+		}
+		if act == "edit" {
+			// Find changed inbounds
+			inboundIds, err = s.findInboundsChanges(tx, client)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			err = json.Unmarshal(client.Inbounds, &inboundIds)
+			if err != nil {
+				return nil, err
+			}
 		}
 		err = tx.Save(&client).Error
 		if err != nil {
@@ -140,7 +149,7 @@ func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*mod
 			}
 		}
 
-		// Add no local links
+		// Add non local links
 		for _, clientLink := range clientLinks {
 			if clientLink["type"] != "local" {
 				newClientLinks = append(newClientLinks, clientLink)
@@ -316,7 +325,8 @@ func (s *ClientService) DepleteClients() ([]uint, error) {
 		users = append(users, client.Name)
 		var userInbounds []uint
 		json.Unmarshal(client.Inbounds, &userInbounds)
-		inboundIds = s.uniqueAppendInboundIds(inboundIds, userInbounds)
+		// Find changed inbounds
+		inboundIds = common.UnionUintArray(inboundIds, userInbounds)
 		changes = append(changes, model.Changes{
 			DateTime: dt,
 			Actor:    "DepleteJob",
@@ -342,18 +352,32 @@ func (s *ClientService) DepleteClients() ([]uint, error) {
 	return inboundIds, nil
 }
 
-// avoid duplicate inboundIds
-func (s *ClientService) uniqueAppendInboundIds(a []uint, b []uint) []uint {
-	m := make(map[uint]bool)
-	for _, v := range a {
-		m[v] = true
+func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([]uint, error) {
+	var err error
+	var oldClient model.Client
+	var oldInboundIds, newInboundIds []uint
+	err = tx.Model(model.Client{}).Where("id = ?", client.Id).First(&oldClient).Error
+	if err != nil {
+		return nil, err
 	}
-	for _, v := range b {
-		m[v] = true
+	err = json.Unmarshal(oldClient.Inbounds, &oldInboundIds)
+	if err != nil {
+		return nil, err
 	}
-	var res []uint
-	for k := range m {
-		res = append(res, k)
+	err = json.Unmarshal(client.Inbounds, &newInboundIds)
+	if err != nil {
+		return nil, err
 	}
-	return res
+
+	// Check client.Config changes
+	if !bytes.Equal(oldClient.Config, client.Config) ||
+		oldClient.Name != client.Name ||
+		oldClient.Enable != client.Enable {
+		return common.UnionUintArray(oldInboundIds, newInboundIds), nil
+	}
+
+	// Check client.Inbounds changes
+	diffInbounds := common.DiffUintArray(oldInboundIds, newInboundIds)
+
+	return diffInbounds, nil
 }

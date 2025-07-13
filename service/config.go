@@ -145,7 +145,10 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 		inboundIds, err := s.ClientService.Save(tx, act, data, hostname)
 		if err == nil && len(inboundIds) > 0 {
 			objs = append(objs, "inbounds")
-			err = s.InboundService.RestartInbounds(tx, inboundIds)
+			err = s.InboundService.UpdateUsers(tx, inboundIds)
+			if err != nil {
+				return nil, common.NewErrorf("failed to update users for inbounds: %v", err)
+			}
 		}
 	case "tls":
 		err = s.TlsService.Save(tx, act, data, hostname)
