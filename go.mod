@@ -8,10 +8,9 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sagernet/sing v0.6.12-0.20250704043954-da981379f151
-	github.com/sagernet/sing-box v1.12.0-beta.33
+	github.com/sagernet/sing v0.6.12-0.20250718132236-21daaa465e88
+	github.com/sagernet/sing-box v1.12.0-beta.34
 	github.com/sagernet/sing-dns v0.4.6
-	github.com/sagernet/sing-quic v0.5.0-beta.3
 	github.com/shirou/gopsutil/v4 v4.25.6
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gopkg.in/yaml.v3 v3.0.1
@@ -109,10 +108,11 @@ require (
 	github.com/sagernet/nftables v0.3.0-beta.4 // indirect
 	github.com/sagernet/quic-go v0.52.0-beta.1 // indirect
 	github.com/sagernet/sing-mux v0.3.2 // indirect
+	github.com/sagernet/sing-quic v0.5.0-beta.3 // indirect
 	github.com/sagernet/sing-shadowsocks v0.2.8 // indirect
 	github.com/sagernet/sing-shadowsocks2 v0.2.1 // indirect
 	github.com/sagernet/sing-shadowtls v0.2.1-0.20250503051639-fcd445d33c11 // indirect
-	github.com/sagernet/sing-tun v0.6.10-0.20250703121732-a0881ada3251 // indirect
+	github.com/sagernet/sing-tun v0.6.10-0.20250718030019-3af7305b853e // indirect
 	github.com/sagernet/sing-vmess v0.2.4-0.20250605032146-38cc72672c88 // indirect
 	github.com/sagernet/smux v1.5.34-mod.2 // indirect
 	github.com/sagernet/tailscale v1.80.3-mod.5 // indirect
