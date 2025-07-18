@@ -55,7 +55,7 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
-		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, inboundIds, hostname)
+		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
 		if err != nil {
 			return nil, err
 		}
@@ -81,11 +81,7 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
-		err = json.Unmarshal(clients[0].Inbounds, &inboundIds)
-		if err != nil {
-			return nil, err
-		}
-		err = s.updateLinksWithFixedInbounds(tx, clients, inboundIds, hostname)
+		err = s.updateLinksWithFixedInbounds(tx, clients, hostname)
 		if err != nil {
 			return nil, err
 		}
@@ -119,13 +115,19 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 	return inboundIds, nil
 }
 
-func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*model.Client, inbounIds []uint, hostname string) error {
+func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*model.Client, hostname string) error {
 	var err error
 	var inbounds []model.Inbound
+	var inboundIds []uint
+
+	err = json.Unmarshal(clients[0].Inbounds, &inboundIds)
+	if err != nil {
+		return err
+	}
 
 	// Zero inbounds means removing local links only
-	if len(inbounIds) > 0 {
-		err = tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inbounIds, util.InboundTypeWithLink).Find(&inbounds).Error
+	if len(inboundIds) > 0 {
+		err = tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inboundIds, util.InboundTypeWithLink).Find(&inbounds).Error
 		if err != nil {
 			return err
 		}
