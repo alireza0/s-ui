@@ -4,16 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"s-ui/core/protocol/hysteria"
-	"s-ui/core/protocol/hysteria2"
 	"s-ui/database"
 	"s-ui/database/model"
-	"s-ui/logger"
 	"s-ui/util"
 	"s-ui/util/common"
 	"strings"
 
-	"github.com/sagernet/sing-box/option"
 	"gorm.io/gorm"
 )
 
@@ -329,64 +325,6 @@ func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds st
 	}
 
 	return json.Marshal(inbound)
-}
-
-func (s *InboundService) UpdateUsers(tx *gorm.DB, ids []uint) error {
-	var inbounds []model.Inbound
-	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ?", ids).Find(&inbounds).Error
-	if err != nil {
-		return err
-	}
-	for _, inbound := range inbounds {
-		inboundConfig, err := inbound.MarshalJSON()
-		if err != nil {
-			return err
-		}
-		inboundConfig, err = s.addUsers(tx, inboundConfig, inbound.Id, inbound.Type)
-		if err != nil {
-			return err
-		}
-		inb, ok := corePtr.GetInstance().Inbound().Get(inbound.Tag)
-		if !ok {
-			return common.NewErrorf("inbound %s not found", inbound.Tag)
-		}
-		switch inbound.Type {
-		case "hysteria":
-			var hysteriaOptions option.HysteriaInboundOptions
-			err = json.Unmarshal(inboundConfig, &hysteriaOptions)
-			if err != nil {
-				return common.NewErrorf("failed to unmarshal hysteria options for inbound %s: %v", inbound.Tag, err)
-			}
-			err = inb.(*hysteria.Inbound).UpdateUsers(hysteriaOptions.Users)
-			if err != nil {
-				return common.NewErrorf("failed to update users for hysteria inbound %s: %v", inbound.Tag, err)
-			}
-			logger.Info("Updated users for hysteria inbound:", inbound.Tag)
-		case "hysteria2":
-			var hy2Options option.Hysteria2InboundOptions
-			err = json.Unmarshal(inboundConfig, &hy2Options)
-			if err != nil {
-				return common.NewErrorf("failed to unmarshal hysteria2 options for inbound %s: %v", inbound.Tag, err)
-			}
-			err = inb.(*hysteria2.Inbound).UpdateUsers(hy2Options.Users)
-			if err != nil {
-				return common.NewErrorf("failed to update users for hysteria2 inbound %s: %v", inbound.Tag, err)
-			}
-			logger.Info("Updated users for hysteria2 inbound:", inbound.Tag)
-		default:
-			err = corePtr.RemoveInbound(inbound.Tag)
-			if err != nil && err != os.ErrInvalid {
-				return err
-			}
-
-			err = corePtr.AddInbound(inboundConfig)
-			if err != nil {
-				return err
-			}
-		}
-
-	}
-	return nil
 }
 
 func (s *InboundService) RestartInbounds(tx *gorm.DB, ids []uint) error {
