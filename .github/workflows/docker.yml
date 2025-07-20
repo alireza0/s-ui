@@ -6,15 +6,47 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  frontend-build:
     runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          submodules: recursive
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies and build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
 
+  build:
+    needs: frontend-build
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/386
+          - linux/arm64/v8
+          - linux/arm/v7
+          - linux/arm/v6
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4.2.2
+    - name: Download frontend build artifact
+      uses: actions/download-artifact@v4
       with:
-        submodules: recursive
-   
+        name: frontend-dist
+        path: frontend_dist
     - name: Docker meta
       id: meta
       uses: docker/metadata-action@v5
@@ -26,31 +58,39 @@ jobs:
           type=ref,event=branch
           type=ref,event=tag
           type=pep440,pattern={{version}}
-
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-
+      with:
+        install: true
+        buildkitd-flags: --debug
+    - name: Cache Docker layers
+      uses: actions/cache@v4
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
     - name: Login to GHCR
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         context: .
+        file: Dockerfile.frontend-artifact
         push: true
-        platforms: linux/amd64, linux/arm64/v8, linux/arm/v7, linux/arm/v6, linux/386
+        platforms: ${{ matrix.platform }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
