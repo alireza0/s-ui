@@ -81,6 +81,10 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+		err = json.Unmarshal(clients[0].Inbounds, &inboundIds)
+		if err != nil {
+			return nil, err
+		}
 		err = s.updateLinksWithFixedInbounds(tx, clients, hostname)
 		if err != nil {
 			return nil, err
