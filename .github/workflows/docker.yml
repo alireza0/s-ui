@@ -30,14 +30,6 @@ jobs:
 
   build:
     needs: frontend-build
-    strategy:
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/386
-          - linux/arm64/v8
-          - linux/arm/v7
-          - linux/arm/v6
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
@@ -89,7 +81,7 @@ jobs:
         context: .
         file: Dockerfile.frontend-artifact
         push: true
-        platforms: ${{ matrix.platform }}
+        platforms: linux/amd64, linux/386, linux/arm64/v8, linux/arm/v7, linux/arm/v6
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=local,src=/tmp/.buildx-cache
