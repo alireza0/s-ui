@@ -98,6 +98,9 @@ func addTls(out *map[string]interface{}, tls *model.Tls) {
 	if maxVersion, ok := tlsServer["max_version"]; ok {
 		tlsConfig["max_version"] = maxVersion
 	}
+	if certificate, ok := tlsServer["certificate"]; ok {
+		tlsConfig["certificate"] = certificate
+	}
 	if cipherSuites, ok := tlsServer["cipher_suites"]; ok {
 		tlsConfig["cipher_suites"] = cipherSuites
 	}
