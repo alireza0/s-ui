@@ -19,7 +19,10 @@ var defaultConfig = `{
   "log": {
     "level": "info"
   },
-  "dns": {},
+  "dns": {
+    "servers": [],
+    "rules": []
+  },
   "route": {
     "rules": [
       {
