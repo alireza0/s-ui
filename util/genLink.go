@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var InboundTypeWithLink = []string{"shadowsocks", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}
+var InboundTypeWithLink = []string{"socks", "http", "mixed", "shadowsocks", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}
 
 func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname string) []string {
 	inbound, err := i.MarshalFull()
@@ -61,6 +61,13 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 	}
 
 	switch i.Type {
+	case "socks":
+		return socksLink(userConfig["socks"], *inbound, Addrs)
+	case "http":
+		return httpLink(userConfig["http"], *inbound, Addrs)
+	case "mixed":
+		return append(
+			socksLink(userConfig["socks"], *inbound, Addrs), httpLink(userConfig["http"], *inbound, Addrs)...)
 	case "shadowsocks":
 		return shadowsocksLink(userConfig, *inbound, Addrs)
 	case "naive":
@@ -104,6 +111,26 @@ func prepareTls(t *model.Tls) map[string]interface{} {
 		}
 	}
 	return oTls
+}
+
+func socksLink(userConfig map[string]interface{}, inbound map[string]interface{}, addrs []map[string]interface{}) []string {
+	var links []string
+	for _, addr := range addrs {
+		links = append(links, fmt.Sprintf("socks5://%s:%s@%s:%d", userConfig["username"], userConfig["password"], addr["server"].(string), uint(addr["server_port"].(float64))))
+	}
+	return links
+}
+
+func httpLink(userConfig map[string]interface{}, inbound map[string]interface{}, addrs []map[string]interface{}) []string {
+	var links []string
+	var protocol string = "http"
+	for _, addr := range addrs {
+		if addr["tls"] != nil {
+			protocol = "https"
+		}
+		links = append(links, fmt.Sprintf("%s://%s:%s@%s:%d", protocol, userConfig["username"], userConfig["password"], addr["server"].(string), uint(addr["server_port"].(float64))))
+	}
+	return links
 }
 
 func shadowsocksLink(

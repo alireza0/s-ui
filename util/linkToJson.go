@@ -481,6 +481,7 @@ func getTls(security string, q *url.Values) *map[string]interface{} {
 	tls_sni := q.Get("sni")
 	tls_insecure := q.Get("allowInsecure")
 	tls_alpn := q.Get("alpn")
+	tls_ech := q.Get("ech")
 	switch security {
 	case "tls":
 		tls["enabled"] = true
@@ -505,6 +506,14 @@ func getTls(security string, q *url.Values) *map[string]interface{} {
 		tls["utls"] = map[string]interface{}{
 			"enabled":     true,
 			"fingerprint": tls_fp,
+		}
+	}
+	if len(tls_ech) > 0 {
+		tls["ech"] = map[string]interface{}{
+			"enabled": true,
+			"config": []string{
+				tls_ech,
+			},
 		}
 	}
 	return &tls
