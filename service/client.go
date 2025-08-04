@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"s-ui/database"
 	"s-ui/database/model"
@@ -13,9 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ClientService struct {
-	InboundService
-}
+type ClientService struct{}
 
 func (s *ClientService) Get(id string) (*[]model.Client, error) {
 	if id == "" {
@@ -56,13 +55,21 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
-		err = json.Unmarshal(client.Inbounds, &inboundIds)
+		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
 		if err != nil {
 			return nil, err
 		}
-		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, inboundIds, hostname)
-		if err != nil {
-			return nil, err
+		if act == "edit" {
+			// Find changed inbounds
+			inboundIds, err = s.findInboundsChanges(tx, client)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			err = json.Unmarshal(client.Inbounds, &inboundIds)
+			if err != nil {
+				return nil, err
+			}
 		}
 		err = tx.Save(&client).Error
 		if err != nil {
@@ -78,7 +85,7 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
-		err = s.updateLinksWithFixedInbounds(tx, clients, inboundIds, hostname)
+		err = s.updateLinksWithFixedInbounds(tx, clients, hostname)
 		if err != nil {
 			return nil, err
 		}
@@ -112,13 +119,19 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 	return inboundIds, nil
 }
 
-func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*model.Client, inbounIds []uint, hostname string) error {
+func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*model.Client, hostname string) error {
 	var err error
 	var inbounds []model.Inbound
+	var inboundIds []uint
+
+	err = json.Unmarshal(clients[0].Inbounds, &inboundIds)
+	if err != nil {
+		return err
+	}
 
 	// Zero inbounds means removing local links only
-	if len(inbounIds) > 0 {
-		err = tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inbounIds, util.InboundTypeWithLink).Find(&inbounds).Error
+	if len(inboundIds) > 0 {
+		err = tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inboundIds, util.InboundTypeWithLink).Find(&inbounds).Error
 		if err != nil {
 			return err
 		}
@@ -142,7 +155,7 @@ func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*mod
 			}
 		}
 
-		// Add no local links
+		// Add non local links
 		for _, clientLink := range clientLinks {
 			if clientLink["type"] != "local" {
 				newClientLinks = append(newClientLinks, clientLink)
@@ -248,13 +261,9 @@ func (s *ClientService) UpdateClientsOnInboundDelete(tx *gorm.DB, id uint, tag s
 	return nil
 }
 
-func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounIds []uint, hostname string) error {
-	var inbounds []model.Inbound
-	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? and type in ?", inbounIds, util.InboundTypeWithLink).Find(&inbounds).Error
-	if err != nil && database.IsNotFound(err) {
-		return err
-	}
-	for _, inbound := range inbounds {
+func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounds *[]model.Inbound, hostname string, oldTag string) error {
+	var err error
+	for _, inbound := range *inbounds {
 		var clients []model.Client
 		err = tx.Table("clients").
 			Where("EXISTS (SELECT 1 FROM json_each(clients.inbounds) WHERE json_each.value = ?)", inbound.Id).
@@ -274,7 +283,7 @@ func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounIds []uint
 				})
 			}
 			for _, clientLink := range clientLinks {
-				if clientLink["remark"] != inbound.Tag {
+				if clientLink["remark"] != inbound.Tag && clientLink["remark"] != oldTag {
 					newClientLinks = append(newClientLinks, clientLink)
 				}
 			}
@@ -292,7 +301,7 @@ func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounIds []uint
 	return nil
 }
 
-func (s *ClientService) DepleteClients() error {
+func (s *ClientService) DepleteClients() ([]uint, error) {
 	var err error
 	var clients []model.Client
 	var changes []model.Changes
@@ -306,12 +315,6 @@ func (s *ClientService) DepleteClients() error {
 	defer func() {
 		if err == nil {
 			tx.Commit()
-			if len(inboundIds) > 0 && corePtr.IsRunning() {
-				err1 := s.InboundService.RestartInbounds(db, inboundIds)
-				if err1 != nil {
-					logger.Error("unable to restart inbounds: ", err1)
-				}
-			}
 		} else {
 			tx.Rollback()
 		}
@@ -319,7 +322,7 @@ func (s *ClientService) DepleteClients() error {
 
 	err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", now).Scan(&clients).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	dt := time.Now().Unix()
@@ -328,7 +331,8 @@ func (s *ClientService) DepleteClients() error {
 		users = append(users, client.Name)
 		var userInbounds []uint
 		json.Unmarshal(client.Inbounds, &userInbounds)
-		inboundIds = s.uniqueAppendInboundIds(inboundIds, userInbounds)
+		// Find changed inbounds
+		inboundIds = common.UnionUintArray(inboundIds, userInbounds)
 		changes = append(changes, model.Changes{
 			DateTime: dt,
 			Actor:    "DepleteJob",
@@ -342,30 +346,44 @@ func (s *ClientService) DepleteClients() error {
 	if len(changes) > 0 {
 		err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", now).Update("enable", false).Error
 		if err != nil {
-			return err
+			return nil, err
 		}
 		err = tx.Model(model.Changes{}).Create(&changes).Error
 		if err != nil {
-			return err
+			return nil, err
 		}
 		LastUpdate = dt
 	}
 
-	return nil
+	return inboundIds, nil
 }
 
-// avoid duplicate inboundIds
-func (s *ClientService) uniqueAppendInboundIds(a []uint, b []uint) []uint {
-	m := make(map[uint]bool)
-	for _, v := range a {
-		m[v] = true
+func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([]uint, error) {
+	var err error
+	var oldClient model.Client
+	var oldInboundIds, newInboundIds []uint
+	err = tx.Model(model.Client{}).Where("id = ?", client.Id).First(&oldClient).Error
+	if err != nil {
+		return nil, err
 	}
-	for _, v := range b {
-		m[v] = true
+	err = json.Unmarshal(oldClient.Inbounds, &oldInboundIds)
+	if err != nil {
+		return nil, err
 	}
-	var res []uint
-	for k := range m {
-		res = append(res, k)
+	err = json.Unmarshal(client.Inbounds, &newInboundIds)
+	if err != nil {
+		return nil, err
 	}
-	return res
+
+	// Check client.Config changes
+	if !bytes.Equal(oldClient.Config, client.Config) ||
+		oldClient.Name != client.Name ||
+		oldClient.Enable != client.Enable {
+		return common.UnionUintArray(oldInboundIds, newInboundIds), nil
+	}
+
+	// Check client.Inbounds changes
+	diffInbounds := common.DiffUintArray(oldInboundIds, newInboundIds)
+
+	return diffInbounds, nil
 }

@@ -18,27 +18,27 @@ type Counter struct {
 	write *atomic.Int64
 }
 
-type ConnTracker struct {
+type StatsTracker struct {
 	access    sync.Mutex
-	createdAt time.Time
 	inbounds  map[string]Counter
 	outbounds map[string]Counter
 	users     map[string]Counter
 }
 
-func NewConnTracker() *ConnTracker {
-	return &ConnTracker{
-		createdAt: time.Now(),
+func NewStatsTracker() *StatsTracker {
+	return &StatsTracker{
 		inbounds:  make(map[string]Counter),
 		outbounds: make(map[string]Counter),
 		users:     make(map[string]Counter),
 	}
 }
 
-func (c *ConnTracker) getReadCounters(inbound string, outbound string, user string) ([]*atomic.Int64, []*atomic.Int64) {
+func (c *StatsTracker) getReadCounters(inbound string, outbound string, user string) ([]*atomic.Int64, []*atomic.Int64) {
 	var readCounter []*atomic.Int64
 	var writeCounter []*atomic.Int64
 	c.access.Lock()
+	defer c.access.Unlock()
+
 	if inbound != "" {
 		readCounter = append(readCounter, c.loadOrCreateCounter(&c.inbounds, inbound).read)
 		writeCounter = append(writeCounter, c.inbounds[inbound].write)
@@ -51,11 +51,10 @@ func (c *ConnTracker) getReadCounters(inbound string, outbound string, user stri
 		readCounter = append(readCounter, c.loadOrCreateCounter(&c.users, user).read)
 		writeCounter = append(writeCounter, c.users[user].write)
 	}
-	c.access.Unlock()
 	return readCounter, writeCounter
 }
 
-func (c *ConnTracker) loadOrCreateCounter(obj *map[string]Counter, name string) Counter {
+func (c *StatsTracker) loadOrCreateCounter(obj *map[string]Counter, name string) Counter {
 	counter, loaded := (*obj)[name]
 	if loaded {
 		return counter
@@ -65,17 +64,17 @@ func (c *ConnTracker) loadOrCreateCounter(obj *map[string]Counter, name string) 
 	return counter
 }
 
-func (c *ConnTracker) RoutedConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, matchedRule adapter.Rule, matchOutbound adapter.Outbound) net.Conn {
+func (c *StatsTracker) RoutedConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, matchedRule adapter.Rule, matchOutbound adapter.Outbound) net.Conn {
 	readCounter, writeCounter := c.getReadCounters(metadata.Inbound, matchOutbound.Tag(), metadata.User)
 	return bufio.NewInt64CounterConn(conn, readCounter, writeCounter)
 }
 
-func (c *ConnTracker) RoutedPacketConnection(ctx context.Context, conn network.PacketConn, metadata adapter.InboundContext, matchedRule adapter.Rule, matchOutbound adapter.Outbound) network.PacketConn {
+func (c *StatsTracker) RoutedPacketConnection(ctx context.Context, conn network.PacketConn, metadata adapter.InboundContext, matchedRule adapter.Rule, matchOutbound adapter.Outbound) network.PacketConn {
 	readCounter, writeCounter := c.getReadCounters(metadata.Inbound, matchOutbound.Tag(), metadata.User)
 	return bufio.NewInt64CounterPacketConn(conn, readCounter, writeCounter)
 }
 
-func (c *ConnTracker) GetStats() *[]model.Stats {
+func (c *StatsTracker) GetStats() *[]model.Stats {
 	c.access.Lock()
 	defer c.access.Unlock()
 

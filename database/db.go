@@ -76,6 +76,7 @@ func InitDB(dbPath string) error {
 		&model.Tls{},
 		&model.Inbound{},
 		&model.Outbound{},
+		&model.Service{},
 		&model.Endpoint{},
 		&model.User{},
 		&model.Tokens{},

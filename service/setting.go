@@ -19,7 +19,10 @@ var defaultConfig = `{
   "log": {
     "level": "info"
   },
-  "dns": {},
+  "dns": {
+    "servers": [],
+    "rules": []
+  },
   "route": {
     "rules": [
       {
@@ -56,6 +59,7 @@ var defaultValueMap = map[string]string{
 	"subShowInfo":   "false",
 	"subURI":        "",
 	"subJsonExt":    "",
+	"subClashExt":   "",
 	"config":        defaultConfig,
 	"version":       config.GetVersion(),
 }
@@ -390,6 +394,10 @@ func (s *SettingService) Save(tx *gorm.DB, data json.RawMessage) error {
 
 func (s *SettingService) GetSubJsonExt() (string, error) {
 	return s.getString("subJsonExt")
+}
+
+func (s *SettingService) GetSubClashExt() (string, error) {
+	return s.getString("subClashExt")
 }
 
 func (s *SettingService) fileExists(path string) error {

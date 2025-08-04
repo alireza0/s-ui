@@ -19,8 +19,10 @@ var (
 	globalCtx        context.Context
 	inbound_manager  adapter.InboundManager
 	outbound_manager adapter.OutboundManager
+	service_manager  adapter.ServiceManager
 	endpoint_manager adapter.EndpointManager
 	router           adapter.Router
+	statsTracker     *StatsTracker
 	connTracker      *ConnTracker
 	factory          log.Factory
 )
@@ -32,7 +34,7 @@ type Core struct {
 
 func NewCore() *Core {
 	globalCtx = context.Background()
-	globalCtx = sb.Context(globalCtx, inboundRegistry(), outboundRegistry(), EndpointRegistry())
+	globalCtx = sb.Context(globalCtx, InboundRegistry(), OutboundRegistry(), EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry())
 	return &Core{
 		isRunning: false,
 		instance:  nil,
@@ -70,6 +72,7 @@ func (c *Core) Start(sbConfig []byte) error {
 	globalCtx = service.ContextWith(globalCtx, c)
 	inbound_manager = service.FromContext[adapter.InboundManager](globalCtx)
 	outbound_manager = service.FromContext[adapter.OutboundManager](globalCtx)
+	service_manager = service.FromContext[adapter.ServiceManager](globalCtx)
 	endpoint_manager = service.FromContext[adapter.EndpointManager](globalCtx)
 	router = service.FromContext[adapter.Router](globalCtx)
 

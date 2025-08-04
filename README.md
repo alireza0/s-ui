@@ -27,6 +27,12 @@
 | Dark/Light Theme                       | :heavy_check_mark: |
 | API Interface                          | :heavy_check_mark: |
 
+## Screenshots
+
+!["Main"](https://github.com/alireza0/s-ui-frontend/raw/main/media/main.png)
+
+[Other UI Screenshots](https://github.com/alireza0/s-ui-frontend/blob/main/screenshots.md)
+
 ## API Documentation
 
 [API-Documentation Wiki](https://github.com/alireza0/s-ui/wiki/API-Documentation)

@@ -24,6 +24,8 @@ func GetOutbound(uri string, i int) (*map[string]interface{}, string, error) {
 			return hy(u, i)
 		case "hy2", "hysteria2":
 			return hy2(u, i)
+		case "anytls":
+			return anytls(u, i)
 		case "tuic":
 			return tuic(u, i)
 		case "ss", "shadowsocks":
@@ -293,6 +295,42 @@ func hy2(u *url.URL, i int) (*map[string]interface{}, string, error) {
 	return &hy2, tag, nil
 }
 
+func anytls(u *url.URL, i int) (*map[string]interface{}, string, error) {
+	query, _ := url.ParseQuery(u.RawQuery)
+	host, portStr, _ := net.SplitHostPort(u.Host)
+	port := 443
+	if len(portStr) > 0 {
+		port, _ = strconv.Atoi(portStr)
+	}
+
+	tls := map[string]interface{}{
+		"enabled":     true,
+		"server_name": query.Get("sni"),
+	}
+	alpn := query.Get("alpn")
+	insecure := query.Get("insecure")
+	if len(alpn) > 0 {
+		tls["alpn"] = strings.Split(alpn, ",")
+	}
+	if insecure == "1" || insecure == "true" {
+		tls["insecure"] = true
+	}
+
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
+	anytls := map[string]interface{}{
+		"type":        "anytls",
+		"tag":         tag,
+		"server":      host,
+		"server_port": port,
+		"password":    u.User.Username(),
+		"tls":         tls,
+	}
+	return &anytls, tag, nil
+}
+
 func tuic(u *url.URL, i int) (*map[string]interface{}, string, error) {
 	query, _ := url.ParseQuery(u.RawQuery)
 	host, portStr, _ := net.SplitHostPort(u.Host)
@@ -443,6 +481,7 @@ func getTls(security string, q *url.Values) *map[string]interface{} {
 	tls_sni := q.Get("sni")
 	tls_insecure := q.Get("allowInsecure")
 	tls_alpn := q.Get("alpn")
+	tls_ech := q.Get("ech")
 	switch security {
 	case "tls":
 		tls["enabled"] = true
@@ -467,6 +506,14 @@ func getTls(security string, q *url.Values) *map[string]interface{} {
 		tls["utls"] = map[string]interface{}{
 			"enabled":     true,
 			"fingerprint": tls_fp,
+		}
+	}
+	if len(tls_ech) > 0 {
+		tls["ech"] = map[string]interface{}{
+			"enabled": true,
+			"config": []string{
+				tls_ech,
+			},
 		}
 	}
 	return &tls

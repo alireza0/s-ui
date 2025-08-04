@@ -112,3 +112,36 @@ func (c *Core) RemoveEndpoint(tag string) error {
 	logger.Info("remove endpoint: ", tag)
 	return endpoint_manager.Remove(tag)
 }
+
+func (c *Core) AddService(config []byte) error {
+	if !c.isRunning {
+		return common.NewError("sing-box is not running")
+	}
+	var err error
+	var srv_config option.Service
+
+	err = srv_config.UnmarshalJSONContext(c.GetCtx(), config)
+	if err != nil {
+		return err
+	}
+
+	err = service_manager.Create(
+		c.GetCtx(),
+		factory.NewLogger("service/"+srv_config.Type+"["+srv_config.Tag+"]"),
+		srv_config.Tag,
+		srv_config.Type,
+		srv_config.Options)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Core) RemoveService(tag string) error {
+	if !c.isRunning {
+		return common.NewError("sing-box is not running")
+	}
+	logger.Info("remove service: ", tag)
+	return service_manager.Remove(tag)
+}

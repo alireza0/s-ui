@@ -11,6 +11,7 @@ type SubHandler struct {
 	service.SettingService
 	SubService
 	JsonService
+	ClashService
 }
 
 func NewSubHandler(g *gin.RouterGroup) {
@@ -23,29 +24,35 @@ func (s *SubHandler) initRouter(g *gin.RouterGroup) {
 }
 
 func (s *SubHandler) subs(c *gin.Context) {
+	var headers []string
+	var result *string
+	var err error
 	subId := c.Param("subid")
 	format, isFormat := c.GetQuery("format")
 	if isFormat {
-		result, err := s.JsonService.GetJson(subId, format)
+		switch format {
+		case "json":
+			result, headers, err = s.JsonService.GetJson(subId, format)
+		case "clash":
+			result, headers, err = s.ClashService.GetClash(subId)
+		}
 		if err != nil || result == nil {
 			logger.Error(err)
 			c.String(400, "Error!")
-		} else {
-			c.String(200, *result)
+			return
 		}
 	} else {
-		result, headers, err := s.SubService.GetSubs(subId)
+		result, headers, err = s.SubService.GetSubs(subId)
 		if err != nil || result == nil {
 			logger.Error(err)
 			c.String(400, "Error!")
-		} else {
-
-			// Add headers
-			c.Writer.Header().Set("Subscription-Userinfo", headers[0])
-			c.Writer.Header().Set("Profile-Update-Interval", headers[1])
-			c.Writer.Header().Set("Profile-Title", headers[2])
-
-			c.String(200, *result)
+			return
 		}
 	}
+	// Add headers
+	c.Writer.Header().Set("Subscription-Userinfo", headers[0])
+	c.Writer.Header().Set("Profile-Update-Interval", headers[1])
+	c.Writer.Header().Set("Profile-Title", headers[2])
+
+	c.String(200, *result)
 }

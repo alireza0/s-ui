@@ -22,6 +22,7 @@ type ConfigService struct {
 	SettingService
 	InboundService
 	OutboundService
+	ServicesService
 	EndpointService
 }
 
@@ -31,6 +32,7 @@ type SingBoxConfig struct {
 	Ntp          json.RawMessage   `json:"ntp"`
 	Inbounds     []json.RawMessage `json:"inbounds"`
 	Outbounds    []json.RawMessage `json:"outbounds"`
+	Services     []json.RawMessage `json:"services"`
 	Endpoints    []json.RawMessage `json:"endpoints"`
 	Route        json.RawMessage   `json:"route"`
 	Experimental json.RawMessage   `json:"experimental"`
@@ -60,6 +62,10 @@ func (s *ConfigService) GetConfig(data string) (*SingBoxConfig, error) {
 		return nil, err
 	}
 	singboxConfig.Outbounds, err = s.OutboundService.GetAllConfig(database.GetDB())
+	if err != nil {
+		return nil, err
+	}
+	singboxConfig.Services, err = s.ServicesService.GetAllConfig(database.GetDB())
 	if err != nil {
 		return nil, err
 	}
@@ -118,8 +124,6 @@ func (s *ConfigService) StopCore() error {
 
 func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initUsers string, loginUser string, hostname string) ([]string, error) {
 	var err error
-	var inboundIds []uint
-	var inboundId uint
 	var objs []string = []string{obj}
 
 	db := database.GetDB()
@@ -127,12 +131,6 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 	defer func() {
 		if err == nil {
 			tx.Commit()
-			if len(inboundIds) > 0 && corePtr.IsRunning() {
-				err1 := s.InboundService.RestartInbounds(db, inboundIds)
-				if err1 != nil {
-					logger.Error("unable to restart inbounds: ", err1)
-				}
-			}
 			// Try to start core if it is not running
 			if !corePtr.IsRunning() {
 				s.StartCore("")
@@ -144,14 +142,24 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 
 	switch obj {
 	case "clients":
-		inboundIds, err = s.ClientService.Save(tx, act, data, hostname)
-		objs = append(objs, "inbounds")
+		inboundIds, err := s.ClientService.Save(tx, act, data, hostname)
+		if err == nil && len(inboundIds) > 0 {
+			objs = append(objs, "inbounds")
+			err = s.InboundService.RestartInbounds(tx, inboundIds)
+			if err != nil {
+				return nil, common.NewErrorf("failed to update users for inbounds: %v", err)
+			}
+		}
 	case "tls":
-		inboundIds, err = s.TlsService.Save(tx, act, data)
+		err = s.TlsService.Save(tx, act, data, hostname)
+		objs = append(objs, "clients", "inbounds")
 	case "inbounds":
-		inboundId, err = s.InboundService.Save(tx, act, data, initUsers, hostname)
+		err = s.InboundService.Save(tx, act, data, initUsers, hostname)
+		objs = append(objs, "clients")
 	case "outbounds":
 		err = s.OutboundService.Save(tx, act, data)
+	case "services":
+		err = s.ServicesService.Save(tx, act, data)
 	case "endpoints":
 		err = s.EndpointService.Save(tx, act, data)
 	case "config":
@@ -180,49 +188,8 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 	if err != nil {
 		return nil, err
 	}
-	// Commit changes so far
-	tx.Commit()
+
 	LastUpdate = time.Now().Unix()
-	tx = db.Begin()
-
-	// Update side changes
-
-	// Update client links
-	if obj == "tls" && len(inboundIds) > 0 {
-		err = s.ClientService.UpdateLinksByInboundChange(tx, inboundIds, hostname)
-		if err != nil {
-			return nil, err
-		}
-		objs = append(objs, "clients")
-	}
-	if obj == "inbounds" {
-		switch act {
-		case "new":
-			err = s.ClientService.UpdateClientsOnInboundAdd(tx, initUsers, inboundId, hostname)
-		case "edit":
-			err = s.ClientService.UpdateLinksByInboundChange(tx, []uint{inboundId}, hostname)
-		case "del":
-			var tag string
-			err = json.Unmarshal(data, &tag)
-			if err != nil {
-				return nil, err
-			}
-			err = s.ClientService.UpdateClientsOnInboundDelete(tx, inboundId, tag)
-		}
-		if err != nil {
-			return nil, err
-		}
-		objs = append(objs, "clients")
-	}
-
-	// Update out_json of inbounds when tls is changed
-	if obj == "tls" && len(inboundIds) > 0 {
-		err = s.InboundService.UpdateOutJsons(tx, inboundIds, hostname)
-		if err != nil {
-			return nil, common.NewError("unable to update out_json of inbounds: ", err.Error())
-		}
-		objs = append(objs, "inbounds")
-	}
 
 	return objs, nil
 }

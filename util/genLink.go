@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var InboundTypeWithLink = []string{"shadowsocks", "naive", "hysteria", "hysteria2", "tuic", "vless", "trojan", "vmess"}
+var InboundTypeWithLink = []string{"socks", "http", "mixed", "shadowsocks", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}
 
 func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname string) []string {
 	inbound, err := i.MarshalFull()
@@ -61,6 +61,13 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 	}
 
 	switch i.Type {
+	case "socks":
+		return socksLink(userConfig["socks"], *inbound, Addrs)
+	case "http":
+		return httpLink(userConfig["http"], *inbound, Addrs)
+	case "mixed":
+		return append(
+			socksLink(userConfig["socks"], *inbound, Addrs), httpLink(userConfig["http"], *inbound, Addrs)...)
 	case "shadowsocks":
 		return shadowsocksLink(userConfig, *inbound, Addrs)
 	case "naive":
@@ -73,6 +80,8 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 		return tuicLink(userConfig["tuic"], *inbound, Addrs)
 	case "vless":
 		return vlessLink(userConfig["vless"], *inbound, Addrs)
+	case "anytls":
+		return anytlsLink(userConfig["anytls"], Addrs)
 	case "trojan":
 		return trojanLink(userConfig["trojan"], *inbound, Addrs)
 	case "vmess":
@@ -95,13 +104,33 @@ func prepareTls(t *model.Tls) map[string]interface{} {
 			reality := v.(map[string]interface{})
 			clientReality := oTls["reality"].(map[string]interface{})
 			clientReality["enabled"] = reality["enabled"]
-			if short_ids, hasSIds := reality["short_ids"].([]interface{}); hasSIds && len(short_ids) > 0 {
+			if short_ids, hasSIds := reality["short_id"].([]interface{}); hasSIds && len(short_ids) > 0 {
 				clientReality["short_id"] = short_ids[common.RandomInt(len(short_ids))]
 			}
 			oTls["reality"] = clientReality
 		}
 	}
 	return oTls
+}
+
+func socksLink(userConfig map[string]interface{}, inbound map[string]interface{}, addrs []map[string]interface{}) []string {
+	var links []string
+	for _, addr := range addrs {
+		links = append(links, fmt.Sprintf("socks5://%s:%s@%s:%d", userConfig["username"], userConfig["password"], addr["server"].(string), uint(addr["server_port"].(float64))))
+	}
+	return links
+}
+
+func httpLink(userConfig map[string]interface{}, inbound map[string]interface{}, addrs []map[string]interface{}) []string {
+	var links []string
+	var protocol string = "http"
+	for _, addr := range addrs {
+		if addr["tls"] != nil {
+			protocol = "https"
+		}
+		links = append(links, fmt.Sprintf("%s://%s:%s@%s:%d", protocol, userConfig["username"], userConfig["password"], addr["server"].(string), uint(addr["server_port"].(float64))))
+	}
+	return links
 }
 
 func shadowsocksLink(
@@ -270,6 +299,40 @@ func hysteria2Link(
 			params["fastopen"] = "1"
 		} else {
 			params["fastopen"] = "0"
+		}
+
+		port, _ := addr["server_port"].(float64)
+		uri := fmt.Sprintf("%s%s:%d", baseUri, addr["server"].(string), uint(port))
+		links = append(links, addParams(uri, params, addr["remark"].(string)))
+	}
+
+	return links
+}
+
+func anytlsLink(
+	userConfig map[string]interface{},
+	addrs []map[string]interface{}) []string {
+
+	password, _ := userConfig["password"].(string)
+	baseUri := fmt.Sprintf("%s%s@", "anytls://", password)
+	var links []string
+
+	for _, addr := range addrs {
+		params := map[string]string{}
+		if tls, ok := addr["tls"].(map[string]interface{}); ok {
+			if sni, ok := tls["server_name"].(string); ok {
+				params["sni"] = sni
+			}
+			if alpn, ok := tls["alpn"].([]interface{}); ok {
+				alpnList := make([]string, len(alpn))
+				for i, v := range alpn {
+					alpnList[i] = v.(string)
+				}
+				params["alpn"] = strings.Join(alpnList, ",")
+			}
+			if insecure, ok := tls["insecure"].(bool); ok && insecure {
+				params["insecure"] = "1"
+			}
 		}
 
 		port, _ := addr["server_port"].(float64)
