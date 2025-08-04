@@ -49,6 +49,7 @@ type Box struct {
 	connection      *route.ConnectionManager
 	router          *route.Router
 	internalService []adapter.LifecycleService
+	statsTracker    *StatsTracker
 	connTracker     *ConnTracker
 	done            chan struct{}
 }
@@ -324,6 +325,10 @@ func NewBox(options Options) (*Box, error) {
 			return nil, common.NewError("initialize platform interface", err)
 		}
 	}
+	if statsTracker == nil {
+		statsTracker = NewStatsTracker()
+	}
+	router.AppendTracker(statsTracker)
 	if connTracker == nil {
 		connTracker = NewConnTracker()
 	}
@@ -387,6 +392,7 @@ func NewBox(options Options) (*Box, error) {
 		logFactory:      logFactory,
 		logger:          logFactory.Logger(),
 		internalService: internalServices,
+		statsTracker:    statsTracker,
 		connTracker:     connTracker,
 		done:            make(chan struct{}),
 	}, nil
@@ -528,6 +534,10 @@ func (s *Box) Outbound() adapter.OutboundManager {
 
 func (s *Box) Endpoint() adapter.EndpointManager {
 	return s.endpoint
+}
+
+func (s *Box) StatsTracker() *StatsTracker {
+	return s.statsTracker
 }
 
 func (s *Box) ConnTracker() *ConnTracker {

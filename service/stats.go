@@ -23,7 +23,7 @@ func (s *StatsService) SaveStats() error {
 	if !corePtr.IsRunning() {
 		return nil
 	}
-	stats := corePtr.GetInstance().ConnTracker().GetStats()
+	stats := corePtr.GetInstance().StatsTracker().GetStats()
 
 	// Reset onlines
 	onlineResources.Inbound = nil
