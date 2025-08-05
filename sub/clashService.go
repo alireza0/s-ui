@@ -162,9 +162,15 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 					proxy["obfs"] = obfs["type"]
 					proxy["obfs-password"] = obfs["password"]
 				}
-				if ports, ok := obMap["server_ports"].([]string); ok {
-					proxy["ports"] = strings.ReplaceAll(strings.Join(ports, ","), ":", "-")
+			}
+
+			if portLists, ok := obMap["server_ports"].([]interface{}); ok {
+				var ports []string
+				for _, portList := range portLists {
+					portRange, _ := portList.(string)
+					ports = append(ports, strings.ReplaceAll(portRange, ":", "-"))
 				}
+				proxy["ports"] = strings.Join(ports, ",")
 			}
 		case "anytls":
 			proxy["password"] = obMap["password"]
