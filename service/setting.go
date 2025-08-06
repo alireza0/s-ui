@@ -25,6 +25,9 @@ var defaultConfig = `{
   },
   "route": {
     "rules": [
+		  {
+        "action": "sniff"
+      },
       {
         "protocol": [
           "dns"
