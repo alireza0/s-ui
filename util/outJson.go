@@ -42,7 +42,6 @@ func FillOutJson(i *model.Inbound, hostname string) error {
 	case "http", "socks", "mixed", "anytls":
 	case "shadowsocks":
 		shadowsocksOut(&outJson, *inbound)
-		return nil
 	case "shadowtls":
 		shadowTlsOut(&outJson, *inbound)
 	case "hysteria":

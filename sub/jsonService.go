@@ -7,6 +7,7 @@ import (
 	"s-ui/database/model"
 	"s-ui/service"
 	"s-ui/util"
+	"strings"
 )
 
 const defaultJson = `
@@ -128,12 +129,36 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 			return nil, nil, err
 		}
 		protocol, _ := outbound["type"].(string)
-		config, _ := configs[protocol].(map[string]interface{})
-		for key, value := range config {
-			if key == "name" || key == "alterId" || (key == "flow" && inData.TlsId == 0) {
-				continue
+
+		// Shadowsocks
+		if protocol == "shadowsocks" {
+			var userPass []string
+			var inbOptions map[string]interface{}
+			err = json.Unmarshal(inData.Options, &inbOptions)
+			if err != nil {
+				return nil, nil, err
 			}
-			outbound[key] = value
+			method, _ := inbOptions["method"].(string)
+			if strings.HasPrefix(method, "2022") {
+				inbPass, _ := inbOptions["password"].(string)
+				userPass = append(userPass, inbPass)
+			}
+			var pass string
+			if method == "2022-blake3-aes-128-gcm" {
+				pass, _ = configs["shadowsocks16"].(map[string]interface{})["password"].(string)
+			} else {
+				pass, _ = configs["shadowsocks"].(map[string]interface{})["password"].(string)
+			}
+			userPass = append(userPass, pass)
+			outbound["password"] = strings.Join(userPass, ":")
+		} else { // Other protocols
+			config, _ := configs[protocol].(map[string]interface{})
+			for key, value := range config {
+				if key == "name" || key == "alterId" || (key == "flow" && inData.TlsId == 0) {
+					continue
+				}
+				outbound[key] = value
+			}
 		}
 
 		var addrs []map[string]interface{}
