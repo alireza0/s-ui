@@ -157,7 +157,7 @@ func shadowsocksLink(
 	var links []string
 	for _, addr := range addrs {
 		port, _ := addr["server_port"].(float64)
-		links = append(links, fmt.Sprintf("%s@%s:%d", uriBase, addr["server"].(string), uint(port)))
+		links = append(links, fmt.Sprintf("%s@%s:%d#%s", uriBase, addr["server"].(string), uint(port), addr["remark"].(string)))
 	}
 	return links
 }
