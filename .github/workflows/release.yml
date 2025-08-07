@@ -1,10 +1,19 @@
 name: Release S-UI
 
 on:
-  push:
-    tags:
-      - "*"
   workflow_dispatch:
+  release:
+    types: [published]
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '**.sh'
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 's-ui.service'
 
 jobs:
   build:
@@ -102,8 +111,15 @@ jobs:
       - name: Package
         run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
 
+      - name: Upload files to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: s-ui-linux-${{ matrix.platform }}
+          path: ./s-ui-linux-${{ matrix.platform }}.tar.gz
+
       - name: Upload
         uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'release' && github.event.action == 'published'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
