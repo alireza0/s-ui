@@ -528,6 +528,13 @@ func vmessLink(
 			if sni, ok := tls["server_name"].(string); ok {
 				obj["sni"] = sni
 			}
+			if alpn, ok := tls["alpn"].([]interface{}); ok {
+				alpnList := make([]string, len(alpn))
+				for i, v := range alpn {
+					alpnList[i] = v.(string)
+				}
+				obj["alpn"] = strings.Join(alpnList, ",")
+			}
 			if utls, ok := tls["utls"].(map[string]interface{}); ok {
 				obj["fp"], _ = utls["fingerprint"].(string)
 			}
