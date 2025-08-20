@@ -132,6 +132,12 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 					proxy["flow"] = flow
 				}
 			}
+			if t == "tuic" {
+				proxy["password"] = obMap["password"]
+				if congestion_control, ok := obMap["congestion_control"].(string); ok {
+					proxy["congestion-controller"] = congestion_control
+				}
+			}
 		case "trojan":
 			proxy["password"] = obMap["password"]
 		case "socks", "http":
