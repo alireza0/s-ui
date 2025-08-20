@@ -303,15 +303,15 @@ func NewBox(options Options) (*Box, error) {
 			return nil, common.NewError("initialize service["+F.ToString(i)+"]"+tag, err)
 		}
 	}
-	outboundManager.Initialize(sbCommon.Must1(
-		direct.NewOutbound(
+	outboundManager.Initialize(func() (adapter.Outbound, error) {
+		return direct.NewOutbound(
 			ctx,
 			router,
 			logFactory.NewLogger("outbound/direct"),
 			"direct",
 			option.DirectOutboundOptions{},
-		),
-	))
+		)
+	})
 	dnsTransportManager.Initialize(sbCommon.Must1(
 		local.NewTransport(
 			ctx,
