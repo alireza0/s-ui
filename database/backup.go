@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"runtime"
 	"s-ui/cmd/migration"
 	"s-ui/config"
 	"s-ui/database/model"
@@ -287,7 +288,11 @@ func SendSighup() error {
 	// Send SIGHUP to the current process
 	go func() {
 		time.Sleep(3 * time.Second)
-		err := process.Signal(syscall.SIGHUP)
+		if runtime.GOOS == "windows" {
+			err = process.Kill()
+		} else {
+			err = process.Signal(syscall.SIGHUP)
+		}
 		if err != nil {
 			logger.Error("send signal SIGHUP failed:", err)
 		}

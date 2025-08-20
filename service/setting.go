@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"os"
+	"runtime"
 	"s-ui/config"
 	"s-ui/database"
 	"s-ui/database/model"
@@ -244,6 +245,9 @@ func (s *SettingService) GetTimeLocation() (*time.Location, error) {
 	l, err := s.getString("timeLocation")
 	if err != nil {
 		return nil, err
+	}
+	if runtime.GOOS == "windows" {
+		l = "Local"
 	}
 	location, err := time.LoadLocation(l)
 	if err != nil {

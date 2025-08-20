@@ -36,7 +36,7 @@ REM Check if WinSW is available
 set "WINSW_PATH=%INSTALL_DIR%\winsw.exe"
 if not exist "%WINSW_PATH%" (
     echo Downloading WinSW...
-    powershell -Command "& {Invoke-WebRequest -Uri 'https://github.com/winsw/winsw/releases/download/v3.0.0/WinSW-x64.exe' -OutFile '%WINSW_PATH%'}"
+    powershell -Command "& {Invoke-WebRequest -Uri 'https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe' -OutFile '%WINSW_PATH%'}"
     if exist "%WINSW_PATH%" (
         echo WinSW downloaded successfully
     ) else (
@@ -51,10 +51,7 @@ if exist "%WINSW_PATH%" (
     cd /d "%INSTALL_DIR%"
     copy "winsw.exe" "s-ui-service.exe" >nul
     copy "s-ui-windows.xml" "s-ui-service.xml" >nul
-    
-    REM Update XML with correct paths
-    powershell -Command "& {(Get-Content 's-ui-service.xml') -replace '%BASE%', '%INSTALL_DIR%' | Set-Content 's-ui-service.xml'}"
-    
+        
     REM Install service
     s-ui-service.exe install
     if %errorLevel% equ 0 (

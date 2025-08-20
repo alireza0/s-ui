@@ -2,6 +2,7 @@ package service
 
 import (
 	"os"
+	"runtime"
 	"s-ui/logger"
 	"syscall"
 	"time"
@@ -17,7 +18,11 @@ func (s *PanelService) RestartPanel(delay time.Duration) error {
 	}
 	go func() {
 		time.Sleep(delay)
-		err := p.Signal(syscall.SIGHUP)
+		if runtime.GOOS == "windows" {
+			err = p.Kill()
+		} else {
+			err = p.Signal(syscall.SIGHUP)
+		}
 		if err != nil {
 			logger.Error("send signal SIGHUP failed:", err)
 		}

@@ -16,22 +16,92 @@ on:
       - 'windows/**'
 
 jobs:
-  build-windows:
-    strategy:
-      matrix:
-        platform:
-          - amd64
-          - arm64
-        include:
-          - platform: amd64
-            goarch: amd64
-            suffix: ""
-          - platform: arm64
-            goarch: arm64
-            suffix: "-arm64"
-    
+  build-windows:    
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          cache: false
+          go-version-file: go.mod
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install zip for Windows
+        shell: powershell
+        run: |
+          # Install Chocolatey if not available
+          if (!(Get-Command choco -ErrorAction SilentlyContinue)) {
+            Set-ExecutionPolicy Bypass -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+            iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          }
+          # Install zip
+          choco install zip -y
+
+      - name: Build frontend
+        shell: bash
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+          mv frontend/dist web/html
+          rm -fr frontend
+
+      - name: Build s-ui
+        shell: bash
+        run: |
+          export CGO_ENABLED=1
+          export GOOS=windows
+          export GOARCH=amd64
+          
+          echo "Building for Windows amd64"
+          go version
+          
+          ### Build s-ui
+          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui.exe main.go
+          file sui.exe
+          
+          mkdir s-ui-windows
+          cp sui.exe s-ui-windows/
+          cp -r windows/* s-ui-windows/
+
+      - name: Package
+        shell: bash
+        run: |
+          zip -r "s-ui-windows-amd64.zip" s-ui-windows
+
+      - name: Upload files to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: s-ui-windows-amd64
+          path: ./s-ui-windows-amd64.zip
+          retention-days: 30
+
+      - name: Upload to Release
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'release' && github.event.action == 'published'
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file: s-ui-windows-amd64.zip
+          asset_name: s-ui-windows-amd64.zip
+          prerelease: true
+          overwrite: true
+
+  build-windows-arm64:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5.0.0
@@ -60,50 +130,42 @@ jobs:
           mv frontend/dist web/html
           rm -fr frontend
 
-      - name: Build S-UI for Windows
+      - name: Build s-ui for ARM64
         run: |
-          export CGO_ENABLED=1
+          export CGO_ENABLED=0
           export GOOS=windows
-          export GOARCH=${{ matrix.goarch }}
+          export GOARCH=arm64
           
-          # Install MinGW-w64 for Windows cross-compilation
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64
+          echo "Building for Windows ARM64 (32-bit)"
+          go version
+          go env GOOS GOARCH
           
-          # Set CC based on architecture
-          case "${{ matrix.goarch }}" in
-            amd64) export CC=x86_64-w64-mingw32-gcc ;;
-            arm64) export CC=x86_64-w64-mingw32-gcc ;; # MinGW doesn't support ARM64 well, use x86_64
-          esac
-          
-          echo "Using CC: $CC"
-          echo "GOOS: $GOOS, GOARCH: $GOARCH"
-
-          ### Build s-ui for Windows
-          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o "sui${{ matrix.suffix }}.exe" main.go
-          file "sui${{ matrix.suffix }}.exe"
+          ### Build s-ui without CGO for ARM64
+          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui.exe main.go
+          file sui.exe
           
           mkdir s-ui-windows
-          cp "sui${{ matrix.suffix }}.exe" s-ui-windows/sui.exe
+          cp sui.exe s-ui-windows/
           cp -r windows/* s-ui-windows/
 
-      - name: Package
-        run: zip -r "s-ui-windows-${{ matrix.platform }}.zip" s-ui-windows
+      - name: Package ARM64
+        run: |
+          zip -r "s-ui-windows-arm64.zip" s-ui-windows
 
-      - name: Upload files to Artifacts
+      - name: Upload ARM64 files to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: s-ui-windows-${{ matrix.platform }}
-          path: ./s-ui-windows-${{ matrix.platform }}.zip
+          name: s-ui-windows-arm64
+          path: ./s-ui-windows-arm64.zip
           retention-days: 30
 
-      - name: Upload to Release
+      - name: Upload ARM64 to Release
         uses: svenstaro/upload-release-action@v2
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
-          file: s-ui-windows-${{ matrix.platform }}.zip
-          asset_name: s-ui-windows-${{ matrix.platform }}.zip
+          file: s-ui-windows-arm64.zip
+          asset_name: s-ui-windows-arm64.zip
           prerelease: true
           overwrite: true
