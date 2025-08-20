@@ -27,6 +27,13 @@
 | Dark/Light Theme                       | :heavy_check_mark: |
 | API Interface                          | :heavy_check_mark: |
 
+## Supported Platforms
+| Platform | Architecture | Status |
+|----------|--------------|---------|
+| Linux    | amd64, arm64, armv7, armv6, armv5, 386, s390x | ✅ Supported |
+| Windows  | amd64, 386, arm64 | ✅ Supported |
+| macOS    | amd64, arm64 | 🚧 Experimental |
+
 ## Screenshots
 
 !["Main"](https://github.com/alireza0/s-ui-frontend/raw/main/media/main.png)
@@ -46,9 +53,16 @@
 
 ## Install & Upgrade to Latest Version
 
+### Linux/macOS
 ```sh
 bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh)
 ```
+
+### Windows
+1. Download the latest Windows release from [GitHub Releases](https://github.com/alireza0/s-ui/releases/latest)
+2. Extract the ZIP file
+3. Run `install-windows.bat` as Administrator
+4. Follow the installation wizard
 
 ## Install legacy Version
 
@@ -60,6 +74,7 @@ VERSION=1.0.0 && bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui
 
 ## Manual installation
 
+### Linux/macOS
 1. Get the latest version of S-UI based on your OS/Architecture from GitHub: [https://github.com/alireza0/s-ui/releases/latest](https://github.com/alireza0/s-ui/releases/latest)
 2. **OPTIONAL** Get the latest version of `s-ui.sh` [https://raw.githubusercontent.com/alireza0/s-ui/master/s-ui.sh](https://raw.githubusercontent.com/alireza0/s-ui/master/s-ui.sh)
 3. **OPTIONAL** Copy `s-ui.sh` to /usr/bin/ and run `chmod +x /usr/bin/s-ui`.
@@ -67,6 +82,14 @@ VERSION=1.0.0 && bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui
 5. Copy *.service files to /etc/systemd/system/ and run `systemctl daemon-reload`.
 6. Enable autostart and start S-UI service using `systemctl enable s-ui --now`
 7. Start sing-box service using `systemctl enable sing-box --now`
+
+### Windows
+1. Get the latest Windows version from GitHub: [https://github.com/alireza0/s-ui/releases/latest](https://github.com/alireza0/s-ui/releases/latest)
+2. Download the appropriate Windows package (e.g., `s-ui-windows-amd64.zip`)
+3. Extract the ZIP file to a directory of your choice
+4. Run `install-windows.bat` as Administrator
+5. Follow the installation wizard
+6. Access the panel at http://localhost:2095/app
 
 ## Uninstall S-UI
 

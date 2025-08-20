@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service>
+  <id>s-ui</id>
+  <name>S-UI Proxy Panel</name>
+  <description>S-UI is a proxy panel for managing proxy services</description>
+  <executable>%BASE%\sui.exe</executable>
+  <arguments></arguments>
+  <logmode>rotate</logmode>
+  <logpath>%BASE%\logs</logpath>
+  <log size="10 m" />
+  <log keep="10" />
+  <workingdirectory>%BASE%</workingdirectory>
+  <env name="SUI_DB_FOLDER" value="db" />
+  <env name="SUI_DEBUG" value="false" />
+  <onfailure action="restart" delay="10 sec" />
+  <onfailure action="restart" delay="20 sec" />
+  <onfailure action="none" />
+  <resetfailure>1 hour</resetfailure>
+  <startmode>Automatic</startmode>
+  <depend>tcpip</depend>
+  <depend>netman</depend>
+</service>

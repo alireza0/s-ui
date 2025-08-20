@@ -1,0 +1,109 @@
+name: Build S-UI for Windows
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/windows.yml'
+      - 'frontend/**'
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'windows/**'
+
+jobs:
+  build-windows:
+    strategy:
+      matrix:
+        platform:
+          - amd64
+          - arm64
+        include:
+          - platform: amd64
+            goarch: amd64
+            suffix: ""
+          - platform: arm64
+            goarch: arm64
+            suffix: "-arm64"
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          cache: false
+          go-version-file: go.mod
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+          mv frontend/dist web/html
+          rm -fr frontend
+
+      - name: Build S-UI for Windows
+        run: |
+          export CGO_ENABLED=1
+          export GOOS=windows
+          export GOARCH=${{ matrix.goarch }}
+          
+          # Install MinGW-w64 for Windows cross-compilation
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
+          
+          # Set CC based on architecture
+          case "${{ matrix.goarch }}" in
+            amd64) export CC=x86_64-w64-mingw32-gcc ;;
+            arm64) export CC=x86_64-w64-mingw32-gcc ;; # MinGW doesn't support ARM64 well, use x86_64
+          esac
+          
+          echo "Using CC: $CC"
+          echo "GOOS: $GOOS, GOARCH: $GOARCH"
+
+          ### Build s-ui for Windows
+          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o "sui${{ matrix.suffix }}.exe" main.go
+          file "sui${{ matrix.suffix }}.exe"
+          
+          mkdir s-ui-windows
+          cp "sui${{ matrix.suffix }}.exe" s-ui-windows/sui.exe
+          cp -r windows/* s-ui-windows/
+
+      - name: Package
+        run: zip -r "s-ui-windows-${{ matrix.platform }}.zip" s-ui-windows
+
+      - name: Upload files to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: s-ui-windows-${{ matrix.platform }}
+          path: ./s-ui-windows-${{ matrix.platform }}.zip
+          retention-days: 30
+
+      - name: Upload to Release
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'release' && github.event.action == 'published'
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file: s-ui-windows-${{ matrix.platform }}.zip
+          asset_name: s-ui-windows-${{ matrix.platform }}.zip
+          prerelease: true
+          overwrite: true

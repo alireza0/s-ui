@@ -20,6 +20,14 @@ frontend/
 *.log*
 .cache
 
+# Windows build artifacts
+*.exe
+*.zip
+s-ui-windows/
+sui-*.exe
+sui-*.zip
+windows/sui-*.exe
+
 # Editor directories and files
 .idea
 .vscode

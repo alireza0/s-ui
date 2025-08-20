@@ -17,7 +17,7 @@ on:
       - 's-ui.service'
 
 jobs:
-  build:
+  build-linux:
     strategy:
       matrix:
         platform:
@@ -34,6 +34,7 @@ jobs:
         uses: actions/checkout@v5.0.0
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -103,8 +104,9 @@ jobs:
         with:
           name: s-ui-linux-${{ matrix.platform }}
           path: ./s-ui-linux-${{ matrix.platform }}.tar.gz
+          retention-days: 30
 
-      - name: Upload
+      - name: Upload to Release
         uses: svenstaro/upload-release-action@v2
         if: github.event_name == 'release' && github.event.action == 'published'
         with:
