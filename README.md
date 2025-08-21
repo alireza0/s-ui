@@ -217,21 +217,6 @@ To run backend (from root folder of repository):
 - HTTPS for secure access to the web panel and subscription service (self-provided domain + SSL certificate)
 - Dark/Light theme
 
-## Recommended OS
-
-- Ubuntu 22.04+
-- Debian 12+
-- CentOS 9+
-- Fedora 36+
-- Arch Linux
-- Parch Linux
-- Manjaro
-- Armbian
-- AlmaLinux 9.5+
-- Rocky Linux 9.5+
-- Oracle Linux 8+
-- OpenSUSE Tubleweed
-
 ## Environment Variables
 
 <details>
