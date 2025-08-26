@@ -134,7 +134,7 @@ docker compose up -d
 mkdir s-ui && cd s-ui
 docker run -itd \
     -p 2095:2095 -p 2096:2096 -p 443:443 -p 80:80 \
-    -v $PWD/db/:/usr/local/s-ui/db/ \
+    -v $PWD/db/:/app/db/ \
     -v $PWD/cert/:/root/cert/ \
     --name s-ui --restart=unless-stopped \
     alireza7/s-ui:latest
