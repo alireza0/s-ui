@@ -9,8 +9,8 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sagernet/sing v0.7.6-0.20250815070458-d33ece7a184f
-	github.com/sagernet/sing-box v1.12.3
+	github.com/sagernet/sing v0.7.6-0.20250825114712-2aeec120ce28
+	github.com/sagernet/sing-box v1.12.4
 	github.com/sagernet/sing-dns v0.4.6
 	github.com/shirou/gopsutil/v4 v4.25.7
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
@@ -114,7 +114,7 @@ require (
 	github.com/sagernet/sing-tun v0.7.0-beta.1 // indirect
 	github.com/sagernet/sing-vmess v0.2.7 // indirect
 	github.com/sagernet/smux v1.5.34-mod.2 // indirect
-	github.com/sagernet/tailscale v1.80.3-mod.5 // indirect
+	github.com/sagernet/tailscale v1.80.3-sing-box-1.12-mod.1 // indirect
 	github.com/sagernet/wireguard-go v0.0.1-beta.7 // indirect
 	github.com/sagernet/ws v0.0.0-20231204124109-acfe8907c854 // indirect
 	github.com/tailscale/certstore v0.1.1-0.20231202035212-d3fa0460f47e // indirect
