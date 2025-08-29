@@ -435,7 +435,7 @@ func ss(u *url.URL, i int) (*map[string]interface{}, string, error) {
 	return &ss, tag, nil
 }
 
-func getTransport(tp_type string, q *url.Values) *map[string]interface{} {
+func getTransport(tp_type string, q *url.Values) map[string]interface{} {
 	transport := map[string]interface{}{}
 	tp_host := q.Get("host")
 	tp_path := q.Get("path")
@@ -472,10 +472,10 @@ func getTransport(tp_type string, q *url.Values) *map[string]interface{} {
 		transport["path"] = tp_path
 		transport["host"] = tp_host
 	}
-	return &transport
+	return transport
 }
 
-func getTls(security string, q *url.Values) *map[string]interface{} {
+func getTls(security string, q *url.Values) map[string]interface{} {
 	tls := map[string]interface{}{}
 	tls_fp := q.Get("fp")
 	tls_sni := q.Get("sni")
@@ -516,5 +516,5 @@ func getTls(security string, q *url.Values) *map[string]interface{} {
 			},
 		}
 	}
-	return &tls
+	return tls
 }
