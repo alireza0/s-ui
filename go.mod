@@ -9,14 +9,14 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sagernet/sing v0.7.6-0.20250815070458-d33ece7a184f
-	github.com/sagernet/sing-box v1.12.3
+	github.com/sagernet/sing v0.7.6-0.20250825114712-2aeec120ce28
+	github.com/sagernet/sing-box v1.12.4
 	github.com/sagernet/sing-dns v0.4.6
 	github.com/shirou/gopsutil/v4 v4.25.7
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.6.0
-	gorm.io/gorm v1.30.1
+	gorm.io/gorm v1.30.2
 )
 
 require (
@@ -114,7 +114,7 @@ require (
 	github.com/sagernet/sing-tun v0.7.0-beta.1 // indirect
 	github.com/sagernet/sing-vmess v0.2.7 // indirect
 	github.com/sagernet/smux v1.5.34-mod.2 // indirect
-	github.com/sagernet/tailscale v1.80.3-mod.5 // indirect
+	github.com/sagernet/tailscale v1.80.3-sing-box-1.12-mod.1 // indirect
 	github.com/sagernet/wireguard-go v0.0.1-beta.7 // indirect
 	github.com/sagernet/ws v0.0.0-20231204124109-acfe8907c854 // indirect
 	github.com/tailscale/certstore v0.1.1-0.20231202035212-d3fa0460f47e // indirect
@@ -139,7 +139,7 @@ require (
 	go.uber.org/zap/exp v0.3.0 // indirect
 	go4.org/mem v0.0.0-20240501181205-ae6ca9944745 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
-	golang.org/x/arch v0.19.0 // indirect
+	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/mod v0.27.0 // indirect
