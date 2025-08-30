@@ -391,6 +391,13 @@ func (s *SettingService) Save(tx *gorm.DB, data json.RawMessage) error {
 			}
 		}
 
+		// Delete all stats if it is set to 0
+		if key == "trafficAge" && obj == "0" {
+			err = tx.Where("id > 0").Delete(model.Stats{}).Error
+			if err != nil {
+				return err
+			}
+		}
 		err = tx.Model(model.Setting{}).Where("key = ?", key).Update("value", obj).Error
 		if err != nil {
 			return err

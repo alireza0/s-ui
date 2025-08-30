@@ -90,6 +90,10 @@ func (a *ApiService) getData(c *gin.Context) (interface{}, error) {
 		if err != nil {
 			return "", err
 		}
+		trafficAge, err := a.SettingService.GetTrafficAge()
+		if err != nil {
+			return "", err
+		}
 		data["config"] = json.RawMessage(config)
 		data["clients"] = clients
 		data["tls"] = tlsConfigs
@@ -98,6 +102,7 @@ func (a *ApiService) getData(c *gin.Context) (interface{}, error) {
 		data["endpoints"] = endpoints
 		data["services"] = services
 		data["subURI"] = subURI
+		data["enableTraffic"] = trafficAge > 0
 		data["onlines"] = onlines
 	} else {
 		data["onlines"] = onlines

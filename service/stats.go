@@ -19,7 +19,7 @@ var onlineResources = &onlines{}
 type StatsService struct {
 }
 
-func (s *StatsService) SaveStats() error {
+func (s *StatsService) SaveStats(enableTraffic bool) error {
 	if !corePtr.IsRunning() {
 		return nil
 	}
@@ -70,8 +70,10 @@ func (s *StatsService) SaveStats() error {
 		}
 	}
 
-	err = tx.Create(&stats).Error
-	return err
+	if !enableTraffic {
+		return nil
+	}
+	return tx.Create(&stats).Error
 }
 
 func (s *StatsService) GetStats(resource string, tag string, limit int) ([]model.Stats, error) {
