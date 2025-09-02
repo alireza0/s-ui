@@ -12,7 +12,7 @@ require (
 	github.com/sagernet/sing v0.7.6-0.20250825114712-2aeec120ce28
 	github.com/sagernet/sing-box v1.12.4
 	github.com/sagernet/sing-dns v0.4.6
-	github.com/shirou/gopsutil/v4 v4.25.7
+	github.com/shirou/gopsutil/v4 v4.25.8
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.6.0
