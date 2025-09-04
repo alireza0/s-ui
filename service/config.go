@@ -142,7 +142,8 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 
 	switch obj {
 	case "clients":
-		inboundIds, err := s.ClientService.Save(tx, act, data, hostname)
+		var inboundIds []uint
+		inboundIds, err = s.ClientService.Save(tx, act, data, hostname)
 		if err == nil && len(inboundIds) > 0 {
 			objs = append(objs, "inbounds")
 			err = s.InboundService.RestartInbounds(tx, inboundIds)
