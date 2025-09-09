@@ -29,8 +29,11 @@ func getRemoteIp(c *gin.Context) string {
 
 func getHostname(c *gin.Context) string {
 	host := c.Request.Host
-	if colonIndex := strings.LastIndex(host, ":"); colonIndex != -1 {
+	if strings.Contains(host, ":") {
 		host, _, _ = net.SplitHostPort(c.Request.Host)
+		if strings.Contains(host, ":") {
+			host = "[" + host + "]"
+		}
 	}
 	return host
 }

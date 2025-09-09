@@ -7,7 +7,6 @@ import (
 	"s-ui/service"
 	"s-ui/util"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -86,7 +85,7 @@ func (a *ApiService) getData(c *gin.Context) (interface{}, error) {
 		if err != nil {
 			return "", err
 		}
-		subURI, err := a.SettingService.GetFinalSubURI(strings.Split(c.Request.Host, ":")[0])
+		subURI, err := a.SettingService.GetFinalSubURI(getHostname(c))
 		if err != nil {
 			return "", err
 		}
