@@ -67,7 +67,9 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 		return httpLink(userConfig["http"], *inbound, Addrs)
 	case "mixed":
 		return append(
-			socksLink(userConfig["socks"], *inbound, Addrs), httpLink(userConfig["http"], *inbound, Addrs)...)
+			socksLink(userConfig["socks"], *inbound, Addrs),
+			httpLink(userConfig["http"], *inbound, Addrs)...,
+		)
 	case "shadowsocks":
 		return shadowsocksLink(userConfig, *inbound, Addrs)
 	case "naive":
@@ -157,7 +159,7 @@ func shadowsocksLink(
 	var links []string
 	for _, addr := range addrs {
 		port, _ := addr["server_port"].(float64)
-		links = append(links, fmt.Sprintf("%s@%s:%d#%s", uriBase, addr["server"].(string), uint(port), addr["remark"].(string)))
+		links = append(links, fmt.Sprintf("%s@%s:%.0f#%s", uriBase, addr["server"].(string), port, addr["remark"].(string)))
 	}
 	return links
 }
@@ -198,7 +200,7 @@ func naiveLink(
 		}
 
 		port, _ := addr["server_port"].(float64)
-		uri := baseUri + toBase64([]byte(fmt.Sprintf("%s:%s@%s:%d", username, password, addr["server"].(string), uint(port))))
+		uri := baseUri + toBase64([]byte(fmt.Sprintf("%s:%s@%s:%.0f", username, password, addr["server"].(string), port)))
 		links = append(links, addParams(uri, params, addr["remark"].(string)))
 	}
 	return links
@@ -214,11 +216,11 @@ func hysteriaLink(
 
 	for _, addr := range addrs {
 		params := map[string]string{}
-		if upmbps, ok := inbound["up_mbps"].(string); ok {
-			params["up_mbps"] = upmbps
+		if upmbps, ok := inbound["up_mbps"].(float64); ok {
+			params["upmbps"] = fmt.Sprintf("%.0f", upmbps)
 		}
-		if downmbps, ok := inbound["down_mbps"].(string); ok {
-			params["down_mbps"] = downmbps
+		if downmbps, ok := inbound["down_mbps"].(float64); ok {
+			params["downmbps"] = fmt.Sprintf("%.0f", downmbps)
 		}
 		if auth, ok := userConfig["auth_str"].(string); ok {
 			params["auth"] = auth
@@ -246,9 +248,18 @@ func hysteriaLink(
 		} else {
 			params["fastopen"] = "0"
 		}
+		var outJson map[string]interface{}
+		json.Unmarshal(inbound["out_json"].(json.RawMessage), &outJson)
+		if mport, ok := outJson["server_ports"].([]interface{}); ok {
+			mportList := make([]string, len(mport))
+			for i, v := range mport {
+				mportList[i] = v.(string)
+			}
+			params["mport"] = strings.Join(mportList, ",")
+		}
 
 		port, _ := addr["server_port"].(float64)
-		uri := fmt.Sprintf("%s%s:%d", baseUri, addr["server"].(string), uint(port))
+		uri := fmt.Sprintf("%s%s:%.0f", baseUri, addr["server"].(string), port)
 		links = append(links, addParams(uri, params, addr["remark"].(string)))
 	}
 
@@ -266,11 +277,11 @@ func hysteria2Link(
 
 	for _, addr := range addrs {
 		params := map[string]string{}
-		if upmbps, ok := inbound["up_mbps"].(string); ok {
-			params["up_mbps"] = upmbps
+		if upmbps, ok := inbound["up_mbps"].(float64); ok {
+			params["upmbps"] = fmt.Sprintf("%.0f", upmbps)
 		}
-		if downmbps, ok := inbound["down_mbps"].(string); ok {
-			params["down_mbps"] = downmbps
+		if downmbps, ok := inbound["down_mbps"].(float64); ok {
+			params["downmbps"] = fmt.Sprintf("%.0f", downmbps)
 		}
 		if tls, ok := addr["tls"].(map[string]interface{}); ok {
 			if sni, ok := tls["server_name"].(string); ok {
@@ -300,9 +311,18 @@ func hysteria2Link(
 		} else {
 			params["fastopen"] = "0"
 		}
+		var outJson map[string]interface{}
+		json.Unmarshal(inbound["out_json"].(json.RawMessage), &outJson)
+		if mport, ok := outJson["server_ports"].([]interface{}); ok {
+			mportList := make([]string, len(mport))
+			for i, v := range mport {
+				mportList[i] = v.(string)
+			}
+			params["mport"] = strings.Join(mportList, ",")
+		}
 
 		port, _ := addr["server_port"].(float64)
-		uri := fmt.Sprintf("%s%s:%d", baseUri, addr["server"].(string), uint(port))
+		uri := fmt.Sprintf("%s%s:%.0f", baseUri, addr["server"].(string), port)
 		links = append(links, addParams(uri, params, addr["remark"].(string)))
 	}
 
@@ -336,7 +356,7 @@ func anytlsLink(
 		}
 
 		port, _ := addr["server_port"].(float64)
-		uri := fmt.Sprintf("%s%s:%d", baseUri, addr["server"].(string), uint(port))
+		uri := fmt.Sprintf("%s%s:%.0f", baseUri, addr["server"].(string), port)
 		links = append(links, addParams(uri, params, addr["remark"].(string)))
 	}
 
@@ -378,7 +398,7 @@ func tuicLink(
 		}
 
 		port, _ := addr["server_port"].(float64)
-		uri := fmt.Sprintf("%s%s:%d", baseUri, addr["server"].(string), uint(port))
+		uri := fmt.Sprintf("%s%s:%.0f", baseUri, addr["server"].(string), port)
 		links = append(links, addParams(uri, params, addr["remark"].(string)))
 	}
 
@@ -429,7 +449,7 @@ func vlessLink(
 			}
 		}
 		port, _ := addr["server_port"].(float64)
-		uri := fmt.Sprintf("vless://%s@%s:%d", uuid, addr["server"].(string), uint(port))
+		uri := fmt.Sprintf("vless://%s@%s:%.0f", uuid, addr["server"].(string), port)
 		uri = addParams(uri, params, addr["remark"].(string))
 		links = append(links, uri)
 	}
@@ -477,7 +497,7 @@ func trojanLink(
 			}
 		}
 		port, _ := addr["server_port"].(float64)
-		uri := fmt.Sprintf("trojan://%s@%s:%d", password, addr["server"].(string), uint(port))
+		uri := fmt.Sprintf("trojan://%s@%s:%.0f", password, addr["server"].(string), port)
 		uri = addParams(uri, params, addr["remark"].(string))
 		links = append(links, uri)
 	}
@@ -556,11 +576,11 @@ func toBase64(d []byte) string {
 
 func addParams(uri string, params map[string]string, remark string) string {
 	URL, _ := url.Parse(uri)
-	q := URL.Query()
+	var q []string
 	for k, v := range params {
-		q.Add(k, v)
+		q = append(q, fmt.Sprintf("%s=%s", k, v))
 	}
-	URL.RawQuery = q.Encode()
+	URL.RawQuery = strings.Join(q, "&")
 	URL.Fragment = remark
 	return URL.String()
 }
