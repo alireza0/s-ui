@@ -283,7 +283,7 @@ func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounds *[]mode
 				})
 			}
 			for _, clientLink := range clientLinks {
-				if clientLink["remark"] != inbound.Tag && clientLink["remark"] != oldTag {
+				if clientLink["type"] != "local" || (clientLink["remark"] != inbound.Tag && clientLink["remark"] != oldTag) {
 					newClientLinks = append(newClientLinks, clientLink)
 				}
 			}
