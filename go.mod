@@ -9,14 +9,14 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sagernet/sing v0.7.8
-	github.com/sagernet/sing-box v1.12.5
+	github.com/sagernet/sing v0.7.10
+	github.com/sagernet/sing-box v1.12.8
 	github.com/sagernet/sing-dns v0.4.6
 	github.com/shirou/gopsutil/v4 v4.25.8
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.6.0
-	gorm.io/gorm v1.30.5
+	gorm.io/gorm v1.31.0
 )
 
 require (
@@ -111,7 +111,7 @@ require (
 	github.com/sagernet/sing-shadowsocks v0.2.8 // indirect
 	github.com/sagernet/sing-shadowsocks2 v0.2.1 // indirect
 	github.com/sagernet/sing-shadowtls v0.2.1-0.20250503051639-fcd445d33c11 // indirect
-	github.com/sagernet/sing-tun v0.7.1-0.20250909064831-29d619807240 // indirect
+	github.com/sagernet/sing-tun v0.7.2 // indirect
 	github.com/sagernet/sing-vmess v0.2.7 // indirect
 	github.com/sagernet/smux v1.5.34-mod.2 // indirect
 	github.com/sagernet/tailscale v1.80.3-sing-box-1.12-mod.1 // indirect
