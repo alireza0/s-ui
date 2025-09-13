@@ -217,10 +217,10 @@ func hysteriaLink(
 	for _, addr := range addrs {
 		params := map[string]string{}
 		if upmbps, ok := inbound["up_mbps"].(float64); ok {
-			params["upmbps"] = fmt.Sprintf("%.0f", upmbps)
+			params["downmbps"] = fmt.Sprintf("%.0f", upmbps)
 		}
 		if downmbps, ok := inbound["down_mbps"].(float64); ok {
-			params["downmbps"] = fmt.Sprintf("%.0f", downmbps)
+			params["upmbps"] = fmt.Sprintf("%.0f", downmbps)
 		}
 		if auth, ok := userConfig["auth_str"].(string); ok {
 			params["auth"] = auth
@@ -266,10 +266,10 @@ func hysteria2Link(
 	for _, addr := range addrs {
 		params := map[string]string{}
 		if upmbps, ok := inbound["up_mbps"].(float64); ok {
-			params["upmbps"] = fmt.Sprintf("%.0f", upmbps)
+			params["downmbps"] = fmt.Sprintf("%.0f", upmbps)
 		}
 		if downmbps, ok := inbound["down_mbps"].(float64); ok {
-			params["downmbps"] = fmt.Sprintf("%.0f", downmbps)
+			params["upmbps"] = fmt.Sprintf("%.0f", downmbps)
 		}
 		if tls, ok := addr["tls"].(map[string]interface{}); ok {
 			getTlsParams(&params, tls, "insecure")
