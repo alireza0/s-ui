@@ -475,7 +475,12 @@ func addParams(uri string, params map[string]string, remark string) string {
 	URL, _ := url.Parse(uri)
 	var q []string
 	for k, v := range params {
-		q = append(q, fmt.Sprintf("%s=%s", k, v))
+		switch k {
+		case "mport", "alpn":
+			q = append(q, fmt.Sprintf("%s=%s", k, v))
+		default:
+			q = append(q, fmt.Sprintf("%s=%s", k, url.QueryEscape(v)))
+		}
 	}
 	URL.RawQuery = strings.Join(q, "&")
 	URL.Fragment = remark
