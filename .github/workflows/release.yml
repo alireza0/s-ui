@@ -23,11 +23,6 @@ jobs:
         platform:
           - amd64
           - arm64
-          - armv7
-          - armv6
-          - armv5
-          - 386
-          - s390x
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
