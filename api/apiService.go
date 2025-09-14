@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"s-ui/database"
 	"s-ui/logger"
 	"s-ui/service"
@@ -327,25 +328,35 @@ func (a *ApiService) Save(c *gin.Context, loginUser string) {
 
 func extractDataAndServer(c *gin.Context) (json.RawMessage, string, error) {
 	raw := c.Request.FormValue("data")
+	if raw == "" {
+			return nil, "", fmt.Errorf("missing 'data' field")
+	}
+
+	var temp json.RawMessage
+	if err := json.Unmarshal([]byte(raw), &temp); err != nil {
+			return nil, "", fmt.Errorf("invalid JSON: %w", err)
+	}
+
+	// 尝试解析为 map[string]interface{}
 	var obj map[string]interface{}
-	if err := json.Unmarshal([]byte(raw), &obj); err != nil {
-		return nil, "", err
+	if err := json.Unmarshal(temp, &obj); err != nil {
+			return temp, "", nil // 返回原始 JSON，说明不是对象结构
 	}
 
 	server := ""
 	if s, ok := obj["server"].(string); ok {
-		server = s
-		// 删除 server 字段
-		delete(obj, "server")
+			server = s
+			// 删除 server 字段
+			delete(obj, "server")
+		  // 重新编码为 json.RawMessage
+			newRaw, err := json.Marshal(obj)
+			if err != nil {
+					return nil, "", fmt.Errorf("Marshal JSON: %w", err)
+			}
+			return json.RawMessage(newRaw), server, nil
 	}
 
-	// 重新编码为 json.RawMessage
-	newRaw, err := json.Marshal(obj)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return json.RawMessage(newRaw), server, nil
+	return temp, "", nil
 }
 
 func (a *ApiService) RestartApp(c *gin.Context) {
