@@ -297,12 +297,24 @@ func (a *ApiService) ChangePass(c *gin.Context) {
 }
 
 func (a *ApiService) Save(c *gin.Context, loginUser string) {
-	hostname := getHostname(c)
+	dataRaw, server, err := extractDataAndServer(c)
+	if err != nil {
+		jsonMsg(c, "save", err)
+		return
+	}
+
+	var hostname string
+	if server != "" {
+		hostname = server
+	} else {
+		hostname = getHostname(c)
+	}
+
 	obj := c.Request.FormValue("object")
 	act := c.Request.FormValue("action")
-	data := c.Request.FormValue("data")
+
 	initUsers := c.Request.FormValue("initUsers")
-	objs, err := a.ConfigService.Save(obj, act, json.RawMessage(data), initUsers, loginUser, hostname)
+	objs, err := a.ConfigService.Save(obj, act, dataRaw, initUsers, loginUser, hostname)
 	if err != nil {
 		jsonMsg(c, "save", err)
 		return
@@ -311,6 +323,29 @@ func (a *ApiService) Save(c *gin.Context, loginUser string) {
 	if err != nil {
 		jsonMsg(c, obj, err)
 	}
+}
+
+func extractDataAndServer(c *gin.Context) (json.RawMessage, string, error) {
+	raw := c.Request.FormValue("data")
+	var obj map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &obj); err != nil {
+		return nil, "", err
+	}
+
+	server := ""
+	if s, ok := obj["server"].(string); ok {
+		server = s
+		// 删除 server 字段
+		delete(obj, "server")
+	}
+
+	// 重新编码为 json.RawMessage
+	newRaw, err := json.Marshal(obj)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return json.RawMessage(newRaw), server, nil
 }
 
 func (a *ApiService) RestartApp(c *gin.Context) {

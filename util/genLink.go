@@ -31,12 +31,33 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 	var Addrs []map[string]interface{}
 	json.Unmarshal(i.Addrs, &Addrs)
 	if len(Addrs) == 0 {
+		var outJson map[string]interface{}
+		if raw, ok := (*inbound)["out_json"].(json.RawMessage); ok {
+			json.Unmarshal(raw, &outJson)
+		}
+
+		server := hostname
+		port := (*inbound)["listen_port"]
+		if outJson != nil {
+			if s, ok := outJson["server"].(string); ok {
+				server = s
+			}
+			if p, ok := outJson["server_port"].(float64); ok {
+				port = p
+			}
+		}
+
 		Addrs = append(Addrs, map[string]interface{}{
-			"server":      hostname,
-			"server_port": (*inbound)["listen_port"],
+			"server":      server,
+			"server_port": port,
 			"remark":      i.Tag,
 		})
+		// 在 tls 中没有 server_name 时才注入，避免覆盖已有伪装域名
 		if i.TlsId > 0 {
+			tls = prepareTls(i.Tls)
+			if _, ok := tls["server_name"]; !ok {
+				tls["server_name"] = hostname
+			}
 			Addrs[0]["tls"] = tls
 		}
 	} else {

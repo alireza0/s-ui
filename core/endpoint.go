@@ -8,6 +8,7 @@ import (
 	"github.com/sagernet/sing-box/option"
 )
 
+// 增加入站
 func (c *Core) AddInbound(config []byte) error {
 	if !c.isRunning {
 		return common.NewError("sing-box is not running")
