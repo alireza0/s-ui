@@ -4,8 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    "allowImportingTsExtensions": true
   },
   "include": ["vite.config.mts"],
   "exclude": []
