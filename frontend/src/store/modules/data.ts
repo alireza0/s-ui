@@ -6,7 +6,7 @@ import { Inbound } from '@/types/inbounds'
 import { Client } from '@/types/clients'
 
 const Data = defineStore('Data', {
-  state: () => ({ 
+  state: () => ({
     lastLoad: 0,
     reloadItems: localStorage.getItem("reloadItems")?.split(',')?? <string[]>[],
     subURI: "",
@@ -32,7 +32,7 @@ const Data = defineStore('Data', {
             message: msg.obj.lastLog
           })
         }
-        
+
         if (msg.obj.config) {
           this.setNewData(msg.obj)
         }

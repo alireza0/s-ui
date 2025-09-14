@@ -301,8 +301,10 @@ export default {
     },
   },
   in: {
-    addr: "地址",
-    port: "端口",
+    addr: "监听地址",
+    port: "监听端口",
+    server: "节点地址",
+    server_placeholder: "默认为面板地址",
     clients: "启用客户端",
     ssMethod: "方法",
     ssManageable: "可管理的",

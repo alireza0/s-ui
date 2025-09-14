@@ -21,6 +21,16 @@
       </v-col>
     </v-row>
     <v-row>
+      <v-col cols="12" sm="6" md="4">
+        <v-text-field
+          :label="$t('in.server')"
+          :placeholder="$t('in.server_placeholder')"
+          hide-details
+          v-model="data.server">
+        </v-text-field>
+      </v-col>
+    </v-row>
+    <v-row>
       <v-col cols="12" sm="6" md="4" v-if="optionDetour">
         <v-select
         :label="$t('listen.detourText')"
@@ -90,8 +100,8 @@ export default {
       set(newValue:number) { this.$props.data.udp_timeout = newValue > 0 ? newValue + 'm' : '5m' }
     },
     optionTCP: {
-      get(): boolean { 
-        return this.$props.data.tcp_fast_open != undefined && 
+      get(): boolean {
+        return this.$props.data.tcp_fast_open != undefined &&
                this.$props.data.tcp_multi_path != undefined
       },
       set(v:boolean) {
@@ -100,13 +110,13 @@ export default {
       }
     },
     optionUDP: {
-      get(): boolean { 
+      get(): boolean {
         return this.$props.data.udp_fragment != undefined &&
                this.$props.data.udp_timeout != undefined
       },
       set(v:boolean) {
         this.$props.data.udp_fragment = v ? false : undefined
-        this.$props.data.udp_timeout = v ? '5m' : undefined 
+        this.$props.data.udp_timeout = v ? '5m' : undefined
       }
     },
     optionDetour: {

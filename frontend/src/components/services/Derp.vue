@@ -50,7 +50,7 @@
             hide-details
             v-model="clientUrl.url">
             </v-text-field>
-            <Dial :dial="clientUrl" />     
+            <Dial :dial="clientUrl" />
           </v-col>
         </v-row>
       </v-card>
@@ -94,7 +94,7 @@
                 </v-text-field>
               </v-col>
             </v-row>
-            <Dial :dial="mesh" />     
+            <Dial :dial="mesh" />
             <OutTLS :outbound="mesh" />
           </v-col>
         </v-row>

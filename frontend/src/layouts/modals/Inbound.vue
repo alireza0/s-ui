@@ -191,6 +191,7 @@ export default {
         values: [],
       }
     },
+    // 改变类型
     changeType() {
       if (!this.inbound.listen_port) this.inbound.listen_port = RandomUtil.randomIntRange(10000, 60000)
       // Tag change only in add inbound
@@ -214,6 +215,7 @@ export default {
       this.updateData(0) // reset
       this.$emit('close')
     },
+    // 保存函数
     async saveChanges() {
       if (!this.$props.visible) return
       // check duplicate tag
