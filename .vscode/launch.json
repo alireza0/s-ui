@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug SUI",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/main.go",
+      "buildFlags": [
+        "-tags=with_quic,with_grpc,with_utls,with_acme,with_gvisor",
+        "-gcflags=all=-N -l"
+      ]
+    }
+  ]
+}

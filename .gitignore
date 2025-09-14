@@ -29,4 +29,4 @@ windows/sui-*.exe
 
 # Editor directories and files
 .idea
-.vscode
+# .vscode
