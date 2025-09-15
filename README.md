@@ -131,14 +131,16 @@ docker compose up -d
 > Use docker
 
 ```shell
-mkdir s-ui && cd s-ui
+mkdir -p /opt/apps/s-ui && cd /opt/apps/s-ui
 docker run -itd \
-    -p 2095:2095 -p 2096:2096 -p 443:443 -p 80:80 \
-    -v $PWD/db/:/app/db/ \
-    -v $PWD/cert/:/root/cert/ \
-    --name s-ui --restart=unless-stopped \
-    alireza7/s-ui:latest
+    -p 2095:2095 -p 2096:2096 \
+    -v $PWD/db/:/app/db/ \
+    -v /opt/certs/LetsEncrypt/planeteditorx.dpdns.org/:/root/cert/ \
+    --name s-ui --restart=unless-stopped \
+    yexundao/s-ui:latest
 ```
+> 用户名/密码：`admin`
+> 仅内部访问：添加`127.0.0.1:`
 
 > Build your own image
 
