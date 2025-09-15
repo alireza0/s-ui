@@ -73,6 +73,21 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 				json.Unmarshal(restFields["managed"], &ss_managed)
 			}
 		}
+		// 处理 out_json 字段
+		if inbound.OutJson != nil {
+			// 定义一个匿名结构体来匹配 out_json 的结构
+			var outJsonData struct {
+					Server string `json:"server"`
+			}
+
+			// 解析 out_json
+			if err := json.Unmarshal(inbound.OutJson, &outJsonData); err != nil {
+					return nil, err
+			} else {
+					// 将解析出的 server 参数添加到 inbData 中
+					inbData["server"] = outJsonData.Server
+			}
+		}
 		if s.hasUser(inbound.Type) &&
 			!(inbound.Type == "shadowtls" && shadowtls_version < 3) &&
 			!(inbound.Type == "shadowsocks" && ss_managed) {

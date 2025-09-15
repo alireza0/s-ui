@@ -164,7 +164,10 @@ export default {
     async loadData(id: number) {
       this.loading = true
       const inboundArray = await Data().loadInbounds([id])
+      // 编辑时加载单个节点
       this.inbound = inboundArray[0]
+      // 同步 out_json.server 到 addrs[0]
+      this.inbound.server = this.inbound.out_json?.server ?? ''
       this.loading = false
     },
     updateData(id: number) {
@@ -260,6 +263,7 @@ export default {
       if ((<any>this.inbound).managed) return false
       return true
     }
+
   },
   watch: {
     visible(newValue) {

@@ -102,7 +102,7 @@ export default {
     optionTCP: {
       get(): boolean {
         return this.$props.data.tcp_fast_open != undefined &&
-               this.$props.data.tcp_multi_path != undefined
+              this.$props.data.tcp_multi_path != undefined
       },
       set(v:boolean) {
         this.$props.data.tcp_fast_open = v ? false : undefined
@@ -112,7 +112,7 @@ export default {
     optionUDP: {
       get(): boolean {
         return this.$props.data.udp_fragment != undefined &&
-               this.$props.data.udp_timeout != undefined
+              this.$props.data.udp_timeout != undefined
       },
       set(v:boolean) {
         this.$props.data.udp_fragment = v ? false : undefined

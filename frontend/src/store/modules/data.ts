@@ -50,6 +50,7 @@ const Data = defineStore('Data', {
       if (Object.hasOwn(data, 'endpoints')) this.endpoints = data.endpoints ?? []
       if (Object.hasOwn(data, 'tls')) this.tlsConfigs = data.tls ?? []
     },
+    // 加载入站节点
     async loadInbounds(ids: number[]): Promise<Inbound[]> {
       const options = ids.length > 0 ? {id: ids.join(",")} : {}
       const msg = await HttpUtils.get('api/inbounds', options)
