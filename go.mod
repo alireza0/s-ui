@@ -1,4 +1,4 @@
-module s-ui
+module github.com/alireza0/s-ui
 
 go 1.25.1
 

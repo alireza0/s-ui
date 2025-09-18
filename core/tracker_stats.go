@@ -3,9 +3,10 @@ package core
 import (
 	"context"
 	"net"
-	"s-ui/database/model"
 	"sync"
 	"time"
+
+	"github.com/alireza0/s-ui/database/model"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing/common/atomic"

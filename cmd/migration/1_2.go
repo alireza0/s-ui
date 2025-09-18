@@ -5,7 +5,8 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"s-ui/database/model"
+
+	"github.com/alireza0/s-ui/database/model"
 
 	"gorm.io/gorm"
 )

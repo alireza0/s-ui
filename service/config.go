@@ -2,13 +2,14 @@ package service
 
 import (
 	"encoding/json"
-	"s-ui/core"
-	"s-ui/database"
-	"s-ui/database/model"
-	"s-ui/logger"
-	"s-ui/util/common"
 	"strconv"
 	"time"
+
+	"github.com/alireza0/s-ui/core"
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/util/common"
 )
 
 var (

@@ -3,12 +3,13 @@ package sub
 import (
 	"encoding/base64"
 	"fmt"
-	"s-ui/database"
-	"s-ui/database/model"
-	"s-ui/service"
-	"s-ui/util"
 	"strings"
 	"time"
+
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/service"
+	"github.com/alireza0/s-ui/util"
 )
 
 type SubService struct {

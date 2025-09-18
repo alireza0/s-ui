@@ -3,9 +3,10 @@ package service
 import (
 	"os"
 	"runtime"
-	"s-ui/logger"
 	"syscall"
 	"time"
+
+	"github.com/alireza0/s-ui/logger"
 )
 
 type PanelService struct {

@@ -4,9 +4,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"s-ui/app"
-	"s-ui/cmd"
 	"syscall"
+
+	"github.com/alireza0/s-ui/app"
+	"github.com/alireza0/s-ui/cmd"
 )
 
 func runApp() {

@@ -2,14 +2,15 @@ package app
 
 import (
 	"log"
-	"s-ui/config"
-	"s-ui/core"
-	"s-ui/cronjob"
-	"s-ui/database"
-	"s-ui/logger"
-	"s-ui/service"
-	"s-ui/sub"
-	"s-ui/web"
+
+	"github.com/alireza0/s-ui/config"
+	"github.com/alireza0/s-ui/core"
+	"github.com/alireza0/s-ui/cronjob"
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/service"
+	"github.com/alireza0/s-ui/sub"
+	"github.com/alireza0/s-ui/web"
 
 	"github.com/op/go-logging"
 )

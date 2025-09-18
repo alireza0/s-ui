@@ -3,7 +3,8 @@ package util
 import (
 	"encoding/json"
 	"math/rand"
-	"s-ui/database/model"
+
+	"github.com/alireza0/s-ui/database/model"
 )
 
 // Fill Inbound's out_json

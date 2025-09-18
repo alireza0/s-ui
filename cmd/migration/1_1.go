@@ -3,8 +3,9 @@ package migration
 import (
 	"encoding/json"
 	"fmt"
-	"s-ui/database/model"
 	"strings"
+
+	"github.com/alireza0/s-ui/database/model"
 
 	"gorm.io/gorm"
 )

@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"s-ui/database"
-	"s-ui/database/model"
-	"s-ui/util"
-	"s-ui/util/common"
 	"strings"
+
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/util"
+	"github.com/alireza0/s-ui/util/common"
 
 	"gorm.io/gorm"
 )

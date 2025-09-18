@@ -1,9 +1,9 @@
 package cronjob
 
 import (
-	"s-ui/database"
-	"s-ui/logger"
-	"s-ui/service"
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/service"
 )
 
 type DepleteJob struct {

@@ -1,8 +1,9 @@
 package api
 
 import (
-	"s-ui/util/common"
 	"strings"
+
+	"github.com/alireza0/s-ui/util/common"
 
 	"github.com/gin-gonic/gin"
 )

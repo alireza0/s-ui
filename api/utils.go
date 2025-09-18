@@ -3,8 +3,9 @@ package api
 import (
 	"net"
 	"net/http"
-	"s-ui/logger"
 	"strings"
+
+	"github.com/alireza0/s-ui/logger"
 
 	"github.com/gin-gonic/gin"
 )

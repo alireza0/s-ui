@@ -1,8 +1,8 @@
 package sub
 
 import (
-	"s-ui/logger"
-	"s-ui/service"
+	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/service"
 
 	"github.com/gin-gonic/gin"
 )

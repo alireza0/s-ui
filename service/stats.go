@@ -1,9 +1,10 @@
 package service
 
 import (
-	"s-ui/database"
-	"s-ui/database/model"
 	"time"
+
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/database/model"
 
 	"gorm.io/gorm"
 )

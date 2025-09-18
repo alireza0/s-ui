@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"s-ui/config"
+
+	"github.com/alireza0/s-ui/config"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

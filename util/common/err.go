@@ -3,7 +3,8 @@ package common
 import (
 	"errors"
 	"fmt"
-	"s-ui/logger"
+
+	"github.com/alireza0/s-ui/logger"
 )
 
 func NewErrorf(format string, a ...interface{}) error {

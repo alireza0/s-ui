@@ -4,11 +4,12 @@ import (
 	"encoding/base64"
 	"os"
 	"runtime"
-	"s-ui/config"
-	"s-ui/logger"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/alireza0/s-ui/config"
+	"github.com/alireza0/s-ui/logger"
 
 	"github.com/sagernet/sing-box/common/tls"
 	"github.com/shirou/gopsutil/v4/cpu"

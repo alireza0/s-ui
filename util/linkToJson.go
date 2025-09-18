@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"s-ui/util/common"
 	"strconv"
 	"strings"
+
+	"github.com/alireza0/s-ui/util/common"
 )
 
 func GetOutbound(uri string, i int) (*map[string]interface{}, string, error) {

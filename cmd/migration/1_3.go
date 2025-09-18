@@ -3,9 +3,10 @@ package migration
 import (
 	"encoding/json"
 	"net/url"
-	"s-ui/database/model"
 	"strconv"
 	"strings"
+
+	"github.com/alireza0/s-ui/database/model"
 
 	"gorm.io/gorm"
 )

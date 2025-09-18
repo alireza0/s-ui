@@ -6,12 +6,13 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"s-ui/config"
-	"s-ui/logger"
-	"s-ui/middleware"
-	"s-ui/network"
-	"s-ui/service"
 	"strconv"
+
+	"github.com/alireza0/s-ui/config"
+	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/middleware"
+	"github.com/alireza0/s-ui/network"
+	"github.com/alireza0/s-ui/service"
 
 	"github.com/gin-gonic/gin"
 )

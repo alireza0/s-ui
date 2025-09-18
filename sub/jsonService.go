@@ -3,11 +3,12 @@ package sub
 import (
 	"encoding/json"
 	"fmt"
-	"s-ui/database"
-	"s-ui/database/model"
-	"s-ui/service"
-	"s-ui/util"
 	"strings"
+
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/service"
+	"github.com/alireza0/s-ui/util"
 )
 
 const defaultJson = `

@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"s-ui/logger"
-	"s-ui/util"
 	"strings"
+
+	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/util"
 )
 
 type Link struct {

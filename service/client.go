@@ -3,13 +3,14 @@ package service
 import (
 	"bytes"
 	"encoding/json"
-	"s-ui/database"
-	"s-ui/database/model"
-	"s-ui/logger"
-	"s-ui/util"
-	"s-ui/util/common"
 	"strings"
 	"time"
+
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/util"
+	"github.com/alireza0/s-ui/util/common"
 
 	"gorm.io/gorm"
 )
