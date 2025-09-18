@@ -63,7 +63,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/PlanetEditorX/s-ui/refs/heads/dev/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -82,7 +82,7 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/PlanetEditorX/s-ui/refs/heads/dev/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "Update is complete, Panel has automatically restarted "
         exit 0
@@ -169,7 +169,7 @@ set_setting() {
 
     echo -e "Enter the ${yellow}subscription port${plain} (leave blank for existing/default value):"
     read config_subPort
-    echo -e "Enter the ${yellow}subscription path${plain} (leave blank for existing/default value):" 
+    echo -e "Enter the ${yellow}subscription path${plain} (leave blank for existing/default value):"
     read config_subPath
 
     echo -e "${yellow}Initializing, please wait...${plain}"
@@ -487,7 +487,7 @@ ssl_cert_issue_main() {
     read -p "Choose an option: " choice
     case "$choice" in
         1) ssl_cert_issue ;;
-        2) 
+        2)
             local domain=""
             read -p "Please enter your domain name to revoke the certificate: " domain
             ~/.acme.sh/acme.sh --revoke -d ${domain}
@@ -619,7 +619,7 @@ ssl_cert_issue_CF() {
             else
                 echo "Starting SSL certificate issuance..."
             fi
-            
+
             LOGD "******Instructions for use******"
             LOGI "This Acme script requires the following data:"
             LOGI "1.Cloudflare Registered e-mail"
@@ -774,7 +774,7 @@ generate_self_signed_cert() {
 show_usage() {
     echo -e "S-UI Control Menu Usage"
     echo -e "------------------------------------------"
-    echo -e "SUBCOMMANDS:" 
+    echo -e "SUBCOMMANDS:"
     echo -e "s-ui              - Admin Management Script"
     echo -e "s-ui start        - Start s-ui"
     echo -e "s-ui stop         - Stop s-ui"
