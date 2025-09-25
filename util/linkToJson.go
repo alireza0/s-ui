@@ -115,10 +115,20 @@ func vmess(data string, i int) (*map[string]interface{}, string, error) {
 	if i > 0 {
 		tag = fmt.Sprintf("%d.%s", i, tag)
 	}
-	alter_id, ok := dataJson["aid"].(int)
-	if !ok {
-		alter_id = 0
-	}
+    // Normalize aid/alterId. Providers may send it as number or string; default to 0.
+    alter_id := 0
+    if raw, exists := dataJson["aid"]; exists {
+        switch v := raw.(type) {
+        case float64:
+            alter_id = int(v)
+        case int:
+            alter_id = v
+        case string:
+            if n, err := strconv.Atoi(v); err == nil {
+                alter_id = n
+            }
+        }
+    }
 	vmess := map[string]interface{}{
 		"type":        "vmess",
 		"tag":         tag,

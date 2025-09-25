@@ -1,13 +1,14 @@
 package sub
 
 import (
-	"strings"
+    "strconv"
+    "strings"
 
-	"github.com/alireza0/s-ui/logger"
-	"github.com/alireza0/s-ui/service"
-	"github.com/alireza0/s-ui/util"
+    "github.com/alireza0/s-ui/logger"
+    "github.com/alireza0/s-ui/service"
+    "github.com/alireza0/s-ui/util"
 
-	"gopkg.in/yaml.v3"
+    "gopkg.in/yaml.v3"
 )
 
 type ClashService struct {
@@ -126,12 +127,33 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 		proxy["port"] = obMap["server_port"]
 
 		switch t {
-		case "vmess", "vless", "tuic":
-			proxy["uuid"] = obMap["uuid"]
-			if t == "vmess" {
-				proxy["alterId"] = obMap["alter_id"]
-				proxy["cipher"] = "auto"
-			}
+        case "vmess", "vless", "tuic":
+            proxy["uuid"] = obMap["uuid"]
+            if t == "vmess" {
+                // Some sources may omit or set a null alter_id. Clash expects a number.
+                // Normalize to an integer, defaulting to 0 when missing/invalid.
+                alterId := 0
+                if v, ok := obMap["alter_id"]; ok {
+                    switch vv := v.(type) {
+                    case int:
+                        alterId = vv
+                    case int32:
+                        alterId = int(vv)
+                    case int64:
+                        alterId = int(vv)
+                    case float32:
+                        alterId = int(vv)
+                    case float64:
+                        alterId = int(vv)
+                    case string:
+                        if n, err := strconv.Atoi(vv); err == nil {
+                            alterId = n
+                        }
+                    }
+                }
+                proxy["alterId"] = alterId
+                proxy["cipher"] = "auto"
+            }
 			if t == "vless" {
 				if flow, ok := obMap["flow"].(string); ok {
 					proxy["flow"] = flow
