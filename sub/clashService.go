@@ -193,6 +193,16 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 				proxy["sni"] = tls["server_name"]
 				proxy["skip-cert-verify"] = tls["insecure"]
 			}
+		case "shadowsocks":
+			proxy["type"] = "ss"
+			proxy["cipher"] = obMap["method"]
+			proxy["password"] = obMap["password"]
+			if network, ok := obMap["network"].(string); ok && network != "tcp" {
+				proxy["udp"] = true
+			}
+			if uot, ok := obMap["udp_over_tcp"].(bool); ok && uot {
+				proxy["udp-over-tcp"] = true
+			}
 		default:
 			continue
 		}
