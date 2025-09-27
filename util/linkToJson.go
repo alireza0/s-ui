@@ -115,9 +115,9 @@ func vmess(data string, i int) (*map[string]interface{}, string, error) {
 	if i > 0 {
 		tag = fmt.Sprintf("%d.%s", i, tag)
 	}
-	alter_id, ok := dataJson["aid"].(int)
-	if !ok {
-		alter_id = 0
+	alter_id := 0
+	if aid, ok := dataJson["aid"].(float64); ok {
+		alter_id = int(aid)
 	}
 	vmess := map[string]interface{}{
 		"type":        "vmess",

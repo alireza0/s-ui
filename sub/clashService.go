@@ -129,7 +129,11 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 		case "vmess", "vless", "tuic":
 			proxy["uuid"] = obMap["uuid"]
 			if t == "vmess" {
-				proxy["alterId"] = obMap["alter_id"]
+				if alterId, ok := obMap["alter_id"].(float64); ok {
+					proxy["alterId"] = int(alterId)
+				} else {
+					proxy["alterId"] = 0
+				}
 				proxy["cipher"] = "auto"
 			}
 			if t == "vless" {
