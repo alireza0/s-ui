@@ -216,10 +216,6 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 			}
 		}
 		if isTls {
-			// ignore ech outbounds
-			if _, ok := tls["ech"].(interface{}); ok {
-				continue
-			}
 			proxy["tls"] = tls["enabled"]
 
 			// ALPN if exists
@@ -254,6 +250,19 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 			}
 			if insecure, ok := tls["insecure"].(bool); ok && insecure {
 				proxy["skip-cert-verify"] = insecure
+			}
+			// ech outbounds
+			if ech, ok := tls["ech"].(interface{}); ok {
+				ech_data, _ := ech.(map[string]interface{})
+				ech_config, _ := ech_data["config"].([]interface{})
+				ech_string := ""
+				for i := 1; i < len(ech_config)-1; i++ {
+					ech_string += ech_config[i].(string)
+				}
+				proxy["ech-opts"] = map[string]interface{}{
+					"enable": true,
+					"config": ech_string,
+				}
 			}
 		}
 
