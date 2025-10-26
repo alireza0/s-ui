@@ -92,6 +92,9 @@ func (s *ClashService) GetClash(subId string) (*string, []string, error) {
 	}
 
 	result, err := s.ConvertToClashMeta(outbounds)
+	if err != nil {
+		return nil, nil, err
+	}
 	resultStr := othersStr + "\n" + string(result)
 
 	updateInterval, _ := s.SettingService.GetSubUpdates()
