@@ -2,12 +2,14 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/alireza0/s-ui/database"
 	"github.com/alireza0/s-ui/database/model"
 	"github.com/alireza0/s-ui/logger"
 	"github.com/alireza0/s-ui/util/common"
+	"github.com/pquerna/otp/totp"
 )
 
 type UserService struct {
@@ -47,15 +49,15 @@ func (s *UserService) UpdateFirstUser(username string, password string) error {
 	return db.Save(user).Error
 }
 
-func (s *UserService) Login(username string, password string, remoteIP string) (string, error) {
-	user := s.CheckUser(username, password, remoteIP)
+func (s *UserService) Login(username string, password string, passcode string, remoteIP string) (string, error) {
+	user := s.CheckUser(username, password, passcode, remoteIP)
 	if user == nil {
-		return "", common.NewError("wrong user or password! IP: ", remoteIP)
+		return "", common.NewError("wrong user, password or passcode! IP: ", remoteIP)
 	}
 	return user.Username, nil
 }
 
-func (s *UserService) CheckUser(username string, password string, remoteIP string) *model.User {
+func (s *UserService) CheckUser(username string, password string, passcode string, remoteIP string) *model.User {
 	db := database.GetDB()
 
 	user := &model.User{}
@@ -67,6 +69,11 @@ func (s *UserService) CheckUser(username string, password string, remoteIP strin
 		return nil
 	} else if err != nil {
 		logger.Warning("check user err:", err, " IP: ", remoteIP)
+		return nil
+	}
+
+	if user.TOTPEnabled && !totp.Validate(passcode, user.TOTPSecret) {
+		logger.Warning("check err:", errors.New("Invalid 2FA code"), " IP: ", remoteIP)
 		return nil
 	}
 
@@ -83,7 +90,7 @@ func (s *UserService) CheckUser(username string, password string, remoteIP strin
 func (s *UserService) GetUsers() (*[]model.User, error) {
 	var users []model.User
 	db := database.GetDB()
-	err := db.Model(model.User{}).Select("id,username,last_logins").Scan(&users).Error
+	err := db.Model(model.User{}).Select("id,username,last_logins,totp_enabled").Scan(&users).Error
 	if err != nil {
 		return nil, err
 	}
@@ -158,4 +165,22 @@ func (s *UserService) AddToken(username string, expiry int64, desc string) (stri
 func (s *UserService) DeleteToken(id string) error {
 	db := database.GetDB()
 	return db.Model(model.Tokens{}).Where("id = ?", id).Delete(&model.Tokens{}).Error
+}
+
+func (s *UserService) Set2FAState(username string, secret string, passcode string, enabled bool) error {
+	db := database.GetDB()
+	user := &model.User{}
+	err := db.Model(model.User{}).Where("username = ?", username).First(user).Error
+	if err != nil || database.IsNotFound(err) {
+		return err
+	}
+
+	if enabled && !totp.Validate(passcode, secret) {
+		return errors.New("Invalid passcode")
+	}
+
+	user.TOTPEnabled = enabled
+	user.TOTPSecret = secret
+
+	return db.Save(user).Error
 }

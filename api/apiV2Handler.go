@@ -51,6 +51,10 @@ func (a *APIv2Handler) postHandler(c *gin.Context) {
 		a.ApiService.LinkConvert(c)
 	case "importdb":
 		a.ApiService.ImportDb(c)
+	case "enable2fa":
+		a.ApiService.Enable2FA(c)
+	case "disable2fa":
+		a.ApiService.Disable2FA(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
@@ -86,6 +90,8 @@ func (a *APIv2Handler) getHandler(c *gin.Context) {
 		a.ApiService.GetKeypairs(c)
 	case "getdb":
 		a.ApiService.GetDb(c)
+	case "prepare2fa":
+		a.ApiService.Prepare2FA(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
