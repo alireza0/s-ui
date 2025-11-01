@@ -16,10 +16,12 @@ type Tls struct {
 }
 
 type User struct {
-	Id         uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
-	Username   string `json:"username" form:"username"`
-	Password   string `json:"password" form:"password"`
-	LastLogins string `json:"lastLogin"`
+	Id          uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Username    string `json:"username" form:"username"`
+	Password    string `json:"password" form:"password"`
+	LastLogins  string `json:"lastLogin"`
+	TOTPEnabled bool   `json:"totp" gorm:"default:false"`
+	TOTPSecret  string `json:"totp_secret" gorm:"size:64"`
 }
 
 type Client struct {

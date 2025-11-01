@@ -56,6 +56,10 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 	case "deleteToken":
 		a.ApiService.DeleteToken(c)
 		a.apiv2.ReloadTokens()
+	case "enable2fa":
+		a.ApiService.Enable2FA(c)
+	case "disable2fa":
+		a.ApiService.Disable2FA(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
@@ -95,6 +99,8 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		a.ApiService.GetDb(c)
 	case "tokens":
 		a.ApiService.GetTokens(c)
+	case "prepare2fa":
+		a.ApiService.Prepare2FA(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/alireza0/s-ui/util"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/pquerna/otp/totp"
 )
 
 type ApiService struct {
@@ -261,7 +264,7 @@ func (a *ApiService) postActions(c *gin.Context) (string, json.RawMessage, error
 
 func (a *ApiService) Login(c *gin.Context) {
 	remoteIP := getRemoteIp(c)
-	loginUser, err := a.UserService.Login(c.Request.FormValue("user"), c.Request.FormValue("pass"), remoteIP)
+	loginUser, err := a.UserService.Login(c.Request.FormValue("user"), c.Request.FormValue("pass"), c.Request.FormValue("passcode"), remoteIP)
 	if err != nil {
 		jsonMsg(c, "", err)
 		return
@@ -377,4 +380,49 @@ func (a *ApiService) DeleteToken(c *gin.Context) {
 	tokenId := c.Request.FormValue("id")
 	err := a.UserService.DeleteToken(tokenId)
 	jsonMsg(c, "", err)
+}
+
+func (a *ApiService) Prepare2FA(c *gin.Context) {
+	key, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      "S-UI Panel",
+		AccountName: GetLoginUser(c),
+	})
+	if err != nil {
+		jsonMsg(c, "", err)
+		return
+	}
+	secretUrl := key.URL()
+	jsonObj(c, secretUrl, nil)
+}
+
+func (a *ApiService) Enable2FA(c *gin.Context) {
+	loginUser := GetLoginUser(c)
+	passcode := c.Request.FormValue("passcode")
+	secretUrl, err := url.Parse(c.Request.FormValue("secretUrl"))
+	if err != nil {
+		jsonMsg(c, "", err)
+		return
+	}
+	params, err := url.ParseQuery(secretUrl.RawQuery)
+	if err != nil {
+		jsonMsg(c, "", err)
+		return
+	}
+	secret := params.Get("secret")
+	err = a.UserService.Set2FAState(loginUser, secret, passcode, true)
+	if err != nil {
+		jsonMsg(c, "", err)
+		return
+	}
+	jsonMsg(c, "Enable2FA", err)
+}
+
+func (a *ApiService) Disable2FA(c *gin.Context) {
+	loginUser := GetLoginUser(c)
+	err := a.UserService.Set2FAState(loginUser, "", "", false)
+	if err != nil {
+		jsonMsg(c, "", err)
+		return
+	}
+	jsonMsg(c, "Disable2FA", err)
 }
