@@ -1,0 +1,20 @@
+{
+  "server_name": "ocsp2.apple.com",
+  "certificate_path": "",
+  "key_path": "",
+  "reality": {
+    "enabled": true,
+    "handshake": {
+      "server": "ocsp2.apple.com",
+      "server_port": 443
+    },
+    "private_key": "",
+    "public_key": "",
+    "short_id": [
+      "4a03"
+    ]
+  },
+  "acme": {
+    "enabled": false
+  }
+}

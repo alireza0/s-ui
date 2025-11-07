@@ -1,0 +1,8 @@
+# 服务器列表格式: IP,SSH_USER,SSH_KEY_PATH,NEW_PASSWORD
+# 如果不需要 SSH 安装（已手动安装），可以只填写 IP 和密码
+# 示例:
+# 216.167.29.233,root,/root/.ssh/id_rsa,MyNewSecurePassword123!
+# 192.168.1.100,,,SimplePassword456
+
+# 取消下面的注释并填入你的服务器信息
+# 216.167.29.233,root,/root/.ssh/id_rsa,MySecurePass123!

@@ -1,0 +1,36 @@
+{
+  "type": "vless",
+  "tag": "vless-16354",
+  "listen": "0.0.0.0",
+  "listen_port": 16354,
+  "sniff": true,
+  "sniff_override_destination": false,
+  "domain_strategy": "",
+  "tls": {
+    "enabled": true,
+    "server_name": "ocsp2.apple.com",
+    "reality": {
+      "enabled": true,
+      "handshake": {
+        "server": "ocsp2.apple.com",
+        "server_port": 443
+      },
+      "short_id": [
+        "4a03"
+      ]
+    }
+  },
+  "users": [
+    {
+      "name": "user1",
+      "uuid": "92af9f1a-8dfd-406a-c14a-ec9c4888f582",
+      "flow": "xtls-rprx-vision"
+    }
+  ],
+  "transport": {
+    "type": "tcp"
+  },
+  "multiplex": {
+    "enabled": false
+  }
+}
