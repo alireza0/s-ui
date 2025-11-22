@@ -300,6 +300,18 @@ func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uin
 		return nil, err
 	}
 
+	// Remove multiplex if any user has xtls-rprx-vision flow (they are incompatible)
+	if inboundType == "vless" {
+		if users, ok := inbound["users"].([]json.RawMessage); ok {
+			for _, user := range users {
+				if strings.Contains(string(user), "xtls-rprx-vision") {
+					delete(inbound, "multiplex")
+					break
+				}
+			}
+		}
+	}
+
 	return json.Marshal(inbound)
 }
 
@@ -323,6 +335,18 @@ func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds st
 	inbound["users"], err = s.fetchUsers(db, inboundType, condition, inbound)
 	if err != nil {
 		return nil, err
+	}
+
+	// Remove multiplex if any user has xtls-rprx-vision flow (they are incompatible)
+	if inboundType == "vless" {
+		if users, ok := inbound["users"].([]json.RawMessage); ok {
+			for _, user := range users {
+				if strings.Contains(string(user), "xtls-rprx-vision") {
+					delete(inbound, "multiplex")
+					break
+				}
+			}
+		}
 	}
 
 	return json.Marshal(inbound)
