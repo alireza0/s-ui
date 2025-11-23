@@ -156,10 +156,30 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 			}
 			userPass = append(userPass, pass)
 			outbound["password"] = strings.Join(userPass, ":")
+		} else if protocol == "vless" {
+			config, _ := configs[protocol].(map[string]interface{})
+			for key, value := range config {
+				if key == "name" || key == "flow_inbound_tags" || key == "alterId" || (key == "flow" && inData.TlsId == 0) {
+					continue
+				}
+				if key == "flow" {
+					if flowInboundTags, ok := config["flow_inbound_tags"].([]interface{}); ok && len(flowInboundTags) > 0 {
+						for _, tag := range flowInboundTags {
+							if tag.(string) == inData.Tag {
+								outbound[key] = value
+							}
+						}
+					} else {
+						outbound[key] = value
+					}
+					continue
+				}
+				outbound[key] = value
+			}
 		} else { // Other protocols
 			config, _ := configs[protocol].(map[string]interface{})
 			for key, value := range config {
-				if key == "name" || key == "alterId" || (key == "flow" && inData.TlsId == 0) {
+				if key == "name" || key == "alterId" {
 					continue
 				}
 				outbound[key] = value
