@@ -368,8 +368,18 @@ func vlessLink(
 		params := baseParams
 		if tls, ok := addr["tls"].(map[string]interface{}); ok && tls["enabled"].(bool) {
 			getTlsParams(&params, tls, "allowInsecure")
-			if flow, ok := userConfig["flow"].(string); ok {
-				params["flow"] = flow
+			if flow, ok := userConfig["flow"].(string); ok && flow != "" {
+				if flowInboundTags, ok := userConfig["flow_inbound_tags"].([]interface{}); ok && len(flowInboundTags) > 0 {
+					for _, tag := range flowInboundTags {
+						if tag.(string) == inbound["tag"].(string) {
+							params["flow"] = flow
+							break
+						}
+					}
+				} else {
+					// if flow_inbound_tags is empty, apply to all
+					params["flow"] = flow
+				}
 			}
 		}
 		port, _ := addr["server_port"].(float64)

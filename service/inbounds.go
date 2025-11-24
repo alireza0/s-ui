@@ -275,10 +275,30 @@ func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition s
 	}
 	var usersJson []json.RawMessage
 	for _, user := range users {
-		if inboundType == "vless" && inbound["tls"] == nil {
-			user = strings.Replace(user, "xtls-rprx-vision", "", -1)
+		var userConfig map[string]interface{}
+		json.Unmarshal([]byte(user), &userConfig)
+
+		if inboundType == "vless" {
+			if _, tlsEnabled := inbound["tls"]; !tlsEnabled {
+				delete(userConfig, "flow")
+			} else {
+				if flowInboundTags, ok := userConfig["flow_inbound_tags"].([]interface{}); ok && len(flowInboundTags) > 0 {
+					found := false
+					for _, tag := range flowInboundTags {
+						if tag.(string) == inbound["tag"].(string) {
+							found = true
+							break
+						}
+					}
+					if !found {
+						delete(userConfig, "flow")
+					}
+				}
+			}
 		}
-		usersJson = append(usersJson, json.RawMessage(user))
+		delete(userConfig, "flow_inbound_tags")
+		newUser, _ := json.Marshal(userConfig)
+		usersJson = append(usersJson, newUser)
 	}
 	return usersJson, nil
 }
