@@ -135,8 +135,9 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 		}
 		protocol, _ := outbound["type"].(string)
 
+		switch protocol {
 		// Shadowsocks
-		if protocol == "shadowsocks" {
+		case "shadowsocks":
 			var userPass []string
 			var inbOptions map[string]interface{}
 			err = json.Unmarshal(inData.Options, &inbOptions)
@@ -156,27 +157,34 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 			}
 			userPass = append(userPass, pass)
 			outbound["password"] = strings.Join(userPass, ":")
-		} else if protocol == "vless" {
+		// VLESS
+		case "vless":
 			config, _ := configs[protocol].(map[string]interface{})
 			for key, value := range config {
-				if key == "name" || key == "flow_inbound_tags" || key == "alterId" || (key == "flow" && inData.TlsId == 0) {
+				switch key {
+				case "name", "flow_inbound_tags", "alterId":
 					continue
-				}
-				if key == "flow" {
-					if flowInboundTags, ok := config["flow_inbound_tags"].([]interface{}); ok && len(flowInboundTags) > 0 {
-						for _, tag := range flowInboundTags {
-							if tag.(string) == inData.Tag {
+				case "flow":
+					if inData.TlsId == 0 {
+						continue
+					}
+					tags, ok := config["flow_inbound_tags"].([]interface{})
+					if ok && len(tags) > 0 {
+						for _, tag := range tags {
+							if tagStr, ok := tag.(string); ok && tagStr == inData.Tag {
 								outbound[key] = value
+								break
 							}
 						}
 					} else {
 						outbound[key] = value
 					}
-					continue
+				default:
+					outbound[key] = value
 				}
-				outbound[key] = value
 			}
-		} else { // Other protocols
+		// Other protocols
+		default:
 			config, _ := configs[protocol].(map[string]interface{})
 			for key, value := range config {
 				if key == "name" || key == "alterId" {
