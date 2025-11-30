@@ -22,9 +22,15 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 
 	db := database.GetDB()
 	client := &model.Client{}
-	err = db.Model(model.Client{}).Where("enable = true and name = ?", subId).First(client).Error
+	// Removed strict enable = true check to handle re-enabled clients
+	err = db.Model(model.Client{}).Where("name = ?", subId).First(client).Error
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// Check if client is enabled
+	if !client.Enable {
+		return nil, nil, fmt.Errorf("client is disabled")
 	}
 
 	clientInfo := ""

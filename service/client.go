@@ -38,7 +38,7 @@ func (s *ClientService) getById(id string) (*[]model.Client, error) {
 func (s *ClientService) GetAll() (*[]model.Client, error) {
 	db := database.GetDB()
 	var clients []model.Client
-	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").Scan(&clients).Error
+	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`,`down`, `volume`, `expiry`").Scan(&clients).Error
 	if err != nil {
 		return nil, err
 	}
@@ -56,10 +56,32 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
-		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
-		if err != nil {
-			return nil, err
+
+		// Check if client is being re-enabled after deactivation
+		if act == "edit" {
+			var oldClient model.Client
+			err = tx.Model(model.Client{}).Where("id = ?", client.Id).First(&oldClient).Error
+			if err == nil && !oldClient.Enable && client.Enable {
+				// Client is being re-enabled - need to refresh links
+				err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
+				if err != nil {
+					return nil, err
+				}
+			} else if err != nil {
+				return nil, err
+			} else {
+				err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		if act == "edit" {
 			// Find changed inbounds
 			inboundIds, err = s.findInboundsChanges(tx, client)
@@ -267,7 +289,7 @@ func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounds *[]mode
 	for _, inbound := range *inbounds {
 		var clients []model.Client
 		err = tx.Table("clients").
-			Where("EXISTS (SELECT 1 FROM json_each(clients.inbounds) WHERE json_each.value = ?)", inbound.Id).
+			Where("EXISTS (SELECT 1 FROMjson_each(clients.inbounds) WHERE json_each.value = ?)", inbound.Id).
 			Find(&clients).Error
 		if err != nil {
 			return err
@@ -345,7 +367,7 @@ func (s *ClientService) DepleteClients() ([]uint, error) {
 
 	// Save changes
 	if len(changes) > 0 {
-		err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", now).Update("enable", false).Error
+		err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down> volume) OR (expiry > 0 AND expiry < ?))", now).Update("enable", false).Error
 		if err != nil {
 			return nil, err
 		}
@@ -363,7 +385,7 @@ func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([
 	var err error
 	var oldClient model.Client
 	var oldInboundIds, newInboundIds []uint
-	err = tx.Model(model.Client{}).Where("id = ?", client.Id).First(&oldClient).Error
+	err = tx.Model(model.Client{}).Where("id =?", client.Id).First(&oldClient).Error
 	if err != nil {
 		return nil, err
 	}

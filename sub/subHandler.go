@@ -15,7 +15,11 @@ type SubHandler struct {
 }
 
 func NewSubHandler(g *gin.RouterGroup) {
-	a := &SubHandler{}
+	a := &SubHandler{
+		SubService:   SubService{},
+		JsonService:  JsonService{},
+		ClashService: ClashService{},
+	}
 	a.initRouter(g)
 }
 
@@ -37,14 +41,14 @@ func (s *SubHandler) subs(c *gin.Context) {
 			result, headers, err = s.ClashService.GetClash(subId)
 		}
 		if err != nil || result == nil {
-			logger.Error(err)
+			logger.Error("Subscription error:", err)
 			c.String(400, "Error!")
 			return
 		}
 	} else {
 		result, headers, err = s.SubService.GetSubs(subId)
 		if err != nil || result == nil {
-			logger.Error(err)
+			logger.Error("Subscription error:", err)
 			c.String(400, "Error!")
 			return
 		}
