@@ -38,7 +38,7 @@ func (s *ClientService) getById(id string) (*[]model.Client, error) {
 func (s *ClientService) GetAll() (*[]model.Client, error) {
 	db := database.GetDB()
 	var clients []model.Client
-	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`,`down`, `volume`, `expiry`").Scan(&clients).Error
+	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").Scan(&clients).Error
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +289,7 @@ func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounds *[]mode
 	for _, inbound := range *inbounds {
 		var clients []model.Client
 		err = tx.Table("clients").
-			Where("EXISTS (SELECT 1 FROMjson_each(clients.inbounds) WHERE json_each.value = ?)", inbound.Id).
+			Where("EXISTS (SELECT 1 FROM json_each(clients.inbounds) WHERE json_each.value = ?)", inbound.Id).
 			Find(&clients).Error
 		if err != nil {
 			return err
@@ -367,7 +367,7 @@ func (s *ClientService) DepleteClients() ([]uint, error) {
 
 	// Save changes
 	if len(changes) > 0 {
-		err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down> volume) OR (expiry > 0 AND expiry < ?))", now).Update("enable", false).Error
+		err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", now).Update("enable", false).Error
 		if err != nil {
 			return nil, err
 		}
