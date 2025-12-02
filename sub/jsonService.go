@@ -84,12 +84,21 @@ func (j *JsonService) GetJson(subId string, format string) (*string, []string, e
 	jsonConfig["outbounds"] = outbounds
 
 	// Add other objects from settings
-	j.addOthers(&jsonConfig)
+	err = j.addOthers(&jsonConfig)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	result, _ := json.MarshalIndent(jsonConfig, "", "  ")
+	result, err := json.MarshalIndent(jsonConfig, "", "  ")
+	if err != nil {
+		return nil, nil, err
+	}
 	resultStr := string(result)
 
-	updateInterval, _ := j.SettingService.GetSubUpdates()
+	updateInterval, err := j.SettingService.GetSubUpdates()
+	if err != nil {
+		return nil, nil, err
+	}
 	headers := util.GetHeaders(client, updateInterval)
 
 	return &resultStr, headers, nil
@@ -98,10 +107,17 @@ func (j *JsonService) GetJson(subId string, format string) (*string, []string, e
 func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, error) {
 	db := database.GetDB()
 	client := &model.Client{}
-	err := db.Model(model.Client{}).Where("enable = true and name = ?", subId).First(client).Error
+	// Remove enable = true check to allow re-enabled clients to work
+	err := db.Model(model.Client{}).Where("name = ?", subId).First(client).Error
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Check if client is enabled
+	if !client.Enable {
+		return nil, nil, fmt.Errorf("client is disabled")
+	}
+
 	var clientInbounds []uint
 	err = json.Unmarshal(client.Inbounds, &clientInbounds)
 	if err != nil {
