@@ -28,9 +28,26 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 		return nil, nil, err
 	}
 
-	// Check if client is enabled
+	now := time.Now().Unix()
+
+	// Check if client has expired
+	if client.Expiry > 0 && client.Expiry < now {
+		return nil, nil, fmt.Errorf("client subscription has expired")
+	}
+
+	// Check if client has exceeded volume limit
+	if client.Volume > 0 && (client.Up+client.Down) > client.Volume {
+		return nil, nil, fmt.Errorf("client has exceeded volume limit")
+	}
+
+	// Auto-enable client if it was disabled but subscription is now valid
 	if !client.Enable {
-		return nil, nil, fmt.Errorf("client is disabled")
+		// Re-enable the client since subscription is valid
+		err = db.Model(model.Client{}).Where("id = ?", client.Id).Update("enable", true).Error
+		if err != nil {
+			return nil, nil, err
+		}
+		client.Enable = true
 	}
 
 	clientInfo := ""
