@@ -48,7 +48,7 @@ type JsonService struct {
 	LinkService
 }
 
-func (j *JsonService) GetJson(subId string, format string) (*string, []string, error) {
+func (j *JsonService) GetJson(subId string, _ string) (*string, []string, error) {
 	var jsonConfig map[string]interface{}
 
 	client, inDatas, err := j.getData(subId)
@@ -67,9 +67,9 @@ func (j *JsonService) GetJson(subId string, format string) (*string, []string, e
 		tagNumEnable = 1
 	}
 	for index, link := range links {
-		json, tag, err := util.GetOutbound(link, (index+1)*tagNumEnable)
+		outbound, tag, err := util.GetOutbound(link, (index+1)*tagNumEnable)
 		if err == nil && len(tag) > 0 {
-			*outbounds = append(*outbounds, *json)
+			*outbounds = append(*outbounds, *outbound)
 			*outTags = append(*outTags, tag)
 		}
 	}
@@ -248,7 +248,7 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 			"tag":       "auto",
 			"type":      "urltest",
 			"outbounds": outTags,
-			"url":       "http://www.gstatic.com/generate_204",
+			"url":       "https://www.gstatic.com/generate_204",
 			"interval":  "10m",
 			"tolerance": 50,
 		},
@@ -261,7 +261,7 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 }
 
 func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
-	rules_start := []interface{}{
+	rulesStart := []interface{}{
 		map[string]interface{}{
 			"action": "sniff",
 		},
@@ -271,7 +271,7 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 			"outbound":   "direct",
 		},
 	}
-	rules_end := []interface{}{
+	rulesEnd := []interface{}{
 		map[string]interface{}{
 			"clash_mode": "Global",
 			"action":     "route",
@@ -281,7 +281,7 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	route := map[string]interface{}{
 		"auto_detect_interface": true,
 		"final":                 "proxy",
-		"rules":                 rules_start,
+		"rules":                 rulesStart,
 	}
 
 	othersStr, err := j.SettingService.GetSubJsonExt()
@@ -313,8 +313,8 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 		route["rule_set"] = othersJson["rule_set"]
 	}
 	if settingRules, ok := othersJson["rules"].([]interface{}); ok {
-		rules := append(rules_start, settingRules...)
-		route["rules"] = append(rules, rules_end...)
+		rules := append(rulesStart, settingRules...)
+		route["rules"] = append(rules, rulesEnd...)
 	}
 	if defaultDomainResolver, ok := othersJson["default_domain_resolver"].(string); ok {
 		route["default_domain_resolver"] = defaultDomainResolver
