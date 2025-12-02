@@ -116,6 +116,23 @@ func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, er
 
 	now := time.Now().Unix()
 
+	// Auto-enable client if it was disabled but subscription is now valid
+	// This must be done BEFORE checking expiry/volume to allow renewed subscriptions to work
+	if !client.Enable {
+		// Check if subscription is valid (not expired and not over volume limit)
+		isExpired := client.Expiry > 0 && client.Expiry < now
+		isOverVolume := client.Volume > 0 && (client.Up+client.Down) > client.Volume
+
+		if !isExpired && !isOverVolume {
+			// Re-enable the client since subscription is valid
+			err = db.Model(model.Client{}).Where("id = ?", client.Id).Update("enable", true).Error
+			if err != nil {
+				return nil, nil, err
+			}
+			client.Enable = true
+		}
+	}
+
 	// Check if client has expired
 	if client.Expiry > 0 && client.Expiry < now {
 		return nil, nil, fmt.Errorf("client subscription has expired")
@@ -124,16 +141,6 @@ func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, er
 	// Check if client has exceeded volume limit
 	if client.Volume > 0 && (client.Up+client.Down) > client.Volume {
 		return nil, nil, fmt.Errorf("client has exceeded volume limit")
-	}
-
-	// Auto-enable client if it was disabled but subscription is now valid
-	if !client.Enable {
-		// Re-enable the client since subscription is valid
-		err = db.Model(model.Client{}).Where("id = ?", client.Id).Update("enable", true).Error
-		if err != nil {
-			return nil, nil, err
-		}
-		client.Enable = true
 	}
 
 	var clientInbounds []uint
