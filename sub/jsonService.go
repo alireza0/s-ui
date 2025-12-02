@@ -248,7 +248,7 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 			"tag":       "auto",
 			"type":      "urltest",
 			"outbounds": outTags,
-			"url":       "https://www.gstatic.com/generate_204",
+			"url":       "http://www.gstatic.com/generate_204",
 			"interval":  "10m",
 			"tolerance": 50,
 		},
