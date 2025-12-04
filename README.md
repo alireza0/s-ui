@@ -26,6 +26,7 @@
 | Advanced Traffic Routing Interface     | :heavy_check_mark: |
 | Client & Traffic & System Status       | :heavy_check_mark: |
 | Subscription Service (link/json + info)| :heavy_check_mark: |
+| Subscription Token Protection          | :heavy_check_mark: |
 | Dark/Light Theme                       | :heavy_check_mark: |
 | API Interface                          | :heavy_check_mark: |
 
@@ -213,9 +214,10 @@ To run backend (from root folder of repository):
 - Supports XTLS protocols
 - An advanced interface for routing traffic, incorporating PROXY Protocol, External, and Transparent Proxy, SSL Certificate, and Port
 - An advanced interface for inbound and outbound configuration
-- Clients’ traffic cap and expiration date
+- Clients' traffic cap and expiration date
 - Displays online clients, inbounds and outbounds with traffic statistics, and system status monitoring
 - Subscription service with ability to add external links and subscription
+- Subscription service with temporary token protection to prevent unauthorized sharing
 - HTTPS for secure access to the web panel and subscription service (self-provided domain + SSL certificate)
 - Dark/Light theme
 
@@ -252,6 +254,33 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 ```
 
 </details>
+
+## Subscription Token Protection
+
+Starting from version 1.3, S-UI includes a subscription token protection feature. When enabled, this feature requires clients to use a unique token in their subscription URL to access configuration data. This prevents unauthorized sharing of subscription links.
+
+### How it works
+
+1. When token protection is enabled, each client is assigned a unique subscription token
+2. Clients must include this token in their subscription URL: `https://yourdomain.com/sub/{client_name}/{token}`
+3. Without a valid token, subscription requests are rejected
+4. Tokens are automatically refreshed periodically
+
+### Enabling Token Protection
+
+To enable subscription token protection:
+1. Go to Settings in the web panel
+2. Find the "Subscription Token Protection" option
+3. Toggle it to enabled
+4. Save the settings
+
+### Managing Tokens
+
+Tokens are automatically managed by the system:
+- New tokens are generated when clients are created
+- Tokens are refreshed periodically
+- Disabled clients receive new tokens when re-enabled
+- Expired or volume-limited clients are automatically disabled
 
 ## Stargazers over Time
 [![Stargazers over time](https://starchart.cc/alireza0/s-ui.svg)](https://starchart.cc/alireza0/s-ui)

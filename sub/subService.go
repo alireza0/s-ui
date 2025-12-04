@@ -1,7 +1,9 @@
 package sub
 
 import (
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -14,6 +16,7 @@ import (
 
 type SubService struct {
 	service.SettingService
+	service.ClientService
 	LinkService
 }
 
@@ -44,6 +47,22 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 				return nil, nil, err
 			}
 			client.Enable = true
+
+			// Generate new token when re-enabling client
+			token, err := s.generateSubToken()
+			if err != nil {
+				return nil, nil, err
+			}
+
+			err = db.Model(model.Client{}).Where("id = ?", client.Id).Updates(map[string]interface{}{
+				"sub_token": token,
+				"sub_exp":   time.Now().Add(24 * time.Hour).Unix(),
+			}).Error
+			if err != nil {
+				return nil, nil, err
+			}
+			client.SubToken = token
+			client.SubExp = time.Now().Add(24 * time.Hour).Unix()
 		}
 	}
 
@@ -55,6 +74,25 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 	// Check if client has exceeded volume limit
 	if client.Volume > 0 && (client.Up+client.Down) > client.Volume {
 		return nil, nil, fmt.Errorf("client has exceeded volume limit")
+	}
+
+	// Check if subscription token has expired
+	if client.SubExp <= now {
+		// Generate new token
+		token, err := s.generateSubToken()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		err = db.Model(model.Client{}).Where("id = ?", client.Id).Updates(map[string]interface{}{
+			"sub_token": token,
+			"sub_exp":   time.Now().Add(24 * time.Hour).Unix(),
+		}).Error
+		if err != nil {
+			return nil, nil, err
+		}
+		client.SubToken = token
+		client.SubExp = time.Now().Add(24 * time.Hour).Unix()
 	}
 
 	clientInfo := ""
@@ -108,4 +146,13 @@ func (s *SubService) formatTraffic(trafficBytes int64) string {
 	} else {
 		return fmt.Sprintf("%.2fEB", float64(trafficBytes)/float64(1024*1024*1024*1024*1024))
 	}
+}
+
+// generateSubToken generates a random subscription token
+func (s *SubService) generateSubToken() (string, error) {
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }
