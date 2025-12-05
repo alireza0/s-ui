@@ -21,6 +21,7 @@ func NewSubHandler(g *gin.RouterGroup) {
 
 func (s *SubHandler) initRouter(g *gin.RouterGroup) {
 	g.GET("/:subid", s.subs)
+	g.HEAD("/:subid", s.subs)
 }
 
 func (s *SubHandler) subs(c *gin.Context) {
@@ -53,6 +54,12 @@ func (s *SubHandler) subs(c *gin.Context) {
 	c.Writer.Header().Set("Subscription-Userinfo", headers[0])
 	c.Writer.Header().Set("Profile-Update-Interval", headers[1])
 	c.Writer.Header().Set("Profile-Title", headers[2])
+
+	// For HEAD requests
+	if c.Request.Method == "HEAD" {
+		c.Status(200)
+		return
+	}
 
 	c.String(200, *result)
 }
