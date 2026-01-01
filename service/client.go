@@ -15,7 +15,40 @@ import (
 	"gorm.io/gorm"
 )
 
-type ClientService struct{}
+type ClientService struct {
+	brokerService *BrokerService
+}
+
+func NewClientService(brokerService *BrokerService) *ClientService {
+	return &ClientService{brokerService: brokerService}
+}
+
+// HandleClientEvent processes incoming client events from the broker.
+func (s *ClientService) HandleClientEvent(event *ClientEvent) {
+	db := database.GetDB()
+	client := event.Client
+
+	logger.Infof("Received client event '%s' for client '%s' from another panel", event.Action, client.Name)
+
+	var err error
+	switch event.Action {
+	case ClientCreated:
+		// We assume the other panel has already assigned an ID.
+		// GORM's Save will create a new record if the ID doesn't exist.
+		err = db.Save(&client).Error
+	case ClientUpdated:
+		// GORM's Save will update the record if the ID exists.
+		err = db.Save(&client).Error
+	case ClientDeleted:
+		err = db.Delete(&model.Client{}, client.Id).Error
+	default:
+		logger.Warningf("Unknown client event action: %s", event.Action)
+	}
+
+	if err != nil {
+		logger.Errorf("Failed to handle client event '%s' for client '%s': %v", event.Action, client.Name, err)
+	}
+}
 
 func (s *ClientService) Get(id string) (*[]model.Client, error) {
 	if id == "" {
@@ -66,15 +99,21 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 			if err != nil {
 				return nil, err
 			}
+			err = tx.Save(&client).Error
+			if err != nil {
+				return nil, err
+			}
+			s.brokerService.PublishClientEvent(ClientUpdated, &client)
 		} else {
 			err = json.Unmarshal(client.Inbounds, &inboundIds)
 			if err != nil {
 				return nil, err
 			}
-		}
-		err = tx.Save(&client).Error
-		if err != nil {
-			return nil, err
+			err = tx.Save(&client).Error
+			if err != nil {
+				return nil, err
+			}
+			s.brokerService.PublishClientEvent(ClientCreated, &client)
 		}
 	case "addbulk":
 		var clients []*model.Client
@@ -93,6 +132,9 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		err = tx.Save(clients).Error
 		if err != nil {
 			return nil, err
+		}
+		for _, client := range clients {
+			s.brokerService.PublishClientEvent(ClientCreated, client)
 		}
 	case "del":
 		var id uint
@@ -113,6 +155,7 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+		s.brokerService.PublishClientEvent(ClientDeleted, &client)
 	default:
 		return nil, common.NewErrorf("unknown action: %s", act)
 	}

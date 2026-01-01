@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/util/common"
 
 	"github.com/gin-gonic/gin"
@@ -18,11 +19,15 @@ type TokenInMemory struct {
 
 type APIv2Handler struct {
 	ApiService
-	tokens *[]TokenInMemory
+	tokens        *[]TokenInMemory
+	brokerService *service.BrokerService
 }
 
-func NewAPIv2Handler(g *gin.RouterGroup) *APIv2Handler {
-	a := &APIv2Handler{}
+func NewAPIv2Handler(g *gin.RouterGroup, brokerService *service.BrokerService) *APIv2Handler {
+	a := &APIv2Handler{
+		brokerService: brokerService,
+	}
+	a.ClientService = *service.NewClientService(brokerService)
 	a.ReloadTokens()
 	a.initRouter(g)
 	return a

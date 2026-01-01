@@ -18,6 +18,8 @@ import (
 type APP struct {
 	service.SettingService
 	configService *service.ConfigService
+	brokerService *service.BrokerService
+	clientService *service.ClientService
 	webServer     *web.Server
 	subServer     *sub.Server
 	cronJob       *cronjob.CronJob
@@ -42,10 +44,19 @@ func (a *APP) Init() error {
 	// Init Setting
 	a.SettingService.GetAllSetting()
 
+	// Init Broker Service
+	a.brokerService, err = service.NewBrokerService(&a.SettingService)
+	if err != nil {
+		// Log the error but don't block the startup
+		logger.Warning("failed to initialize broker service:", err)
+	}
+
+	a.clientService = service.NewClientService(a.brokerService)
+
 	a.core = core.NewCore()
 
 	a.cronJob = cronjob.NewCronJob()
-	a.webServer = web.NewServer()
+	a.webServer = web.NewServer(a.brokerService)
 	a.subServer = sub.NewServer()
 
 	a.configService = service.NewConfigService(a.core)
@@ -84,10 +95,23 @@ func (a *APP) Start() error {
 		logger.Error(err)
 	}
 
+	// Start listening for broker events
+	if a.brokerService != nil {
+		go func() {
+			_, err := a.brokerService.SubscribeClientEvents(a.clientService.HandleClientEvent)
+			if err != nil {
+				logger.Errorf("Failed to subscribe to client events: %v", err)
+			}
+		}()
+	}
+
 	return nil
 }
 
 func (a *APP) Stop() {
+	if a.brokerService != nil {
+		a.brokerService.Close()
+	}
 	a.cronJob.Stop()
 	err := a.subServer.Stop()
 	if err != nil {
