@@ -95,8 +95,8 @@ func (a *APP) Start() error {
 		logger.Error(err)
 	}
 
-	// Start listening for broker events
-	if a.brokerService != nil {
+	// Start listening for broker events only if broker is enabled/connected
+	if a.brokerService != nil && a.brokerService.IsEnabled() {
 		go func() {
 			_, err := a.brokerService.SubscribeClientEvents(a.clientService.HandleClientEvent)
 			if err != nil {
