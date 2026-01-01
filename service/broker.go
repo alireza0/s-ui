@@ -30,22 +30,40 @@ type BrokerService struct {
 }
 
 // NewBrokerService creates a new BrokerService and connects to the NATS server.
+// Important: this function ALWAYS returns a non-nil *BrokerService. If the NATS URL
+// is not configured or the connection fails, the returned BrokerService will have
+// nc == nil (disabled mode). An error is still returned for visibility.
 func NewBrokerService(settingService *SettingService) (*BrokerService, error) {
 	natsUrl, err := settingService.GetNatsUrl()
-	if err != nil {
-		return nil, err
-	}
-
 	panelID := uuid.New().String()
+
+	if err != nil {
+		// Return a non-nil BrokerService (disabled) and the error.
+		logger.Warningf("failed to get NATS URL from settings: %v — broker disabled", err)
+		return &BrokerService{nc: nil, panelID: panelID}, err
+	}
 
 	if natsUrl == "" {
 		logger.Info("NATS URL is not configured, broker service will be disabled.")
 		return &BrokerService{nc: nil, panelID: panelID}, nil
 	}
 
-	nc, err := nats.Connect(natsUrl)
+	// Use some reasonable connection options so we get reconnect/disconnect logs.
+	nc, err := nats.Connect(natsUrl,
+		nats.Name("s-ui-"+panelID),
+		nats.MaxReconnects(-1),
+		nats.ReconnectHandler(func(nc *nats.Conn) {
+			logger.Infof("Reconnected to NATS server at %s", nc.ConnectedUrl())
+		}),
+		nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
+			// err may be nil for normal disconnects
+			logger.Warningf("Disconnected from NATS: %v", err)
+		}),
+	)
 	if err != nil {
-		return nil, err
+		// Return a non-nil BrokerService (disabled) and the error.
+		logger.Warningf("failed to connect to NATS server at %s: %v — broker disabled", natsUrl, err)
+		return &BrokerService{nc: nil, panelID: panelID}, err
 	}
 
 	logger.Infof("Successfully connected to NATS server at %s", natsUrl)
