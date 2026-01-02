@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/alireza0/s-ui/config"
+	"github.com/alireza0/s-ui/database/model"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -67,6 +68,13 @@ func MigrateDb() {
 			log.Fatal("Migration to 1.3 failed: ", err)
 			return
 		}
+	}
+
+	// Add ClientAccessLog table if it doesn't exist
+	err = tx.AutoMigrate(&model.ClientAccessLog{})
+	if err != nil {
+		log.Fatal("Migration to add ClientAccessLog table failed: ", err)
+		return
 	}
 
 	// Set version

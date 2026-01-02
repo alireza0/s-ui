@@ -42,31 +42,35 @@ var defaultConfig = `{
 }`
 
 var defaultValueMap = map[string]string{
-	"webListen":     "",
-	"webDomain":     "",
-	"webPort":       "2095",
-	"secret":        common.Random(32),
-	"webCertFile":   "",
-	"webKeyFile":    "",
-	"webPath":       "/app/",
-	"webURI":        "",
-	"sessionMaxAge": "0",
-	"trafficAge":    "30",
-	"timeLocation":  "Asia/Tehran",
-	"subListen":     "",
-	"subPort":       "2096",
-	"subPath":       "/sub/",
-	"subDomain":     "",
-	"subCertFile":   "",
-	"subKeyFile":    "",
-	"subUpdates":    "12",
-	"subEncode":     "true",
-	"subShowInfo":   "false",
-	"subURI":        "",
-	"subJsonExt":    "",
-	"subClashExt":   "",
-	"config":        defaultConfig,
-	"version":       config.GetVersion(),
+	"webListen":         "",
+	"webDomain":         "",
+	"webPort":           "2095",
+	"secret":            common.Random(32),
+	"webCertFile":       "",
+	"webKeyFile":        "",
+	"webPath":           "/app/",
+	"webURI":            "",
+	"sessionMaxAge":     "0",
+	"trafficAge":        "30",
+	"timeLocation":      "Asia/Tehran",
+	"subListen":         "",
+	"subPort":           "2096",
+	"subPath":           "/sub/",
+	"subDomain":         "",
+	"subCertFile":       "",
+	"subKeyFile":        "",
+	"subUpdates":        "12",
+	"subEncode":         "true",
+	"subShowInfo":       "false",
+	"subURI":            "",
+	"subJsonExt":        "",
+	"subClashExt":       "",
+	"config":            defaultConfig,
+	"version":           config.GetVersion(),
+	"subIPProtection":   "false",
+	"subHWIDProtection": "false",
+	"subMaxIPs":         "1",
+	"subMaxHWIDs":       "1",
 }
 
 type SettingService struct {
@@ -413,6 +417,22 @@ func (s *SettingService) GetSubJsonExt() (string, error) {
 
 func (s *SettingService) GetSubClashExt() (string, error) {
 	return s.getString("subClashExt")
+}
+
+func (s *SettingService) GetSubIPProtection() (bool, error) {
+	return s.getBool("subIPProtection")
+}
+
+func (s *SettingService) GetSubHWIDProtection() (bool, error) {
+	return s.getBool("subHWIDProtection")
+}
+
+func (s *SettingService) GetSubMaxIPs() (int, error) {
+	return s.getInt("subMaxIPs")
+}
+
+func (s *SettingService) GetSubMaxHWIDs() (int, error) {
+	return s.getInt("subMaxHWIDs")
 }
 
 func (s *SettingService) fileExists(path string) error {

@@ -23,18 +23,24 @@ type User struct {
 }
 
 type Client struct {
-	Id       uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
-	Enable   bool            `json:"enable" form:"enable"`
-	Name     string          `json:"name" form:"name"`
-	Config   json.RawMessage `json:"config,omitempty" form:"config"`
-	Inbounds json.RawMessage `json:"inbounds" form:"inbounds"`
-	Links    json.RawMessage `json:"links,omitempty" form:"links"`
-	Volume   int64           `json:"volume" form:"volume"`
-	Expiry   int64           `json:"expiry" form:"expiry"`
-	Down     int64           `json:"down" form:"down"`
-	Up       int64           `json:"up" form:"up"`
-	Desc     string          `json:"desc" form:"desc"`
-	Group    string          `json:"group" form:"group"`
+	Id         uint            `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Enable     bool            `json:"enable" form:"enable"`
+	Name       string          `json:"name" form:"name"`
+	Config     json.RawMessage `json:"config,omitempty" form:"config"`
+	Inbounds   json.RawMessage `json:"inbounds" form:"inbounds"`
+	Links      json.RawMessage `json:"links,omitempty" form:"links"`
+	Volume     int64           `json:"volume" form:"volume"`
+	Expiry     int64           `json:"expiry" form:"expiry"`
+	Down       int64           `json:"down" form:"down"`
+	Up         int64           `json:"up" form:"up"`
+	Desc       string          `json:"desc" form:"desc"`
+	Group      string          `json:"group" form:"group"`
+	LastIP     string          `json:"lastIP" form:"lastIP"`
+	HWID       string          `json:"hwid" form:"hwid"`
+	IPLocked   bool            `json:"ipLocked" form:"ipLocked"`
+	HWIDLocked bool            `json:"hwidLocked" form:"hwidLocked"`
+	MaxIPs     int             `json:"maxIPs" form:"maxIPs"`
+	MaxHWIDs   int             `json:"maxHWIDs" form:"maxHWIDs"`
 }
 
 type Stats struct {
@@ -62,4 +68,13 @@ type Tokens struct {
 	Expiry int64  `json:"expiry" form:"expiry"`
 	UserId uint   `json:"userId" form:"userId"`
 	User   *User  `json:"user" gorm:"foreignKey:UserId;references:Id"`
+}
+
+type ClientAccessLog struct {
+	Id         uint   `json:"id" gorm:"primaryKey;autoIncrement"`
+	ClientName string `json:"clientName" gorm:"index"`
+	IP         string `json:"ip" gorm:"index"`
+	HWID       string `json:"hwid"`
+	AccessTime int64  `json:"accessTime"`
+	UserAgent  string `json:"userAgent"`
 }

@@ -190,6 +190,16 @@ func (a *ApiService) GetSettings(c *gin.Context) {
 	jsonObj(c, data, err)
 }
 
+func (a *ApiService) GetClientAccessLogs(c *gin.Context) {
+	clientName := c.Query("clientName")
+	logs, err := a.ClientService.GetClientAccessLogs(clientName)
+	if err != nil {
+		jsonMsg(c, "", err)
+		return
+	}
+	jsonObj(c, *logs, nil)
+}
+
 func (a *ApiService) GetStats(c *gin.Context) {
 	resource := c.Query("resource")
 	tag := c.Query("tag")

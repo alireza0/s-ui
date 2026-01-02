@@ -38,7 +38,7 @@ func (s *ClientService) getById(id string) (*[]model.Client, error) {
 func (s *ClientService) GetAll() (*[]model.Client, error) {
 	db := database.GetDB()
 	var clients []model.Client
-	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").Scan(&clients).Error
+	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`, `lastIP`, `hwid`, `ipLocked`, `hwidLocked`, `maxIPs`, `maxHWIDs`").Scan(&clients).Error
 	if err != nil {
 		return nil, err
 	}
@@ -387,4 +387,77 @@ func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([
 	diffInbounds := common.DiffUintArray(oldInboundIds, newInboundIds)
 
 	return diffInbounds, nil
+}
+
+func (s *ClientService) UpdateClientAccessInfo(clientName string, ip string, hwid string) error {
+	db := database.GetDB()
+	var client model.Client
+
+	err := db.Model(model.Client{}).Where("name = ?", clientName).First(&client).Error
+	if err != nil {
+		return err
+	}
+
+	// Update LastIP if different
+	if client.LastIP != ip {
+		client.LastIP = ip
+	}
+
+	// Update HWID if different and not empty
+	if hwid != "" && client.HWID != hwid {
+		client.HWID = hwid
+	}
+
+	err = db.Save(&client).Error
+	if err != nil {
+		return err
+	}
+
+	// Log the access for tracking purposes
+	accessLog := model.ClientAccessLog{
+		ClientName: clientName,
+		IP:         ip,
+		HWID:       hwid,
+		AccessTime: time.Now().Unix(),
+	}
+	err = db.Create(&accessLog).Error
+	return err
+}
+
+func (s *ClientService) ValidateClientAccess(clientName string, ip string, hwid string) (bool, error) {
+	db := database.GetDB()
+	var client model.Client
+
+	err := db.Model(model.Client{}).Where("name = ?", clientName).First(&client).Error
+	if err != nil {
+		return false, err
+	}
+
+	// Check if IP protection is enabled
+	if client.IPLocked {
+		// If there's already a stored IP and it's different from current IP
+		if client.LastIP != "" && client.LastIP != ip {
+			return false, nil
+		}
+	}
+
+	// Check if HWID protection is enabled
+	if client.HWIDLocked {
+		// If there's already a stored HWID and it's different from current HWID
+		if client.HWID != "" && client.HWID != hwid {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+func (s *ClientService) GetClientAccessLogs(clientName string) (*[]model.ClientAccessLog, error) {
+	db := database.GetDB()
+	var logs []model.ClientAccessLog
+	err := db.Model(model.ClientAccessLog{}).Where("client_name = ?", clientName).Order("access_time DESC").Limit(100).Find(&logs).Error
+	if err != nil {
+		return nil, err
+	}
+	return &logs, nil
 }
