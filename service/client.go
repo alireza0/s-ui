@@ -389,7 +389,7 @@ func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([
 	return diffInbounds, nil
 }
 
-func (s *ClientService) UpdateClientAccessInfo(clientName string, ip string, hwid string) error {
+func (s *ClientService) UpdateClientAccessInfo(clientName string, ip string, hwid string, userAgent string) error {
 	db := database.GetDB()
 	var client model.Client
 
@@ -419,6 +419,7 @@ func (s *ClientService) UpdateClientAccessInfo(clientName string, ip string, hwi
 		IP:         ip,
 		HWID:       hwid,
 		AccessTime: time.Now().Unix(),
+		UserAgent:  userAgent,
 	}
 	err = db.Create(&accessLog).Error
 	return err

@@ -28,31 +28,33 @@ func (s *SubHandler) subs(c *gin.Context) {
 	// Get client IP and HWID
 	clientIP := c.ClientIP()
 	hwid := c.GetHeader("X-HWID") // Or extract from User-Agent or other headers
+	ua := c.GetHeader("User-Agent")
 
 	// Get protection settings
-	ipProtectionEnabled, err := s.GetSubIPProtection()
+	// Prefer using SettingService explicitly to avoid depending on SubHandler having passthrough methods.
+	settingService := service.SettingService{}
+	ipProtectionEnabled, err := settingService.GetSubIPProtection()
 	if err != nil {
 		logger.Warning("Error getting IP protection setting: ", err)
 		ipProtectionEnabled = false
 	}
-	hwidProtectionEnabled, err := s.GetSubHWIDProtection()
+	hwidProtectionEnabled, err := settingService.GetSubHWIDProtection()
 	if err != nil {
 		logger.Warning("Error getting HWID protection setting: ", err)
 		hwidProtectionEnabled = false
 	}
 
 	// If both protections are disabled, skip validation
+	clientService := service.ClientService{}
 	if !ipProtectionEnabled && !hwidProtectionEnabled {
 		// Update client access info without validation
-		clientService := service.ClientService{}
-		err = clientService.UpdateClientAccessInfo(subId, clientIP, hwid)
+		err = clientService.UpdateClientAccessInfo(subId, clientIP, hwid, ua)
 		if err != nil {
 			logger.Warning("Error updating client access info: ", err)
 		}
 		// Continue to serve the subscription
 	} else {
 		// Validate client access
-		clientService := service.ClientService{}
 		valid, err := clientService.ValidateClientAccess(subId, clientIP, hwid)
 		if err != nil {
 			logger.Error("Error validating client access: ", err)
@@ -65,8 +67,8 @@ func (s *SubHandler) subs(c *gin.Context) {
 			return
 		}
 
-		// Update client access info
-		err = clientService.UpdateClientAccessInfo(subId, clientIP, hwid)
+		// Update client access info (record the successful access)
+		err = clientService.UpdateClientAccessInfo(subId, clientIP, hwid, ua)
 		if err != nil {
 			logger.Warning("Error updating client access info: ", err)
 			// Continue anyway, don't block the request for this error
