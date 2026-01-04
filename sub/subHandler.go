@@ -21,6 +21,7 @@ func NewSubHandler(g *gin.RouterGroup) {
 
 func (s *SubHandler) initRouter(g *gin.RouterGroup) {
 	g.GET("/:subid", s.subs)
+	g.HEAD("/:subid", s.subHeaders)
 }
 
 func (s *SubHandler) subs(c *gin.Context) {
@@ -49,10 +50,29 @@ func (s *SubHandler) subs(c *gin.Context) {
 			return
 		}
 	}
-	// Add headers
+
+	s.addHeaders(c, headers)
+
+	c.String(200, *result)
+}
+
+func (s *SubHandler) subHeaders(c *gin.Context) {
+	subId := c.Param("subid")
+	client, err := s.SubService.getClientBySubId(subId)
+	if err != nil {
+		logger.Error(err)
+		c.String(400, "Error!")
+		return
+	}
+
+	headers := s.SubService.getClientHeaders(client)
+	s.addHeaders(c, headers)
+
+	c.Status(200)
+}
+
+func (s *SubHandler) addHeaders(c *gin.Context, headers []string) {
 	c.Writer.Header().Set("Subscription-Userinfo", headers[0])
 	c.Writer.Header().Set("Profile-Update-Interval", headers[1])
 	c.Writer.Header().Set("Profile-Title", headers[2])
-
-	c.String(200, *result)
 }

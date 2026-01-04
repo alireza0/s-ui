@@ -20,9 +20,7 @@ type SubService struct {
 func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 	var err error
 
-	db := database.GetDB()
-	client := &model.Client{}
-	err = db.Model(model.Client{}).Where("enable = true and name = ?", subId).First(client).Error
+	client, err := s.getClientBySubId(subId)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -36,8 +34,7 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 	linksArray := s.LinkService.GetLinks(&client.Links, "all", clientInfo)
 	result := strings.Join(linksArray, "\n")
 
-	updateInterval, _ := s.SettingService.GetSubUpdates()
-	headers := util.GetHeaders(client, updateInterval)
+	headers := s.getClientHeaders(client)
 
 	subEncode, _ := s.SettingService.GetSubEncode()
 	if subEncode {
@@ -45,6 +42,21 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 	}
 
 	return &result, headers, nil
+}
+
+func (j *SubService) getClientBySubId(subId string) (*model.Client, error) {
+	db := database.GetDB()
+	client := &model.Client{}
+	err := db.Model(model.Client{}).Where("enable = true and name = ?", subId).First(client).Error
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func (s *SubService) getClientHeaders(client *model.Client) []string {
+	updateInterval, _ := s.SettingService.GetSubUpdates()
+	return util.GetHeaders(client, updateInterval)
 }
 
 func (s *SubService) getClientInfo(c *model.Client) string {

@@ -2,7 +2,8 @@ package util
 
 import (
 	"encoding/json"
-	"math/rand"
+
+	"github.com/alireza0/s-ui/util/common"
 
 	"github.com/alireza0/s-ui/database/model"
 )
@@ -108,7 +109,7 @@ func addTls(out *map[string]interface{}, tls *model.Tls) {
 		realityConfig := tlsConfig["reality"].(map[string]interface{})
 		realityConfig["enabled"] = true
 		if shortIDs, ok := reality["short_id"].([]interface{}); ok && len(shortIDs) > 0 {
-			realityConfig["short_id"] = shortIDs[rand.Intn(len(shortIDs))]
+			realityConfig["short_id"] = shortIDs[common.RandomInt(len(shortIDs))]
 		}
 		tlsConfig["reality"] = realityConfig
 	}

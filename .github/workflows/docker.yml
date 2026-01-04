@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         with:
           submodules: recursive
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 20
       - name: Install dependencies and build frontend
@@ -23,7 +23,7 @@ jobs:
           npm install
           npm run build
       - name: Upload frontend build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: frontend-dist
           path: frontend/dist/
@@ -33,9 +33,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5.0.0
+      uses: actions/checkout@v6.0.1
     - name: Download frontend build artifact
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: frontend-dist
         path: frontend_dist

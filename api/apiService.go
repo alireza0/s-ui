@@ -378,3 +378,21 @@ func (a *ApiService) DeleteToken(c *gin.Context) {
 	err := a.UserService.DeleteToken(tokenId)
 	jsonMsg(c, "", err)
 }
+
+func (a *ApiService) GetSingboxConfig(c *gin.Context) {
+	config, err := a.ConfigService.GetConfig("")
+	if err != nil {
+		c.Status(400)
+		c.Writer.WriteString(err.Error())
+		return
+	}
+	rawConfig, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		c.Status(400)
+		c.Writer.WriteString(err.Error())
+		return
+	}
+	c.Header("Content-Type", "application/json")
+	c.Header("Content-Disposition", "attachment; filename=config_"+time.Now().Format("20060102-150405")+".json")
+	c.Writer.Write(rawConfig)
+}

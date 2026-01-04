@@ -33,7 +33,7 @@ FROM --platform=$TARGETPLATFORM alpine
 LABEL org.opencontainers.image.authors="alireza7@gmail.com"
 ENV TZ=Asia/Tehran
 WORKDIR /app
-RUN apk add --no-cache --update ca-certificates tzdata
+RUN set -ex && apk add --no-cache --upgrade bash tzdata ca-certificates nftables
 COPY --from=backend-builder /app/sui /app/
 COPY entrypoint.sh /app/
 ENTRYPOINT [ "./entrypoint.sh" ]

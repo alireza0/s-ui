@@ -22,7 +22,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         with:
           submodules: recursive
           fetch-depth: 0
@@ -34,7 +34,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
@@ -85,7 +85,7 @@ jobs:
           zip -r "s-ui-windows-amd64.zip" s-ui-windows
 
       - name: Upload files to Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: s-ui-windows-amd64
           path: ./s-ui-windows-amd64.zip
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         with:
           submodules: recursive
           fetch-depth: 0
@@ -118,7 +118,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
@@ -155,7 +155,7 @@ jobs:
           zip -r "s-ui-windows-arm64.zip" s-ui-windows
 
       - name: Upload ARM64 files to Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: s-ui-windows-arm64
           path: ./s-ui-windows-arm64.zip
