@@ -1,4 +1,4 @@
-package sub
+packagesub
 
 import (
 	"encoding/json"
@@ -21,7 +21,7 @@ const defaultJson = `
 				"172.19.0.1/30",
 				"fdfe:dcba:9876::1/126"
 			],
-      "mtu": 9000,
+"mtu": 9000,
       "auto_route": true,
       "strict_route": false,
       "endpoint_independent_nat": false,
@@ -39,7 +39,7 @@ const defaultJson = `
       "listen": "127.0.0.1",
       "listen_port": 2080,
       "users": []
-    }
+}
   ]
 }
 `
@@ -53,7 +53,7 @@ func (j *JsonService) GetJson(subId string, _ string) (*string, []string, error)
 	var jsonConfig map[string]interface{}
 
 	client, inDatas, err := j.getData(subId)
-	if err != nil {
+if err != nil {
 		return nil, nil, err
 	}
 
@@ -63,13 +63,13 @@ func (j *JsonService) GetJson(subId string, _ string) (*string, []string, error)
 	}
 
 	links := j.LinkService.GetLinks(&client.Links, "external", "")
-	tagNumEnable := 0
+tagNumEnable := 0
 	if len(links) > 1 {
 		tagNumEnable = 1
 	}
 	for index, link := range links {
 		outbound, tag, err := util.GetOutbound(link, (index+1)*tagNumEnable)
-		if err == nil && len(tag) > 0 {
+		if err == nil && len(tag)> 0 {
 			*outbounds = append(*outbounds, *outbound)
 			*outTags = append(*outTags, tag)
 		}
@@ -79,7 +79,7 @@ func (j *JsonService) GetJson(subId string, _ string) (*string, []string, error)
 
 	err = json.Unmarshal([]byte(defaultJson), &jsonConfig)
 	if err != nil {
-		return nil, nil, err
+	return nil, nil, err
 	}
 
 	jsonConfig["outbounds"] = outbounds
@@ -91,7 +91,7 @@ func (j *JsonService) GetJson(subId string, _ string) (*string, []string, error)
 	}
 
 	result, err := json.MarshalIndent(jsonConfig, "", "  ")
-	if err != nil {
+if err != nil {
 		return nil, nil, err
 	}
 	resultStr := string(result)
@@ -108,30 +108,12 @@ func (j *JsonService) GetJson(subId string, _ string) (*string, []string, error)
 func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, error) {
 	db := database.GetDB()
 	client := &model.Client{}
-	// Remove enable = true check to allow re-enabled clients to work
-	err := db.Model(model.Client{}).Where("name = ?", subId).First(client).Error
+	err:= db.Model(model.Client{}).Where("name = ? AND enable = true", subId).First(client).Error
 	if err != nil {
 		return nil, nil, err
 	}
 
 	now := time.Now().Unix()
-
-	// Auto-enable client if it was disabled but subscription is now valid
-	// This must be done BEFORE checking expiry/volume to allow renewed subscriptions to work
-	if !client.Enable {
-		// Check if subscription is valid (not expired and not over volume limit)
-		isExpired := client.Expiry > 0 && client.Expiry < now
-		isOverVolume := client.Volume > 0 && (client.Up+client.Down) > client.Volume
-
-		if !isExpired && !isOverVolume {
-			// Re-enable the client since subscription is valid
-			err = db.Model(model.Client{}).Where("id = ?", client.Id).Update("enable", true).Error
-			if err != nil {
-				return nil, nil, err
-			}
-			client.Enable = true
-		}
-	}
 
 	// Check if client has expired
 	if client.Expiry > 0 && client.Expiry < now {
@@ -143,7 +125,7 @@ func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, er
 		return nil, nil, fmt.Errorf("client has exceeded volume limit")
 	}
 
-	var clientInbounds []uint
+var clientInbounds []uint
 	err = json.Unmarshal(client.Inbounds, &clientInbounds)
 	if err != nil {
 		return nil, nil, err
@@ -184,7 +166,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 			if err != nil {
 				return nil, nil, err
 			}
-			method, _ := inbOptions["method"].(string)
+			method, _ :=inbOptions["method"].(string)
 			if strings.HasPrefix(method, "2022") {
 				inbPass, _ := inbOptions["password"].(string)
 				userPass = append(userPass, inbPass)
@@ -209,14 +191,14 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 
 		var addrs []map[string]interface{}
 		err = json.Unmarshal(inData.Addrs, &addrs)
-		if err != nil {
+	if err != nil {
 			return nil, nil, err
 		}
 		tag, _ := outbound["tag"].(string)
 		if len(addrs) == 0 {
 			// For mixed protocol, use separated socks and http
 			if protocol == "mixed" {
-				outbound["tag"] = tag
+				outbound["tag"] =tag
 				j.pushMixed(&outbounds, &outTags, outbound)
 			} else {
 				outTags = append(outTags, tag)
@@ -224,8 +206,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 			}
 		} else {
 			for index, addr := range addrs {
-				// Copy original config
-				newOut := make(map[string]interface{}, len(outbound))
+				// Copy original confignewOut := make(map[string]interface{}, len(outbound))
 				for key, value := range outbound {
 					newOut[key] = value
 				}
@@ -237,7 +218,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 				// Override TLS
 				if addrTls, ok := addr["tls"].(map[string]interface{}); ok {
 					outTls, _ := newOut["tls"].(map[string]interface{})
-					if outTls == nil {
+					if outTls == nil{
 						outTls = make(map[string]interface{})
 					}
 					for key, value := range addrTls {
@@ -252,7 +233,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 				// For mixed protocol, use separated socks and http
 				if protocol == "mixed" {
 					j.pushMixed(&outbounds, &outTags, newOut)
-				} else {
+			} else {
 					outTags = append(outTags, newTag)
 					outbounds = append(outbounds, newOut)
 				}
@@ -270,7 +251,7 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 			"type":      "selector",
 		},
 		{
-			"tag":       "auto",
+		"tag":       "auto",
 			"type":      "urltest",
 			"outbounds": outTags,
 			"url":       "http://www.gstatic.com/generate_204",
@@ -297,7 +278,7 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 		},
 	}
 	rulesEnd := []interface{}{
-		map[string]interface{}{
+	map[string]interface{}{
 			"clash_mode": "Global",
 			"action":     "route",
 			"outbound":   "proxy",
@@ -317,7 +298,7 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 		(*jsonConfig)["route"] = route
 		return nil
 	}
-	var othersJson map[string]interface{}
+	var othersJsonmap[string]interface{}
 	err = json.Unmarshal([]byte(othersStr), &othersJson)
 	if err != nil {
 		return err
@@ -325,7 +306,7 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	if _, ok := othersJson["log"]; ok {
 		(*jsonConfig)["log"] = othersJson["log"]
 	}
-	if _, ok := othersJson["dns"]; ok {
+	if _, ok := othersJson["dns"];ok {
 		(*jsonConfig)["dns"] = othersJson["dns"]
 	}
 	if _, ok := othersJson["inbounds"]; ok {
@@ -353,7 +334,7 @@ func (j *JsonService) pushMixed(outbounds *[]map[string]interface{}, outTags *[]
 	socksOut := make(map[string]interface{}, 1)
 	httpOut := make(map[string]interface{}, 1)
 	for key, value := range out {
-		socksOut[key] = value
+		socksOut[key] =value
 		httpOut[key] = value
 	}
 	socksTag := fmt.Sprintf("%s-socks", out["tag"])

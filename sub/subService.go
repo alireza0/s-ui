@@ -25,46 +25,12 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 
 	db := database.GetDB()
 	client := &model.Client{}
-	// Removed strict enable = true check to handle re-enabled clients
-	err = db.Model(model.Client{}).Where("name = ?", subId).First(client).Error
+	err = db.Model(model.Client{}).Where("name = ? AND enable = true", subId).First(client).Error
 	if err != nil {
 		return nil, nil, err
 	}
 
 	now := time.Now().Unix()
-
-	// Auto-enable client if it was disabled but subscription is now valid
-	// This must be done BEFORE checking expiry/volume to allow renewed subscriptions to work
-	if !client.Enable {
-		// Check if subscription is valid (not expired and not over volume limit)
-		isExpired := client.Expiry > 0 && client.Expiry < now
-		isOverVolume := client.Volume > 0 && (client.Up+client.Down) > client.Volume
-
-		if !isExpired && !isOverVolume {
-			// Re-enable the client since subscription is valid
-			err = db.Model(model.Client{}).Where("id = ?", client.Id).Update("enable", true).Error
-			if err != nil {
-				return nil, nil, err
-			}
-			client.Enable = true
-
-			// Generate new token when re-enabling client
-			token, err := s.generateSubToken()
-			if err != nil {
-				return nil, nil, err
-			}
-
-			err = db.Model(model.Client{}).Where("id = ?", client.Id).Updates(map[string]interface{}{
-				"sub_token": token,
-				"sub_exp":   time.Now().Add(24 * time.Hour).Unix(),
-			}).Error
-			if err != nil {
-				return nil, nil, err
-			}
-			client.SubToken = token
-			client.SubExp = time.Now().Add(24 * time.Hour).Unix()
-		}
-	}
 
 	// Check if client has expired
 	if client.Expiry > 0 && client.Expiry < now {
