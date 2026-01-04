@@ -35,6 +35,8 @@ type Client struct {
 	Up       int64           `json:"up" form:"up"`
 	Desc     string          `json:"desc" form:"desc"`
 	Group    string          `json:"group" form:"group"`
+	SubToken string          `json:"sub_token" form:"sub_token"` // Subscription token for protecting subscription links
+	SubExp   int64           `json:"sub_exp" form:"sub_exp"`     // Subscription token expiration timestamp
 }
 
 type Stats struct {

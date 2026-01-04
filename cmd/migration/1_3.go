@@ -151,5 +151,18 @@ func to1_3(db *gorm.DB) error {
 	if err != nil {
 		return err
 	}
-	return nil
+
+	// Add sub_token and sub_exp fields to clients table
+	err = db.Exec("ALTER TABLE clients ADD COLUMN sub_token TEXT").Error
+	if err != nil {
+		return err
+	}
+
+	err = db.Exec("ALTER TABLE clients ADD COLUMN sub_exp INTEGER").Error
+	if err != nil {
+		return err
+	}
+
+	// Create index on sub_token for faster lookups
+	return db.Exec("CREATE INDEX IF NOT EXISTS idx_clients_sub_token ON clients(sub_token)").Error
 }

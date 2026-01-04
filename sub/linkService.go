@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/alireza0/s-ui/database/model"
 	"github.com/alireza0/s-ui/logger"
 	"github.com/alireza0/s-ui/util"
 )
@@ -21,7 +22,7 @@ type LinkService struct {
 }
 
 func (s *LinkService) GetLinks(linkJson *json.RawMessage, types string, clientInfo string) []string {
-	links := []Link{}
+	links := []model.Link{}
 	var result []string
 	err := json.Unmarshal(*linkJson, &links)
 	if err != nil {

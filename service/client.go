@@ -2,6 +2,8 @@ package service
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"strings"
 	"time"
@@ -38,7 +40,7 @@ func (s *ClientService) getById(id string) (*[]model.Client, error) {
 func (s *ClientService) GetAll() (*[]model.Client, error) {
 	db := database.GetDB()
 	var clients []model.Client
-	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").Scan(&clients).Error
+	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`, `sub_exp`").Scan(&clients).Error
 	if err != nil {
 		return nil, err
 	}
@@ -56,10 +58,32 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
-		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
-		if err != nil {
-			return nil, err
+
+		// Check if client is being re-enabled after deactivation
+		if act == "edit" {
+			var oldClient model.Client
+			err = tx.Model(model.Client{}).Where("id = ?", client.Id).First(&oldClient).Error
+			if err == nil && !oldClient.Enable && client.Enable {
+				// Client is being re-enabled - need to refresh links
+				err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
+				if err != nil {
+					return nil, err
+				}
+			} else if err != nil {
+				return nil, err
+			} else {
+				err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		if act == "edit" {
 			// Find changed inbounds
 			inboundIds, err = s.findInboundsChanges(tx, client)
@@ -363,7 +387,7 @@ func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([
 	var err error
 	var oldClient model.Client
 	var oldInboundIds, newInboundIds []uint
-	err = tx.Model(model.Client{}).Where("id = ?", client.Id).First(&oldClient).Error
+	err = tx.Model(model.Client{}).Where("id =?", client.Id).First(&oldClient).Error
 	if err != nil {
 		return nil, err
 	}
@@ -387,4 +411,95 @@ func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([
 	diffInbounds := common.DiffUintArray(oldInboundIds, newInboundIds)
 
 	return diffInbounds, nil
+}
+
+// CheckAllClients checks all clients for expiration or volume limits and refreshes tokens
+func (s *ClientService) CheckAllClients() error {
+	db := database.GetDB()
+	clients := []*model.Client{}
+	err := db.Model(model.Client{}).Find(&clients).Error
+	if err != nil {
+		return err
+	}
+	now := time.Now().Unix()
+	for _, client := range clients {
+		needUpdate := false
+		updates := make(map[string]interface{})
+
+		// Check if client is expired
+		if client.Expiry > 0 && client.Expiry < now && client.Enable {
+			updates["enable"] = false
+			needUpdate = true
+		}
+
+		// Check if client exceeded volume limit
+		if client.Volume > 0 && (client.Up+client.Down) >= client.Volume && client.Enable {
+			updates["enable"] = false
+			needUpdate = true
+		}
+
+		// Refresh subscription token if it's expired but client is still enabled
+		if client.Enable && client.SubExp <= now {
+			token, err := s.generateSubToken()
+			if err != nil {
+				continue // Skip token update on error
+			}
+			updates["sub_token"] = token
+			updates["sub_exp"] = time.Now().Add(24 * time.Hour).Unix()
+			needUpdate = true
+		}
+
+		if needUpdate {
+			db.Model(model.Client{}).Where("id = ?", client.Id).Updates(updates)
+		}
+	}
+	return nil
+}
+
+// GetClientByName retrieves a client by name
+func (s *ClientService) GetClientByName(name string) (*model.Client, error) {
+	db := database.GetDB()
+	client := &model.Client{}
+	err := db.Model(model.Client{}).Where("name = ?", name).First(client).Error
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+// GetClientBySubToken retrieves a client by subscription token
+func (s *ClientService) GetClientBySubToken(token string) (*model.Client, error) {
+	db := database.GetDB()
+	client := &model.Client{}
+	err := db.Model(model.Client{}).Where("sub_token = ? AND sub_exp > ?", token, time.Now().Unix()).First(client).Error
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+// generateSubToken generates a random subscription token
+func (s *ClientService) generateSubToken() (string, error) {
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+// UpdateClientSubToken updates the subscription token for a client
+func (s *ClientService) UpdateClientSubToken(id uint) error {
+	db := database.GetDB()
+
+	// Generate new subscription token
+	token, err := s.generateSubToken()
+	if err != nil {
+		return err
+	}
+
+	// Update the client with new token
+	return db.Model(model.Client{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"sub_token": token,
+		"sub_exp":   time.Now().Add(24 * time.Hour).Unix(),
+	}).Error
 }
