@@ -95,6 +95,8 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		a.ApiService.GetDb(c)
 	case "tokens":
 		a.ApiService.GetTokens(c)
+	case "singbox-config":
+		a.ApiService.GetSingboxConfig(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
