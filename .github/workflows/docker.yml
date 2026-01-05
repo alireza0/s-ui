@@ -35,7 +35,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6.0.1
     - name: Download frontend build artifact
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: frontend-dist
         path: frontend_dist
