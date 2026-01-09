@@ -3,6 +3,7 @@ package api
 import (
 	"strings"
 
+	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/util/common"
 
 	"github.com/gin-gonic/gin"
@@ -10,13 +11,16 @@ import (
 
 type APIHandler struct {
 	ApiService
-	apiv2 *APIv2Handler
+	apiv2         *APIv2Handler
+	brokerService *service.BrokerService
 }
 
-func NewAPIHandler(g *gin.RouterGroup, a2 *APIv2Handler) {
+func NewAPIHandler(g *gin.RouterGroup, a2 *APIv2Handler, brokerService *service.BrokerService) {
 	a := &APIHandler{
-		apiv2: a2,
+		apiv2:         a2,
+		brokerService: brokerService,
 	}
+	a.ClientService = *service.NewClientService(brokerService)
 	a.initRouter(g)
 }
 

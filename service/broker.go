@@ -1,0 +1,159 @@
+package service
+
+import (
+	"encoding/json"
+	"net/url"
+
+	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/logger"
+	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
+)
+
+const (
+	ClientEventSubject = "s-ui.clients.events"
+	ClientCreated      = "CLIENT_CREATED"
+	ClientUpdated      = "CLIENT_UPDATED"
+	ClientDeleted      = "CLIENT_DELETED"
+)
+
+// ClientEvent represents a change to a client.
+type ClientEvent struct {
+	Action        string       `json:"action"`
+	Client        model.Client `json:"client"`
+	SourcePanelID string       `json:"sourcePanelId"`
+}
+
+// BrokerService handles the connection and messaging with the NATS broker.
+type BrokerService struct {
+	nc      *nats.Conn
+	panelID string
+	sub     *nats.Subscription
+}
+
+// NewBrokerService creates a new BrokerService and connects to the NATS server.
+// Important: this function ALWAYS returns a non-nil *BrokerService. If the NATS URL
+// is not configured or the connection fails, the returned BrokerService will have
+// nc == nil (disabled mode). An error is still returned for visibility.
+func NewBrokerService(settingService *SettingService) (*BrokerService, error) {
+	natsUrl, err := settingService.GetNatsUrl()
+	panelID := uuid.New().String()
+
+	if err != nil {
+		// Return a non-nil BrokerService (disabled) and the error.
+		logger.Warningf("failed to get NATS URL from settings: %v — broker disabled", err)
+		return &BrokerService{nc: nil, panelID: panelID}, err
+	}
+
+	if natsUrl == "" {
+		logger.Info("NATS URL is not configured, broker service will be disabled.")
+		return &BrokerService{nc: nil, panelID: panelID}, nil
+	}
+
+	// Use some reasonable connection options so we get reconnect/disconnect logs.
+	nc, err := nats.Connect(natsUrl,
+		nats.Name("s-ui-"+panelID),
+		nats.MaxReconnects(-1),
+		nats.ReconnectHandler(func(nc *nats.Conn) {
+			logger.Infof("Reconnected to NATS server at %s", nc.ConnectedUrl())
+		}),
+		nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
+			// err may be nil for normal disconnects
+			logger.Warningf("Disconnected from NATS: %v", err)
+		}),
+	)
+	if err != nil {
+		// Return a non-nil BrokerService (disabled) and the error.
+		logger.Warningf("failed to connect to NATS server at %s: %v — broker disabled", maskURL(natsUrl), err)
+		return &BrokerService{nc: nil, panelID: panelID}, err
+	}
+
+	logger.Infof("Successfully connected to NATS server at %s", maskURL(natsUrl))
+	logger.Infof("This panel's unique ID is %s", panelID)
+
+	return &BrokerService{nc: nc, panelID: panelID}, nil
+}
+
+// IsEnabled returns true if BrokerService is connected to a NATS server.
+func (s *BrokerService) IsEnabled() bool {
+	return s != nil && s.nc != nil
+}
+
+// PublishClientEvent publishes a client event to the broker.
+func (s *BrokerService) PublishClientEvent(action string, client *model.Client) error {
+	if s == nil || s.nc == nil {
+		return nil // Broker is disabled
+	}
+
+	event := ClientEvent{
+		Action:        action,
+		Client:        *client,
+		SourcePanelID: s.panelID,
+	}
+
+	data, err := json.Marshal(event)
+	if err != nil {
+		logger.Errorf("failed to marshal client event: %v", err)
+		return err
+	}
+
+	return s.nc.Publish(ClientEventSubject, data)
+}
+
+// SubscribeClientEvents subscribes to client events and passes them to the handler.
+// The created subscription is stored on the BrokerService so it can be unsubscribed later.
+func (s *BrokerService) SubscribeClientEvents(handler func(event *ClientEvent)) (*nats.Subscription, error) {
+	if s == nil || s.nc == nil {
+		return nil, nil // Broker is disabled
+	}
+
+	sub, err := s.nc.Subscribe(ClientEventSubject, func(msg *nats.Msg) {
+		var event ClientEvent
+		err := json.Unmarshal(msg.Data, &event)
+		if err != nil {
+			logger.Errorf("failed to unmarshal client event: %v", err)
+			return
+		}
+
+		// Do not process events from the same panel
+		if event.SourcePanelID == s.panelID {
+			return
+		}
+
+		handler(&event)
+	})
+	if err != nil {
+		return nil, err
+	}
+	s.sub = sub
+	return sub, nil
+}
+
+// Close closes the connection to the NATS server and unsubscribes.
+func (s *BrokerService) Close() {
+	if s == nil {
+		return
+	}
+	if s.sub != nil {
+		// best-effort unsubscribe
+		_ = s.sub.Unsubscribe()
+		s.sub = nil
+	}
+	if s.nc != nil {
+		s.nc.Close()
+		s.nc = nil
+	}
+}
+
+// maskURL returns a masked representation of the URL (avoid logging credentials).
+func maskURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	// Prefer to log host only to avoid userinfo leakage
+	if u.Host != "" {
+		return u.Host
+	}
+	return raw
+}

@@ -67,6 +67,7 @@ var defaultValueMap = map[string]string{
 	"subClashExt":   "",
 	"config":        defaultConfig,
 	"version":       config.GetVersion(),
+	"NatsUrl":       "",
 }
 
 type SettingService struct {
@@ -418,4 +419,8 @@ func (s *SettingService) GetSubClashExt() (string, error) {
 func (s *SettingService) fileExists(path string) error {
 	_, err := os.Stat(path)
 	return err
+}
+
+func (s *SettingService) GetNatsUrl() (string, error) {
+	return s.getString("NatsUrl")
 }
