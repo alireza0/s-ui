@@ -85,7 +85,7 @@ jobs:
           zip -r "s-ui-windows-amd64.zip" s-ui-windows
 
       - name: Upload files to Artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: s-ui-windows-amd64
           path: ./s-ui-windows-amd64.zip
@@ -155,7 +155,7 @@ jobs:
           zip -r "s-ui-windows-arm64.zip" s-ui-windows
 
       - name: Upload ARM64 files to Artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: s-ui-windows-arm64
           path: ./s-ui-windows-arm64.zip
