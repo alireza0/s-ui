@@ -1,0 +1,57 @@
+{
+    "name": "s-ui Development",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        "ghcr.io/devcontainers/features/go:1": {
+            "version": "1.23"
+        },
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "20"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "Vue.volar",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "bradlc.vscode-tailwindcss"
+            ],
+            "settings": {
+                "go.toolsManagement.autoUpdate": true,
+                "editor.formatOnSave": true,
+                "[go]": {
+                    "editor.defaultFormatter": "golang.go"
+                },
+                "[vue]": {
+                    "editor.defaultFormatter": "Vue.volar"
+                },
+                "[typescript]": {
+                    "editor.defaultFormatter": "esbenp.prettier-vscode"
+                }
+            }
+        }
+    },
+    "postCreateCommand": "git submodule update --init --recursive && cd frontend && npm install",
+    "forwardPorts": [
+        2095,
+        2096,
+        5173
+    ],
+    "portsAttributes": {
+        "2095": {
+            "label": "S-UI Web Panel",
+            "onAutoForward": "notify"
+        },
+        "2096": {
+            "label": "S-UI Subscription",
+            "onAutoForward": "notify"
+        },
+        "5173": {
+            "label": "Vite Dev Server",
+            "onAutoForward": "openBrowser"
+        }
+    },
+    "remoteUser": "vscode"
+}
