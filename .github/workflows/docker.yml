@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
         with:
           submodules: recursive
       - name: Set up Node.js
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6.0.1
+      uses: actions/checkout@v6.0.2
     - name: Download frontend build artifact
       uses: actions/download-artifact@v6
       with:
