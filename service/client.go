@@ -67,6 +67,10 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 				return nil, err
 			}
 		} else {
+			// New client: set CreatedAt if not set
+			if client.CreatedAt == 0 {
+				client.CreatedAt = time.Now().Unix()
+			}
 			err = json.Unmarshal(client.Inbounds, &inboundIds)
 			if err != nil {
 				return nil, err
@@ -85,6 +89,13 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		err = json.Unmarshal(clients[0].Inbounds, &inboundIds)
 		if err != nil {
 			return nil, err
+		}
+		// Set CreatedAt for all new clients
+		now := time.Now().Unix()
+		for _, client := range clients {
+			if client.CreatedAt == 0 {
+				client.CreatedAt = now
+			}
 		}
 		err = s.updateLinksWithFixedInbounds(tx, clients, hostname)
 		if err != nil {
