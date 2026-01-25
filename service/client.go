@@ -601,6 +601,33 @@ func (s *ClientService) GetTrafficHistory(clientId uint, limit int) ([]model.Tra
 	return histories, err
 }
 
+// GetTrafficHistoryPaginated retrieves traffic history with pagination
+func (s *ClientService) GetTrafficHistoryPaginated(clientId uint, page int, pageSize int) ([]model.TrafficHistory, int64, error) {
+	var histories []model.TrafficHistory
+	var total int64
+	db := database.GetDB()
+
+	query := db.Model(model.TrafficHistory{})
+	if clientId > 0 {
+		query = query.Where("client_id = ?", clientId)
+	}
+
+	// Get total count
+	err := query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	offset := (page - 1) * pageSize
+	err = query.Order("end_time DESC").Offset(offset).Limit(pageSize).Find(&histories).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return histories, total, nil
+}
+
 // GetAllTrafficHistory retrieves traffic history for all clients
 func (s *ClientService) GetAllTrafficHistory(limit int) ([]model.TrafficHistory, error) {
 	var histories []model.TrafficHistory
