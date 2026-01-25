@@ -38,7 +38,7 @@ func (s *ClientService) getById(id string) (*[]model.Client, error) {
 func (s *ClientService) GetAll() (*[]model.Client, error) {
 	db := database.GetDB()
 	var clients []model.Client
-	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").Scan(&clients).Error
+	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`, `created_at`, `reset_mode`, `reset_day_of_month`, `reset_period_days`, `last_reset_at`").Scan(&clients).Error
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +67,10 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 				return nil, err
 			}
 		} else {
+			// New client: set CreatedAt if not set
+			if client.CreatedAt == 0 {
+				client.CreatedAt = time.Now().Unix()
+			}
 			err = json.Unmarshal(client.Inbounds, &inboundIds)
 			if err != nil {
 				return nil, err
@@ -85,6 +89,13 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		err = json.Unmarshal(clients[0].Inbounds, &inboundIds)
 		if err != nil {
 			return nil, err
+		}
+		// Set CreatedAt for all new clients
+		now := time.Now().Unix()
+		for _, client := range clients {
+			if client.CreatedAt == 0 {
+				client.CreatedAt = now
+			}
 		}
 		err = s.updateLinksWithFixedInbounds(tx, clients, hostname)
 		if err != nil {
@@ -387,4 +398,246 @@ func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([
 	diffInbounds := common.DiffUintArray(oldInboundIds, newInboundIds)
 
 	return diffInbounds, nil
+}
+
+// ResetClientsTraffic checks all clients and resets traffic for those that meet reset criteria
+// Returns the list of inbound IDs that need to be restarted (for re-enabled clients)
+func (s *ClientService) ResetClientsTraffic() ([]uint, error) {
+	var err error
+	var inboundIds []uint
+
+	now := time.Now()
+	nowUnix := now.Unix()
+
+	db := database.GetDB()
+	tx := db.Begin()
+	defer func() {
+		if err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	}()
+
+	// Get all clients with reset enabled
+	var clients []model.Client
+	err = tx.Model(model.Client{}).Where("reset_mode > 0").Find(&clients).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var changes []model.Changes
+	var trafficHistories []model.TrafficHistory
+
+	for _, client := range clients {
+		shouldReset := false
+		var periodStartTime int64
+
+		switch client.ResetMode {
+		case model.ResetModeMonthly:
+			shouldReset, periodStartTime = s.checkMonthlyReset(client, now)
+		case model.ResetModePeriodic:
+			shouldReset, periodStartTime = s.checkPeriodicReset(client, now)
+		}
+
+		if !shouldReset {
+			continue
+		}
+
+		logger.Debug("Resetting traffic for client: ", client.Name)
+
+		// Record traffic history before reset
+		trafficHistories = append(trafficHistories, model.TrafficHistory{
+			ClientId:   client.Id,
+			ClientName: client.Name,
+			StartTime:  periodStartTime,
+			EndTime:    nowUnix,
+			Up:         client.Up,
+			Down:       client.Down,
+			ResetMode:  client.ResetMode,
+		})
+
+		// Check if client was disabled due to traffic limit
+		wasDisabledByTraffic := !client.Enable && client.Volume > 0 && (client.Up+client.Down) >= client.Volume
+
+		// Reset traffic
+		updateData := map[string]interface{}{
+			"up":            0,
+			"down":          0,
+			"last_reset_at": nowUnix,
+		}
+
+		// Re-enable client if it was disabled due to traffic limit
+		if wasDisabledByTraffic {
+			updateData["enable"] = true
+
+			// Collect inbound IDs for restart
+			var clientInbounds []uint
+			json.Unmarshal(client.Inbounds, &clientInbounds)
+			inboundIds = common.UnionUintArray(inboundIds, clientInbounds)
+
+			changes = append(changes, model.Changes{
+				DateTime: nowUnix,
+				Actor:    "ResetTrafficJob",
+				Key:      "clients",
+				Action:   "enable",
+				Obj:      json.RawMessage("\"" + client.Name + "\""),
+			})
+		}
+
+		err = tx.Model(model.Client{}).Where("id = ?", client.Id).Updates(updateData).Error
+		if err != nil {
+			return nil, err
+		}
+
+		changes = append(changes, model.Changes{
+			DateTime: nowUnix,
+			Actor:    "ResetTrafficJob",
+			Key:      "clients",
+			Action:   "reset_traffic",
+			Obj:      json.RawMessage("\"" + client.Name + "\""),
+		})
+	}
+
+	// Save traffic histories
+	if len(trafficHistories) > 0 {
+		err = tx.Create(&trafficHistories).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Save changes
+	if len(changes) > 0 {
+		err = tx.Create(&changes).Error
+		if err != nil {
+			return nil, err
+		}
+		LastUpdate = nowUnix
+	}
+
+	return inboundIds, nil
+}
+
+// checkMonthlyReset checks if a client should have its traffic reset based on monthly schedule
+// Returns (shouldReset, periodStartTime)
+func (s *ClientService) checkMonthlyReset(client model.Client, now time.Time) (bool, int64) {
+	today := now.Day()
+	currentMonth := now.Month()
+	currentYear := now.Year()
+
+	// Determine reset day
+	resetDay := client.ResetDayOfMonth
+	if resetDay <= 0 {
+		// Use creation day as default
+		createdAt := time.Unix(client.CreatedAt, 0)
+		resetDay = createdAt.Day()
+	}
+
+	// Handle months with fewer days
+	daysInMonth := time.Date(currentYear, currentMonth+1, 0, 0, 0, 0, 0, now.Location()).Day()
+	if resetDay > daysInMonth {
+		resetDay = daysInMonth
+	}
+
+	// Check if today is the reset day
+	if today != resetDay {
+		return false, 0
+	}
+
+	// Check if already reset this month
+	if client.LastResetAt > 0 {
+		lastReset := time.Unix(client.LastResetAt, 0)
+		if lastReset.Month() == currentMonth && lastReset.Year() == currentYear {
+			return false, 0
+		}
+	}
+
+	// Calculate period start time (last reset or creation time)
+	periodStart := client.LastResetAt
+	if periodStart == 0 {
+		periodStart = client.CreatedAt
+	}
+
+	return true, periodStart
+}
+
+// checkPeriodicReset checks if a client should have its traffic reset based on N-day period
+// Returns (shouldReset, periodStartTime)
+func (s *ClientService) checkPeriodicReset(client model.Client, now time.Time) (bool, int64) {
+	if client.ResetPeriodDays <= 0 {
+		return false, 0
+	}
+
+	nowUnix := now.Unix()
+	periodSeconds := int64(client.ResetPeriodDays) * 24 * 60 * 60
+
+	// Determine the reference point (last reset or creation time)
+	referenceTime := client.LastResetAt
+	if referenceTime == 0 {
+		referenceTime = client.CreatedAt
+	}
+
+	// Check if enough time has passed since last reset
+	timeSinceReference := nowUnix - referenceTime
+	if timeSinceReference < periodSeconds {
+		return false, 0
+	}
+
+	return true, referenceTime
+}
+
+// GetTrafficHistory retrieves traffic history for a specific client
+func (s *ClientService) GetTrafficHistory(clientId uint, limit int) ([]model.TrafficHistory, error) {
+	var histories []model.TrafficHistory
+	db := database.GetDB()
+
+	query := db.Model(model.TrafficHistory{}).Where("client_id = ?", clientId).Order("end_time DESC")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	err := query.Find(&histories).Error
+	return histories, err
+}
+
+// GetTrafficHistoryPaginated retrieves traffic history with pagination
+func (s *ClientService) GetTrafficHistoryPaginated(clientId uint, page int, pageSize int) ([]model.TrafficHistory, int64, error) {
+	var histories []model.TrafficHistory
+	var total int64
+	db := database.GetDB()
+
+	query := db.Model(model.TrafficHistory{})
+	if clientId > 0 {
+		query = query.Where("client_id = ?", clientId)
+	}
+
+	// Get total count
+	err := query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	offset := (page - 1) * pageSize
+	err = query.Order("end_time DESC").Offset(offset).Limit(pageSize).Find(&histories).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return histories, total, nil
+}
+
+// GetAllTrafficHistory retrieves traffic history for all clients
+func (s *ClientService) GetAllTrafficHistory(limit int) ([]model.TrafficHistory, error) {
+	var histories []model.TrafficHistory
+	db := database.GetDB()
+
+	query := db.Model(model.TrafficHistory{}).Order("end_time DESC")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	err := query.Find(&histories).Error
+	return histories, err
 }

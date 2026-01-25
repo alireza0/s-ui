@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -395,4 +396,43 @@ func (a *ApiService) GetSingboxConfig(c *gin.Context) {
 	c.Header("Content-Type", "application/json")
 	c.Header("Content-Disposition", "attachment; filename=config_"+time.Now().Format("20060102-150405")+".json")
 	c.Writer.Write(rawConfig)
+}
+
+func (a *ApiService) GetTrafficHistory(c *gin.Context) {
+	clientIdStr := c.Query("clientId")
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("pageSize", "10")
+
+	var clientId uint
+	if clientIdStr != "" {
+		var id uint64
+		_, err := fmt.Sscanf(clientIdStr, "%d", &id)
+		if err != nil {
+			jsonMsg(c, "traffic-history", err)
+			return
+		}
+		clientId = uint(id)
+	}
+
+	page, _ := strconv.Atoi(pageStr)
+	pageSize, _ := strconv.Atoi(pageSizeStr)
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+
+	histories, total, err := a.ClientService.GetTrafficHistoryPaginated(clientId, page, pageSize)
+	if err != nil {
+		jsonMsg(c, "traffic-history", err)
+		return
+	}
+
+	jsonObj(c, map[string]interface{}{
+		"histories": histories,
+		"total":     total,
+		"page":      page,
+		"pageSize":  pageSize,
+	}, nil)
 }
