@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/alireza0/s-ui/config"
 	"github.com/alireza0/s-ui/database/model"
@@ -49,7 +50,12 @@ func OpenDB(dbPath string) error {
 	c := &gorm.Config{
 		Logger: gormLogger,
 	}
-	db, err = gorm.Open(sqlite.Open(dbPath), c)
+	sep := "?"
+	if strings.Contains(dbPath, "?") {
+		sep = "&"
+	}
+	dsn := dbPath + sep + "_busy_timeout=10000"
+	db, err = gorm.Open(sqlite.Open(dsn), c)
 
 	if config.IsDebug() {
 		db = db.Debug()

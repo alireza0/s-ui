@@ -169,7 +169,9 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 		if err != nil {
 			return nil, err
 		}
-		err = s.restartCoreWithConfig(data)
+		configData := make(json.RawMessage, len(data))
+		copy(configData, data)
+		go func() { _ = s.restartCoreWithConfig(configData) }()
 	case "settings":
 		err = s.SettingService.Save(tx, data)
 	default:
