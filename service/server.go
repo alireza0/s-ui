@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/alireza0/s-ui/config"
+	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/database/model"
 	"github.com/alireza0/s-ui/logger"
 
 	"github.com/sagernet/sing-box/common/tls"
@@ -40,10 +42,11 @@ func (s *ServerService) GetStatus(request string) *map[string]interface{} {
 		case "net":
 			status["net"] = s.GetNetInfo()
 		case "sys":
-			status["uptime"] = s.GetUptime()
 			status["sys"] = s.GetSystemInfo()
 		case "sbd":
 			status["sbd"] = s.GetSingboxInfo()
+		case "db":
+			status["db"] = s.GetDatabaseInfo()
 		}
 	}
 	return &status
@@ -56,16 +59,6 @@ func (s *ServerService) GetCpuPercent() float64 {
 		return 0
 	} else {
 		return percents[0]
-	}
-}
-
-func (s *ServerService) GetUptime() uint64 {
-	upTime, err := host.Uptime()
-	if err != nil {
-		logger.Warning("get uptime failed:", err)
-		return 0
-	} else {
-		return upTime
 	}
 }
 
@@ -192,6 +185,7 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 	}
 	info["ipv4"] = ipv4
 	info["ipv6"] = ipv6
+	info["bootTime"], _ = host.BootTime()
 
 	return info
 }
@@ -258,4 +252,32 @@ func (s *ServerService) generateWireGuardKey(pk string) []string {
 		return []string{"Failed to generate wireguard keypair: ", err.Error()}
 	}
 	return []string{"PrivateKey: " + wgKeys.String(), "PublicKey: " + wgKeys.PublicKey().String()}
+}
+
+func (s *ServerService) GetDatabaseInfo() map[string]int64 {
+	info := make(map[string]int64, 0)
+	db := database.GetDB()
+	if db == nil {
+		return nil
+	}
+
+	var clientsCount, inboundsCount, outboundsCount, servicesCount, endpointsCount, clientUp, clientDown int64
+
+	db.Model(&model.Client{}).Count(&clientsCount)
+	db.Model(&model.Inbound{}).Count(&inboundsCount)
+	db.Model(&model.Outbound{}).Count(&outboundsCount)
+	db.Model(&model.Service{}).Count(&servicesCount)
+	db.Model(&model.Endpoint{}).Count(&endpointsCount)
+	db.Model(&model.Client{}).Select("COALESCE(SUM(up),0)").Scan(&clientUp)
+	db.Model(&model.Client{}).Select("COALESCE(SUM(down),0)").Scan(&clientDown)
+
+	info["clients"] = clientsCount
+	info["inbounds"] = inboundsCount
+	info["outbounds"] = outboundsCount
+	info["services"] = servicesCount
+	info["endpoints"] = endpointsCount
+	info["clientUp"] = clientUp
+	info["clientDown"] = clientDown
+
+	return info
 }
