@@ -125,7 +125,13 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 		proxy := make(map[string]interface{})
 		proxy["name"] = obMap["tag"]
 		proxy["type"] = t
-		proxy["server"] = obMap["server"]
+
+		server, _ := obMap["server"].(string)
+		if len(server) > 0 && strings.Contains(server, ":") && !strings.Contains(server, ".") && !(strings.HasPrefix(server, "[") && strings.HasSuffix(server, "]")) {
+			server = "'[" + server + "]'"
+		}
+		proxy["server"] = server
+
 		proxy["port"] = obMap["server_port"]
 
 		switch t {
