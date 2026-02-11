@@ -123,6 +123,16 @@ func (s *ConfigService) StopCore() error {
 	return nil
 }
 
+func (s *ConfigService) CheckOutbound(tag string, link string) core.CheckOutboundResult {
+	if tag == "" {
+		return core.CheckOutboundResult{Error: "missing query parameter: tag"}
+	}
+	if corePtr == nil || !corePtr.IsRunning() {
+		return core.CheckOutboundResult{Error: "core not running"}
+	}
+	return core.CheckOutbound(corePtr.GetCtx(), tag, link)
+}
+
 func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initUsers string, loginUser string, hostname string) ([]string, error) {
 	var err error
 	var objs []string = []string{obj}

@@ -86,6 +86,8 @@ func (a *APIv2Handler) getHandler(c *gin.Context) {
 		a.ApiService.GetKeypairs(c)
 	case "getdb":
 		a.ApiService.GetDb(c)
+	case "checkOutbound":
+		a.ApiService.GetCheckOutbound(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}

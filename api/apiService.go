@@ -396,3 +396,10 @@ func (a *ApiService) GetSingboxConfig(c *gin.Context) {
 	c.Header("Content-Disposition", "attachment; filename=config_"+time.Now().Format("20060102-150405")+".json")
 	c.Writer.Write(rawConfig)
 }
+
+func (a *ApiService) GetCheckOutbound(c *gin.Context) {
+	tag := c.Query("tag")
+	link := c.Query("link")
+	result := a.ConfigService.CheckOutbound(tag, link)
+	jsonObj(c, result, nil)
+}
