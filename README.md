@@ -11,6 +11,8 @@
 
 **If you think this project is helpful to you, you may wish to give a**:star2:
 
+**Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding conventions, testing, and the pull request process.
+
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/alireza7)
 
 <a href="https://nowpayments.io/donation/alireza7" target="_blank" rel="noreferrer noopener">
@@ -25,7 +27,7 @@
 | Multi-Client/Inbound                   | :heavy_check_mark: |
 | Advanced Traffic Routing Interface     | :heavy_check_mark: |
 | Client & Traffic & System Status       | :heavy_check_mark: |
-| Subscription Service (link/json + info)| :heavy_check_mark: |
+| Subscription Link (link/json/clash + info)| :heavy_check_mark: |
 | Dark/Light Theme                       | :heavy_check_mark: |
 | API Interface                          | :heavy_check_mark: |
 
