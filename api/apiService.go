@@ -330,6 +330,12 @@ func (a *ApiService) LinkConvert(c *gin.Context) {
 	jsonObj(c, result, err)
 }
 
+func (a *ApiService) SubConvert(c *gin.Context) {
+	link := c.Request.FormValue("link")
+	result, err := util.GetExternalSub(link)
+	jsonObj(c, result, err)
+}
+
 func (a *ApiService) ImportDb(c *gin.Context) {
 	file, _, err := c.Request.FormFile("db")
 	if err != nil {

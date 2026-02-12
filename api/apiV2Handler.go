@@ -49,6 +49,8 @@ func (a *APIv2Handler) postHandler(c *gin.Context) {
 		a.ApiService.RestartSb(c)
 	case "linkConvert":
 		a.ApiService.LinkConvert(c)
+	case "subConvert":
+		a.ApiService.SubConvert(c)
 	case "importdb":
 		a.ApiService.ImportDb(c)
 	default:

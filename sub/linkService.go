@@ -1,10 +1,7 @@
 package sub
 
 import (
-	"crypto/tls"
 	"encoding/json"
-	"io"
-	"net/http"
 	"strings"
 
 	"github.com/alireza0/s-ui/logger"
@@ -32,7 +29,8 @@ func (s *LinkService) GetLinks(linkJson *json.RawMessage, types string, clientIn
 		case "external":
 			result = append(result, link.Uri)
 		case "sub":
-			result = append(result, s.getExternalSub(link.Uri)...)
+			subLinks := util.GetExternalLink(link.Uri)
+			result = append(result, strings.Split(subLinks, "\n")...)
 		case "local":
 			if types == "all" {
 				result = append(result, s.addClientInfo(link.Uri, clientInfo))
@@ -73,32 +71,4 @@ func (s *LinkService) addClientInfo(uri string, clientInfo string) string {
 	default:
 		return uri + clientInfo
 	}
-}
-
-func (s *LinkService) getExternalSub(url string) []string {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	client := &http.Client{Transport: tr}
-
-	// Make the HTTP request
-	response, err := client.Get(url)
-	if err != nil {
-		logger.Warning("sub: Error making HTTP request:", err)
-		return nil
-	}
-	defer response.Body.Close()
-
-	// Read the response body
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		logger.Warning("sub: Error reading response body:", err)
-		return nil
-	}
-
-	// Convert if the content is Base64 encoded
-	links := util.StrOrBase64Encoded(string(body))
-	return strings.Split(links, "\n")
-
 }
