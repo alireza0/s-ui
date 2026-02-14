@@ -15,7 +15,6 @@ if %errorLevel% neq 0 (
 )
 
 cd /d "%~dp0"
-
 REM Set installation directory
 set "INSTALL_DIR=C:\Program Files\s-ui"
 set "SERVICE_NAME=s-ui"
