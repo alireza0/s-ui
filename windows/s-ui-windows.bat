@@ -4,6 +4,7 @@ setlocal enabledelayedexpansion
 REM S-UI Windows Control Script
 REM This script provides a menu-driven interface for managing S-UI on Windows
 
+cd /d "%~dp0"
 set "SERVICE_NAME=s-ui"
 set "INSTALL_DIR=%SUI_HOME%"
 if "%INSTALL_DIR%"=="" set "INSTALL_DIR=C:\Program Files\s-ui"
