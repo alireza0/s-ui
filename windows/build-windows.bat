@@ -3,6 +3,8 @@ setlocal enabledelayedexpansion
 
 echo Building S-UI for Windows...
 
+cd /d "%~dp0"
+
 REM Check if Go is installed
 go version >nul 2>&1
 if errorlevel 1 (
