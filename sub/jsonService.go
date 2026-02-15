@@ -48,7 +48,7 @@ type JsonService struct {
 	LinkService
 }
 
-func (j *JsonService) GetJson(subId string, format string) (*string, []string, error) {
+func (j *JsonService) GetJson(subId string, format string, hostname string) (*string, []string, error) {
 	var jsonConfig map[string]interface{}
 
 	client, inDatas, err := j.getData(subId)
@@ -56,7 +56,7 @@ func (j *JsonService) GetJson(subId string, format string) (*string, []string, e
 		return nil, nil, err
 	}
 
-	outbounds, outTags, err := j.getOutbounds(client.Config, inDatas)
+	outbounds, outTags, err := j.getOutbounds(client.Config, inDatas, hostname)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -115,7 +115,7 @@ func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, er
 	return client, inbounds, nil
 }
 
-func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*model.Inbound) (*[]map[string]interface{}, *[]string, error) {
+func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*model.Inbound, hostname string) (*[]map[string]interface{}, *[]string, error) {
 	var outbounds []map[string]interface{}
 	var configs map[string]interface{}
 	var outTags []string
@@ -173,6 +173,11 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 		}
 		tag, _ := outbound["tag"].(string)
 		if len(addrs) == 0 {
+			// Override server with dynamic hostname
+			if hostname != "" {
+				outbound["server"] = hostname
+			}
+
 			// For mixed protocol, use separated socks and http
 			if protocol == "mixed" {
 				outbound["tag"] = tag

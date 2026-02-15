@@ -109,6 +109,17 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+
+		// Filter out non-existent inbounds to prevent errors (Fix for Issue #1008)
+		if len(inboundIds) > 0 {
+			var validIds []uint
+			err = tx.Model(&model.Inbound{}).Where("id IN ?", inboundIds).Pluck("id", &validIds).Error
+			if err != nil {
+				return nil, err
+			}
+			inboundIds = validIds
+		}
+
 		err = tx.Where("id = ?", id).Delete(model.Client{}).Error
 		if err != nil {
 			return nil, err
