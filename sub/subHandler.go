@@ -1,6 +1,9 @@
 package sub
 
 import (
+	"net"
+	"strings"
+
 	"github.com/alireza0/s-ui/logger"
 	"github.com/alireza0/s-ui/service"
 
@@ -30,12 +33,21 @@ func (s *SubHandler) subs(c *gin.Context) {
 	var err error
 	subId := c.Param("subid")
 	format, isFormat := c.GetQuery("format")
+
+	host := c.Request.Host
+	if strings.Contains(host, ":") {
+		host, _, _ = net.SplitHostPort(c.Request.Host)
+		if strings.Contains(host, ":") {
+			host = "[" + host + "]"
+		}
+	}
+
 	if isFormat {
 		switch format {
 		case "json":
-			result, headers, err = s.JsonService.GetJson(subId, format)
+			result, headers, err = s.JsonService.GetJson(subId, format, host)
 		case "clash":
-			result, headers, err = s.ClashService.GetClash(subId)
+			result, headers, err = s.ClashService.GetClash(subId, host)
 		}
 		if err != nil || result == nil {
 			logger.Error(err)
@@ -43,7 +55,7 @@ func (s *SubHandler) subs(c *gin.Context) {
 			return
 		}
 	} else {
-		result, headers, err = s.SubService.GetSubs(subId)
+		result, headers, err = s.SubService.GetSubs(subId, host)
 		if err != nil || result == nil {
 			logger.Error(err)
 			c.String(400, "Error!")
