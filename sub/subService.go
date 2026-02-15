@@ -14,10 +14,11 @@ import (
 
 type SubService struct {
 	service.SettingService
+	service.InboundService
 	LinkService
 }
 
-func (s *SubService) GetSubs(subId string) (*string, []string, error) {
+func (s *SubService) GetSubs(subId string, hostname string) (*string, []string, error) {
 	var err error
 
 	client, err := s.getClientBySubId(subId)
@@ -31,8 +32,42 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 		clientInfo = s.getClientInfo(client)
 	}
 
-	linksArray := s.LinkService.GetLinks(&client.Links, "all", clientInfo)
-	result := strings.Join(linksArray, "\n")
+	var newLinks []string
+
+	// Dynamic link generation
+	var inboundIds []uint
+	if len(client.Inbounds) > 0 {
+		_ = json.Unmarshal(client.Inbounds, &inboundIds)
+		if len(inboundIds) > 0 {
+			inbounds, err := s.InboundService.FromIds(inboundIds)
+			if err == nil {
+				for _, inbound := range inbounds {
+					links := util.LinkGenerator(client.Config, inbound, hostname)
+					for _, link := range links {
+						newLinks = append(newLinks, s.addClientInfo(link, clientInfo))
+					}
+				}
+			}
+		}
+	}
+
+	// Get external/sub links from DB (filtering out "local" type)
+	var storedLinks []Link
+	if len(client.Links) > 0 {
+		_ = json.Unmarshal(client.Links, &storedLinks)
+		for _, link := range storedLinks {
+			if link.Type != "local" {
+				if link.Type == "external" {
+					newLinks = append(newLinks, link.Uri)
+				} else if link.Type == "sub" {
+					subLinks := util.GetExternalLink(link.Uri)
+					newLinks = append(newLinks, strings.Split(subLinks, "\n")...)
+				}
+			}
+		}
+	}
+
+	result := strings.Join(newLinks, "\n")
 
 	headers := s.getClientHeaders(client)
 

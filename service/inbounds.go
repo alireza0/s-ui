@@ -93,7 +93,7 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 func (s *InboundService) FromIds(ids []uint) ([]*model.Inbound, error) {
 	db := database.GetDB()
 	inbounds := []*model.Inbound{}
-	err := db.Model(model.Inbound{}).Where("id in ?", ids).Scan(&inbounds).Error
+	err := db.Model(model.Inbound{}).Preload("Tls").Where("id in ?", ids).Find(&inbounds).Error
 	if err != nil {
 		return nil, err
 	}

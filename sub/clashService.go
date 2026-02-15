@@ -61,14 +61,14 @@ const ProxyGroups = `- name: Proxy
   tolerance: 50
 `
 
-func (s *ClashService) GetClash(subId string) (*string, []string, error) {
+func (s *ClashService) GetClash(subId string, hostname string) (*string, []string, error) {
 
 	client, inDatas, err := s.getData(subId)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	outbounds, outTags, err := s.getOutbounds(client.Config, inDatas)
+	outbounds, outTags, err := s.getOutbounds(client.Config, inDatas, hostname)
 	if err != nil {
 		return nil, nil, err
 	}
