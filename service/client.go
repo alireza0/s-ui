@@ -222,10 +222,16 @@ func (s *ClientService) UpdateClientsOnInboundAdd(tx *gorm.DB, initIds string, i
 }
 
 func (s *ClientService) UpdateClientsOnInboundDelete(tx *gorm.DB, id uint, tag string) error {
+	var clientIds []uint
+	err := tx.Raw("SELECT clients.id FROM clients, json_each(clients.inbounds) AS je WHERE je.value = ?", id).Scan(&clientIds).Error
+	if err != nil {
+		return err
+	}
+	if len(clientIds) == 0 {
+		return nil
+	}
 	var clients []model.Client
-	err := tx.Table("clients").
-		Where("EXISTS (SELECT 1 FROM json_each(clients.inbounds) WHERE json_each.value = ?)", id).
-		Find(&clients).Error
+	err = tx.Model(model.Client{}).Where("id IN ?", clientIds).Find(&clients).Error
 	if err != nil {
 		return err
 	}
@@ -265,10 +271,16 @@ func (s *ClientService) UpdateClientsOnInboundDelete(tx *gorm.DB, id uint, tag s
 func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounds *[]model.Inbound, hostname string, oldTag string) error {
 	var err error
 	for _, inbound := range *inbounds {
+		var clientIds []uint
+		err = tx.Raw("SELECT clients.id FROM clients, json_each(clients.inbounds) AS je WHERE je.value = ?", inbound.Id).Scan(&clientIds).Error
+		if err != nil {
+			return err
+		}
+		if len(clientIds) == 0 {
+			continue
+		}
 		var clients []model.Client
-		err = tx.Table("clients").
-			Where("EXISTS (SELECT 1 FROM json_each(clients.inbounds) WHERE json_each.value = ?)", inbound.Id).
-			Find(&clients).Error
+		err = tx.Model(model.Client{}).Where("id IN ?", clientIds).Find(&clients).Error
 		if err != nil {
 			return err
 		}
