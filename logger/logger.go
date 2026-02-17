@@ -23,15 +23,26 @@ func InitLogger(level logging.Level) {
 	var backend logging.Backend
 	var format logging.Formatter
 
-	backend, err = logging.NewSyslogBackend("")
-	if err != nil {
-		fmt.Println("Unable to use syslog: " + err.Error())
-		backend = logging.NewLogBackend(os.Stderr, "", 0)
+	_, inContainer := os.LookupEnv("container")
+	if !inContainer {
+		if _, statErr := os.Stat("/.dockerenv"); statErr == nil {
+			inContainer = true
+		}
 	}
-	if err != nil {
+	if inContainer {
+		backend = logging.NewLogBackend(os.Stderr, "", 0)
 		format = logging.MustStringFormatter(`%{time:2006/01/02 15:04:05} %{level} - %{message}`)
 	} else {
-		format = logging.MustStringFormatter(`%{level} - %{message}`)
+		backend, err = logging.NewSyslogBackend("")
+		if err != nil {
+			fmt.Println("Unable to use syslog: " + err.Error())
+			backend = logging.NewLogBackend(os.Stderr, "", 0)
+		}
+		if err != nil {
+			format = logging.MustStringFormatter(`%{time:2006/01/02 15:04:05} %{level} - %{message}`)
+		} else {
+			format = logging.MustStringFormatter(`%{level} - %{message}`)
+		}
 	}
 
 	backendFormatter := logging.NewBackendFormatter(backend, format)
