@@ -26,7 +26,7 @@ COPY . .
 COPY --from=front-builder /app/dist/ /app/web/html/
 
 RUN go build -ldflags="-w -s" \
-    -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" \
+    -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_musl" \
     -o sui main.go
 
 FROM --platform=$TARGETPLATFORM alpine

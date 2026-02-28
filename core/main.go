@@ -12,7 +12,6 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	_ "github.com/sagernet/sing-box/transport/v2rayquic"
-	_ "github.com/sagernet/sing-dns/quic"
 	"github.com/sagernet/sing/service"
 )
 
@@ -83,7 +82,7 @@ func (c *Core) Start(sbConfig []byte) error {
 
 func (c *Core) Stop() error {
 	c.isRunning = false
-	if c.instance != nil {
+	if c.instance == nil {
 		return nil
 	}
 	return c.instance.Close()

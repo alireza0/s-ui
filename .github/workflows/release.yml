@@ -18,25 +18,67 @@ on:
       - 'go.sum'
       - 's-ui.service'
 
+env:
+  NODE_VERSION: "24"
+  CRONET_GO_VERSION: "17c7ef18afa63b205e835c6270277b29382eb8e3"
+  CRONET_GO_REPO: https://github.com/sagernet/cronet-go.git
+  BOOTLIN_BASE_URL: https://toolchains.bootlin.com/downloads/releases/toolchains
+  CHROMIUM_CACHE_KEY_SUFFIX: musl-17c7ef18afa6
+
 jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (frontend only)
+        uses: actions/checkout@v6.0.2
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+          cd ..
+
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+
   build-linux:
+    name: build-${{ matrix.platform }}
+    needs: build-frontend
     strategy:
+      fail-fast: false
       matrix:
-        platform:
-          - amd64
-          - arm64
-          - armv7
-          - armv6
-          - armv5
-          - 386
-          - s390x
+        include:
+          - { platform: amd64, arch: amd64, bootlin: x86-64, naive: true }
+          - { platform: arm64, arch: arm64, bootlin: aarch64, naive: true }
+          - { platform: armv7, arch: arm, goarm: "7", bootlin: armv7-eabihf, naive: true }
+          - { platform: armv6, arch: arm, goarm: "6", bootlin: armv6-eabihf, naive: true }
+          - { platform: armv5, arch: arm, goarm: "5", bootlin: armv5-eabi, naive: false }
+          - { platform: "386", arch: "386", bootlin: x86-i686, naive: true }
+          - { platform: s390x, arch: s390x, bootlin: s390x-z13, naive: false }
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v7
         with:
-          submodules: recursive
-          fetch-depth: 0
+          name: frontend-dist
+          path: web/html
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -44,38 +86,64 @@ jobs:
           cache: false
           go-version-file: go.mod
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      # Naive platforms: use cronet toolchain only (no Bootlin).
+      - name: Clone cronet-go (cronet toolchain for naive)
+        if: matrix.naive
+        run: |
+          set -e
+          git init ~/cronet-go
+          git -C ~/cronet-go remote add origin ${{ env.CRONET_GO_REPO }}
+          git -C ~/cronet-go fetch --depth=1 origin "${{ env.CRONET_GO_VERSION }}"
+          git -C ~/cronet-go checkout FETCH_HEAD
+          git -C ~/cronet-go submodule update --init --recursive --depth=1
+
+      - name: Regenerate Debian keyring (cronet sysroot)
+        if: matrix.naive
+        run: |
+          set -e
+          rm -f ~/cronet-go/naiveproxy/src/build/linux/sysroot_scripts/keyring.gpg
+          cd ~/cronet-go
+          GPG_TTY=/dev/null ./naiveproxy/src/build/linux/sysroot_scripts/generate_keyring.sh
+
+      - name: Cache Chromium toolchain
+        if: matrix.naive
+        id: cache-chromium-toolchain
+        uses: actions/cache@v4
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          path: |
+            ~/cronet-go/naiveproxy/src/third_party/llvm-build/
+            ~/cronet-go/naiveproxy/src/gn/out/
+            ~/cronet-go/naiveproxy/src/chrome/build/pgo_profiles/
+            ~/cronet-go/naiveproxy/src/out/sysroot-build/
+          key: chromium-toolchain-${{ matrix.platform }}-${{ env.CHROMIUM_CACHE_KEY_SUFFIX }}
 
-      - name: Build frontend
+      - name: Build cronet lib and set toolchain env (CC, CXX, CGO_LDFLAGS, PATH)
+        if: matrix.naive
         run: |
-          cd frontend
-          npm install
-          npm run build
-          cd ..
-          mv frontend/dist web/html
-          rm -fr frontend
+          set -e
+          cd ~/cronet-go
+          go run ./cmd/build-naive --target=linux/${{ matrix.arch }} --libc=musl download-toolchain
+          go run ./cmd/build-naive --target=linux/${{ matrix.arch }} --libc=musl env | while IFS= read -r line; do
+            line="${line#export }"
+            [[ -z "$line" ]] && continue
+            echo "$line" >> $GITHUB_ENV
+          done
 
-      - name: Build s-ui
+      - name: Set Go build env (all platforms)
         run: |
-          export CGO_ENABLED=1
-          export GOOS=linux
-          export GOARCH=${{ matrix.platform }}
-          # Use Bootlin prebuilt cross-toolchains (musl 1.2.5 in stable series)
-          case "${{ matrix.platform }}" in
-            amd64) BOOTLIN_ARCH="x86-64" ;;
-            arm64) BOOTLIN_ARCH="aarch64" ;;
-            armv7) BOOTLIN_ARCH="armv7-eabihf"; export GOARCH=arm GOARM=7 ;;
-            armv6) BOOTLIN_ARCH="armv6-eabihf"; export GOARCH=arm GOARM=6 ;;
-            armv5) BOOTLIN_ARCH="armv5-eabi"; export GOARCH=arm GOARM=5 ;;
-            386) BOOTLIN_ARCH="x86-i686" ;;
-            s390x) BOOTLIN_ARCH="s390x-z13" ;;
-          esac
+          echo "CGO_ENABLED=1" >> $GITHUB_ENV
+          echo "GOOS=linux" >> $GITHUB_ENV
+          echo "GOARCH=${{ matrix.arch }}" >> $GITHUB_ENV
+          if [ -n "${{ matrix.goarm }}" ]; then echo "GOARM=${{ matrix.goarm }}" >> $GITHUB_ENV; fi
+
+      # Non-naive platforms only: Bootlin musl (armv5, s390x).
+      - name: Set up Bootlin musl (armv5, s390x)
+        if: ${{ matrix.naive != true }}
+        run: |
+          set -e
+          BOOTLIN_ARCH="${{ matrix.bootlin }}"
           echo "Resolving Bootlin musl toolchain for arch=$BOOTLIN_ARCH (platform=${{ matrix.platform }})"
-          TARBALL_BASE="https://toolchains.bootlin.com/downloads/releases/toolchains/$BOOTLIN_ARCH/tarballs/"
+          TARBALL_BASE="${{ env.BOOTLIN_BASE_URL }}/$BOOTLIN_ARCH/tarballs/"
           TARBALL_URL=$(curl -fsSL "$TARBALL_BASE" | grep -oE "${BOOTLIN_ARCH}--musl--stable-[^\"]+\\.tar\\.xz" | sort -r | head -n1)
           [ -z "$TARBALL_URL" ] && { echo "Failed to locate Bootlin musl toolchain for arch=$BOOTLIN_ARCH" >&2; exit 1; }
           echo "Downloading: $TARBALL_URL"
@@ -83,15 +151,28 @@ jobs:
           curl -fL -sS -o "$(basename "$TARBALL_URL")" "$TARBALL_BASE/$TARBALL_URL"
           tar -xf "$(basename "$TARBALL_URL")"
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -name "${BOOTLIN_ARCH}--musl--stable-*" | head -n1)
-          export PATH="$(realpath "$TOOLCHAIN_DIR")/bin:$PATH"
-          export CC=$(realpath "$(find "$TOOLCHAIN_DIR/bin" -name '*-gcc.br_real' -type f -executable | head -n1)")
-          [ -z "$CC" ] && { echo "No gcc.br_real found in $TOOLCHAIN_DIR/bin" >&2; exit 1; }
-          cd -
+          TOOLCHAIN_DIR="$(realpath "$TOOLCHAIN_DIR")"
+          BIN_DIR="$TOOLCHAIN_DIR/bin"
+          echo "PATH=$BIN_DIR:$PATH" >> $GITHUB_ENV
+          CC=$(find "$BIN_DIR" -maxdepth 1 \( -name '*-gcc.br_real' -o -name '*-gcc' \) -type f -executable 2>/dev/null | grep -v g++ | head -n1)
+          [ -z "$CC" ] && { echo "No gcc found in $BIN_DIR" >&2; exit 1; }
+          echo "CC=$(realpath "$CC")" >> $GITHUB_ENV
+          SYSROOT=""
+          F=$(find "$TOOLCHAIN_DIR" -name "libc-header-start.h" 2>/dev/null | head -1)
+          if [ -n "$F" ]; then SYSROOT=$(dirname "$(dirname "$(dirname "$(dirname "$F")")")"); fi
+          if [ -n "$SYSROOT" ] && [ -d "$SYSROOT" ]; then
+            echo "CGO_CFLAGS=--sysroot=$SYSROOT" >> $GITHUB_ENV
+            echo "CGO_LDFLAGS=--sysroot=$SYSROOT -static" >> $GITHUB_ENV
+          fi
 
-          ### Build s-ui
-          go build -ldflags="-w -s -linkmode external -extldflags '-static'" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui main.go
+      - name: Build s-ui
+        run: |
+          set -e
+          BUILD_TAGS="with_quic,with_grpc,with_utls,with_acme,with_gvisor,badlinkname,tfogo_checklinkname0"
+          [ "${{ matrix.naive }}" = "true" ] && BUILD_TAGS="${BUILD_TAGS},with_naive_outbound,with_musl"
+          go build -ldflags="-w -s -checklinkname=0 -linkmode external -extldflags '-static'" -tags "$BUILD_TAGS" -o sui main.go
           file sui
-          ldd sui || echo "Static binary confirmed"
+          ldd sui 2>/dev/null || echo "Static binary confirmed"
 
           mkdir s-ui
           cp sui s-ui/
@@ -101,7 +182,7 @@ jobs:
       - name: Package
         run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
 
-      - name: Upload files to Artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: s-ui-linux-${{ matrix.platform }}
@@ -115,7 +196,7 @@ jobs:
           (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref }}
+          tag: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
           file: s-ui-linux-${{ matrix.platform }}.tar.gz
           asset_name: s-ui-linux-${{ matrix.platform }}.tar.gz
           prerelease: true

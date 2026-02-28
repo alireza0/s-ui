@@ -31,6 +31,8 @@ func GetOutbound(uri string, i int) (*map[string]interface{}, string, error) {
 			return tuic(u, i)
 		case "ss", "shadowsocks":
 			return ss(u, i)
+		case "naive+https", "naive+quic", "http2":
+			return parseNaiveLink(u, i)
 		}
 	}
 	return nil, "", common.NewError("Unsupported link format")
@@ -406,6 +408,87 @@ func ss(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		}
 	}
 	return &ss, tag, nil
+}
+
+func parseNaiveLink(u *url.URL, i int) (*map[string]interface{}, string, error) {
+	var host, portStr, username, password string
+	var port int
+
+	switch u.Scheme {
+	case "http2":
+		decoded := StrOrBase64Encoded(u.Hostname())
+		if idx := strings.Index(decoded, "@"); idx != -1 {
+			userInfo := decoded[:idx]
+			hostPort := decoded[idx+1:]
+			if idx2 := strings.Index(userInfo, ":"); idx2 != -1 {
+				username = userInfo[:idx2]
+				password = userInfo[idx2+1:]
+			} else {
+				username = userInfo
+			}
+			host, portStr, _ = net.SplitHostPort(hostPort)
+			if portStr != "" {
+				port, _ = strconv.Atoi(portStr)
+			} else {
+				port = 443
+			}
+		} else {
+			return nil, "", common.NewError("Invalid naive link (http2)")
+		}
+	case "naive+https", "naive+quic":
+		host, portStr, _ = net.SplitHostPort(u.Host)
+		if portStr != "" {
+			port, _ = strconv.Atoi(portStr)
+		} else {
+			port = 443
+		}
+		if u.User != nil {
+			username = u.User.Username()
+			password, _ = u.User.Password()
+		}
+	default:
+		return nil, "", common.NewError("Unsupported naive scheme")
+	}
+
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
+	if tag == "" {
+		tag = fmt.Sprintf("naive-%d", i)
+	}
+
+	naive := map[string]interface{}{
+		"type":        "naive",
+		"tag":         tag,
+		"server":      host,
+		"server_port": port,
+		"username":    username,
+		"password":    password,
+		"tls":         map[string]interface{}{"enabled": true},
+	}
+
+	query := u.Query()
+	if peer := query.Get("peer"); peer != "" {
+		if tls, ok := naive["tls"].(map[string]interface{}); ok {
+			tls["server_name"] = peer
+		}
+	}
+	if insecure := query.Get("insecure"); insecure == "1" || insecure == "true" {
+		if tls, ok := naive["tls"].(map[string]interface{}); ok {
+			tls["insecure"] = true
+		}
+	}
+	if alpn := query.Get("alpn"); alpn != "" {
+		if tls, ok := naive["tls"].(map[string]interface{}); ok {
+			tls["alpn"] = strings.Split(alpn, ",")
+		}
+	}
+	if u.Scheme == "naive+quic" {
+		naive["quic"] = true
+	}
+
+	return &naive, tag, nil
 }
 
 func getTransport(tp_type string, q *url.Values) map[string]interface{} {
