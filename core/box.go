@@ -22,7 +22,6 @@ import (
 	"github.com/sagernet/sing-box/dns/transport/local"
 	"github.com/sagernet/sing-box/experimental"
 	"github.com/sagernet/sing-box/experimental/cachefile"
-	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/protocol/direct"
@@ -139,7 +138,7 @@ func NewBox(options Options) (*Box, error) {
 	if experimentalOptions.V2RayAPI != nil && experimentalOptions.V2RayAPI.Listen != "" {
 		needV2RayAPI = true
 	}
-	platformInterface := service.FromContext[platform.Interface](ctx)
+	platformInterface := service.FromContext[adapter.PlatformInterface](ctx)
 	var defaultLogWriter io.Writer
 	if platformInterface != nil {
 		defaultLogWriter = io.Discard
@@ -187,7 +186,7 @@ func NewBox(options Options) (*Box, error) {
 	dnsRouter := dns.NewRouter(ctx, logFactory, dnsOptions)
 	service.MustRegister[adapter.DNSRouter](ctx, dnsRouter)
 
-	networkManager, err := route.NewNetworkManager(ctx, logFactory.NewLogger("network"), routeOptions)
+	networkManager, err := route.NewNetworkManager(ctx, logFactory.NewLogger("network"), routeOptions, dnsOptions)
 	if err != nil {
 		return nil, common.NewError("initialize network manager", err)
 	}
@@ -313,13 +312,14 @@ func NewBox(options Options) (*Box, error) {
 			option.DirectOutboundOptions{},
 		)
 	})
-	dnsTransportManager.Initialize(sbCommon.Must1(
-		local.NewTransport(
+	dnsTransportManager.Initialize(func() (adapter.DNSTransport, error) {
+		return local.NewTransport(
 			ctx,
 			logFactory.NewLogger("dns/local"),
 			"local",
 			option.LocalDNSServerOptions{},
-		)))
+		)
+	})
 	if platformInterface != nil {
 		err = platformInterface.Initialize(networkManager)
 		if err != nil {
@@ -443,15 +443,15 @@ func (s *Box) preStart() error {
 	if err != nil {
 		return common.NewError(err, "start logger")
 	}
-	err = adapter.StartNamed(adapter.StartStateInitialize, s.internalService) // cache-file clash-api v2ray-api
+	err = adapter.StartNamed(s.logger, adapter.StartStateInitialize, s.internalService) // cache-file clash-api v2ray-api
 	if err != nil {
 		return err
 	}
-	err = adapter.Start(adapter.StartStateInitialize, s.network, s.dnsTransport, s.dnsRouter, s.connection, s.router, s.outbound, s.inbound, s.endpoint, s.service)
+	err = adapter.Start(s.logger, adapter.StartStateInitialize, s.network, s.dnsTransport, s.dnsRouter, s.connection, s.router, s.outbound, s.inbound, s.endpoint, s.service)
 	if err != nil {
 		return err
 	}
-	err = adapter.Start(adapter.StartStateStart, s.outbound, s.dnsTransport, s.dnsRouter, s.network, s.connection, s.router)
+	err = adapter.Start(s.logger, adapter.StartStateStart, s.outbound, s.dnsTransport, s.dnsRouter, s.network, s.connection, s.router)
 	if err != nil {
 		return err
 	}
@@ -463,27 +463,27 @@ func (s *Box) start() error {
 	if err != nil {
 		return err
 	}
-	err = adapter.StartNamed(adapter.StartStateStart, s.internalService)
+	err = adapter.StartNamed(s.logger, adapter.StartStateStart, s.internalService)
 	if err != nil {
 		return err
 	}
-	err = adapter.Start(adapter.StartStateStart, s.inbound, s.endpoint, s.service)
+	err = adapter.Start(s.logger, adapter.StartStateStart, s.inbound, s.endpoint, s.service)
 	if err != nil {
 		return err
 	}
-	err = adapter.Start(adapter.StartStatePostStart, s.outbound, s.network, s.dnsTransport, s.dnsRouter, s.connection, s.router, s.inbound, s.endpoint, s.service)
+	err = adapter.Start(s.logger, adapter.StartStatePostStart, s.outbound, s.network, s.dnsTransport, s.dnsRouter, s.connection, s.router, s.inbound, s.endpoint, s.service)
 	if err != nil {
 		return err
 	}
-	err = adapter.StartNamed(adapter.StartStatePostStart, s.internalService)
+	err = adapter.StartNamed(s.logger, adapter.StartStatePostStart, s.internalService)
 	if err != nil {
 		return err
 	}
-	err = adapter.Start(adapter.StartStateStarted, s.network, s.dnsTransport, s.dnsRouter, s.connection, s.router, s.outbound, s.inbound, s.endpoint, s.service)
+	err = adapter.Start(s.logger, adapter.StartStateStarted, s.network, s.dnsTransport, s.dnsRouter, s.connection, s.router, s.outbound, s.inbound, s.endpoint, s.service)
 	if err != nil {
 		return err
 	}
-	err = adapter.StartNamed(adapter.StartStateStarted, s.internalService)
+	err = adapter.StartNamed(s.logger, adapter.StartStateStarted, s.internalService)
 	if err != nil {
 		return err
 	}

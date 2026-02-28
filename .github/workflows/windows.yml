@@ -72,7 +72,7 @@ jobs:
           go version
           
           ### Build s-ui
-          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui.exe main.go
+          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego" -o sui.exe main.go
           file sui.exe
           
           mkdir s-ui-windows
@@ -145,7 +145,7 @@ jobs:
           go env GOOS GOARCH
           
           ### Build s-ui without CGO for ARM64
-          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui.exe main.go
+          go build -ldflags="-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego" -o sui.exe main.go
           file sui.exe
           
           mkdir s-ui-windows

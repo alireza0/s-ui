@@ -12,7 +12,6 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	_ "github.com/sagernet/sing-box/transport/v2rayquic"
-	_ "github.com/sagernet/sing-dns/quic"
 	"github.com/sagernet/sing/service"
 )
 

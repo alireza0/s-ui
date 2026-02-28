@@ -21,8 +21,6 @@ import (
 	"github.com/sagernet/sing-box/protocol/hysteria"
 	"github.com/sagernet/sing-box/protocol/hysteria2"
 	"github.com/sagernet/sing-box/protocol/mixed"
-	"github.com/sagernet/sing-box/protocol/naive"
-	_ "github.com/sagernet/sing-box/protocol/naive/quic"
 	"github.com/sagernet/sing-box/protocol/redirect"
 	"github.com/sagernet/sing-box/protocol/shadowsocks"
 	"github.com/sagernet/sing-box/protocol/shadowtls"
@@ -36,11 +34,12 @@ import (
 	"github.com/sagernet/sing-box/protocol/vless"
 	"github.com/sagernet/sing-box/protocol/vmess"
 	"github.com/sagernet/sing-box/protocol/wireguard"
+	"github.com/sagernet/sing-box/service/ccm"
 	"github.com/sagernet/sing-box/service/derp"
+	"github.com/sagernet/sing-box/service/ocm"
 	"github.com/sagernet/sing-box/service/resolved"
 	"github.com/sagernet/sing-box/service/ssmapi"
 	_ "github.com/sagernet/sing-box/transport/v2rayquic"
-	_ "github.com/sagernet/sing-dns/quic"
 )
 
 func InboundRegistry() *inbound.Registry {
@@ -58,7 +57,7 @@ func InboundRegistry() *inbound.Registry {
 	shadowsocks.RegisterInbound(registry)
 	vmess.RegisterInbound(registry)
 	trojan.RegisterInbound(registry)
-	naive.RegisterInbound(registry)
+	registerNaiveInbound(registry)
 	shadowtls.RegisterInbound(registry)
 	vless.RegisterInbound(registry)
 	anytls.RegisterInbound(registry)
@@ -86,6 +85,7 @@ func OutboundRegistry() *outbound.Registry {
 	shadowsocks.RegisterOutbound(registry)
 	vmess.RegisterOutbound(registry)
 	trojan.RegisterOutbound(registry)
+	registerNaiveOutbound(registry)
 	tor.RegisterOutbound(registry)
 	ssh.RegisterOutbound(registry)
 	shadowtls.RegisterOutbound(registry)
@@ -104,7 +104,7 @@ func EndpointRegistry() *endpoint.Registry {
 	registry := endpoint.NewRegistry()
 
 	wireguard.RegisterEndpoint(registry)
-	registerTailscaleEndpoint(registry)
+	tailscale.RegisterEndpoint(registry)
 
 	return registry
 }
@@ -120,32 +120,12 @@ func DNSTransportRegistry() *dns.TransportRegistry {
 	local.RegisterTransport(registry)
 	fakeip.RegisterTransport(registry)
 
-	registerQUICTransports(registry)
-	registerDHCPTransport(registry)
-	registerTailscaleTransport(registry)
-
-	return registry
-}
-
-func registerTailscaleEndpoint(registry *endpoint.Registry) {
-	tailscale.RegisterEndpoint(registry)
-}
-
-func registerTailscaleTransport(registry *dns.TransportRegistry) {
-	tailscale.RegistryTransport(registry)
-}
-
-func registerDERPService(registry *service.Registry) {
-	derp.Register(registry)
-}
-
-func registerQUICTransports(registry *dns.TransportRegistry) {
 	quic.RegisterTransport(registry)
 	quic.RegisterHTTP3Transport(registry)
-}
-
-func registerDHCPTransport(registry *dns.TransportRegistry) {
 	dhcp.RegisterTransport(registry)
+	tailscale.RegistryTransport(registry)
+
+	return registry
 }
 
 func ServiceRegistry() *service.Registry {
@@ -154,7 +134,9 @@ func ServiceRegistry() *service.Registry {
 	resolved.RegisterService(registry)
 	ssmapi.RegisterService(registry)
 
-	registerDERPService(registry)
+	derp.Register(registry)
+	ccm.RegisterService(registry)
+	ocm.RegisterService(registry)
 
 	return registry
 }

@@ -88,8 +88,13 @@ jobs:
           [ -z "$CC" ] && { echo "No gcc.br_real found in $TOOLCHAIN_DIR/bin" >&2; exit 1; }
           cd -
 
-          ### Build s-ui
-          go build -ldflags="-w -s -linkmode external -extldflags '-static'" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui main.go
+          ### Build s-ui (cronet-go does not support s390x, so omit with_naive_outbound)
+          if [ "${{ matrix.platform }}" = "s390x" || "${{ matrix.platform }}" = "armv5" || "${{ matrix.platform }}" = "armv6" ]; then
+            BUILD_TAGS="with_quic,with_grpc,with_utls,with_acme,with_gvisor"
+          else
+            BUILD_TAGS="with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_musl"
+          fi
+          go build -ldflags="-w -s -linkmode external -extldflags '-static'" -tags "$BUILD_TAGS" -o sui main.go
           file sui
           ldd sui || echo "Static binary confirmed"
 
