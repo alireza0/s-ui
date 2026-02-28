@@ -13,5 +13,5 @@ func NewCheckCoreJob() *CheckCoreJob {
 }
 
 func (s *CheckCoreJob) Run() {
-	s.ConfigService.StartCore("")
+	s.ConfigService.StartCore()
 }

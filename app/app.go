@@ -79,7 +79,7 @@ func (a *APP) Start() error {
 		return err
 	}
 
-	err = a.configService.StartCore("")
+	err = a.configService.StartCore()
 	if err != nil {
 		logger.Error(err)
 	}

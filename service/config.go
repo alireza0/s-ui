@@ -44,7 +44,7 @@ func NewConfigService(core *core.Core) *ConfigService {
 	return &ConfigService{}
 }
 
-func (s *ConfigService) GetConfig(data string) (*SingBoxConfig, error) {
+func (s *ConfigService) GetConfig(data string) (*[]byte, error) {
 	var err error
 	if len(data) == 0 {
 		data, err = s.SettingService.GetConfig()
@@ -74,22 +74,22 @@ func (s *ConfigService) GetConfig(data string) (*SingBoxConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &singboxConfig, nil
+	rawConfig, err := json.MarshalIndent(singboxConfig, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return &rawConfig, nil
 }
 
-func (s *ConfigService) StartCore(defaultConfig string) error {
+func (s *ConfigService) StartCore() error {
 	if corePtr.IsRunning() {
 		return nil
 	}
-	singboxConfig, err := s.GetConfig(defaultConfig)
+	rawConfig, err := s.GetConfig("")
 	if err != nil {
 		return err
 	}
-	rawConfig, err := json.MarshalIndent(singboxConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-	err = corePtr.Start(rawConfig)
+	err = corePtr.Start(*rawConfig)
 	if err != nil {
 		logger.Error("start sing-box err:", err.Error())
 		return err
@@ -103,15 +103,34 @@ func (s *ConfigService) RestartCore() error {
 	if err != nil {
 		return err
 	}
-	return s.StartCore("")
+	return s.StartCore()
 }
 
 func (s *ConfigService) restartCoreWithConfig(config json.RawMessage) error {
-	err := s.StopCore()
+	var err error
+	defer func() {
+		if err != nil {
+			corePtr.Stop()
+			logger.Error("restart sing-box err:", err.Error())
+		} else {
+			logger.Info("sing-box restarted with new config")
+		}
+	}()
+	if corePtr.IsRunning() {
+		err = corePtr.GetInstance().Close()
+		if err != nil {
+			return err
+		}
+	}
+	rawConfig, err := s.GetConfig(string(config))
 	if err != nil {
 		return err
 	}
-	return s.StartCore(string(config))
+	err = corePtr.Start(*rawConfig)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *ConfigService) StopCore() error {
@@ -144,7 +163,7 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 			tx.Commit()
 			// Try to start core if it is not running
 			if !corePtr.IsRunning() {
-				s.StartCore("")
+				s.StartCore()
 			}
 		} else {
 			tx.Rollback()

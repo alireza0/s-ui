@@ -83,6 +83,9 @@ func (c *Core) Start(sbConfig []byte) error {
 
 func (c *Core) Stop() error {
 	c.isRunning = false
+	if c.instance != nil {
+		return nil
+	}
 	return c.instance.Close()
 }
 
