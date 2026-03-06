@@ -41,7 +41,7 @@ jobs:
         path: frontend_dist
     - name: Docker meta
       id: meta
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         images: |
           alireza7/s-ui
