@@ -117,7 +117,7 @@ func (s *ConfigService) restartCoreWithConfig(config json.RawMessage) error {
 		}
 	}()
 	if corePtr.IsRunning() {
-		err = corePtr.GetInstance().Close()
+		err = corePtr.Stop()
 		if err != nil {
 			return err
 		}
