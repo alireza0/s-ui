@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -419,15 +420,6 @@ func (s *Box) PreStart() error {
 func (s *Box) Start() error {
 	err := s.start()
 	if err != nil {
-		// TODO: remove catch error
-		defer func() {
-			v := recover()
-			if v != nil {
-				s.logger.Debug(err.Error())
-				s.logger.Error("panic on early start: " + fmt.Sprint(v))
-			}
-		}()
-		s.Close()
 		return err
 	}
 	s.logger.Info("sing-box started (", F.Seconds(time.Since(s.createdAt).Seconds()), "s)")
@@ -496,19 +488,70 @@ func (s *Box) Close() error {
 	default:
 		close(s.done)
 	}
-	err := sbCommon.Close(
-		s.service, s.endpoint, s.inbound, s.outbound, s.router, s.connection, s.dnsRouter, s.dnsTransport, s.network,
-	)
-	for _, lifecycleService := range s.internalService {
-		err1 := lifecycleService.Close()
-		if err1 != nil {
-			s.logger.Debug(lifecycleService.Name(), " close error: ", err1)
+	var err error
+	for _, closeItem := range []struct {
+		name    string
+		service adapter.Lifecycle
+	}{
+		{"service", s.service},
+		{"endpoint", s.endpoint},
+		{"inbound", s.inbound},
+		{"outbound", s.outbound},
+		{"router", s.router},
+		{"connection", s.connection},
+		{"dns-router", s.dnsRouter},
+		{"dns-transport", s.dnsTransport},
+		{"network", s.network},
+	} {
+		if closeItem.service == nil {
+			continue
 		}
+		func() {
+			defer func() {
+				if v := recover(); v != nil {
+					err = errors.Join(err, common.NewError(fmt.Errorf("panic: %v", v), "close "+closeItem.name))
+					s.logger.Error("panic closing ", closeItem.name, ": ", v)
+				}
+			}()
+			s.logger.Trace("close ", closeItem.name)
+			startTime := time.Now()
+			closeErr := closeItem.service.Close()
+			if closeErr != nil {
+				closeErr = common.NewError(closeErr, "close "+closeItem.name)
+			}
+			err = errors.Join(err, closeErr)
+			s.logger.Trace("close ", closeItem.name, " completed (", F.Seconds(time.Since(startTime).Seconds()), "s)")
+		}()
 	}
-	err1 := s.logFactory.Close()
-	if err1 != nil {
-		s.logger.Debug("logger close error: ", err1)
+	for _, lifecycleService := range s.internalService {
+		if lifecycleService == nil {
+			continue
+		}
+		func() {
+			defer func() {
+				if v := recover(); v != nil {
+					err = errors.Join(err, common.NewError(fmt.Errorf("panic: %v", v), "close "+lifecycleService.Name()))
+					s.logger.Error("panic closing ", lifecycleService.Name(), ": ", v)
+				}
+			}()
+			s.logger.Trace("close ", lifecycleService.Name())
+			startTime := time.Now()
+			closeErr := lifecycleService.Close()
+			if closeErr != nil {
+				closeErr = common.NewError(closeErr, "close "+lifecycleService.Name())
+			}
+			err = errors.Join(err, closeErr)
+			s.logger.Trace("close ", lifecycleService.Name(), " completed (", F.Seconds(time.Since(startTime).Seconds()), "s)")
+		}()
 	}
+	s.logger.Trace("close logger")
+	startTime := time.Now()
+	closeErr := s.logFactory.Close()
+	if closeErr != nil {
+		closeErr = common.NewError(closeErr, "close logger")
+	}
+	err = errors.Join(err, closeErr)
+	s.logger.Trace("close logger completed (", F.Seconds(time.Since(startTime).Seconds()), "s)")
 	return err
 }
 

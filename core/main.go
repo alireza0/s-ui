@@ -73,6 +73,7 @@ func (c *Core) Start(sbConfig []byte) error {
 
 	err = c.instance.Start()
 	if err != nil {
+		_ = c.instance.Close()
 		c.instance = nil
 		return err
 	}
