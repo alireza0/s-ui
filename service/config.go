@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/alireza0/s-ui/core"
@@ -13,8 +14,12 @@ import (
 )
 
 var (
-	LastUpdate int64
-	corePtr    *core.Core
+	LastUpdate        int64
+	corePtr           *core.Core
+	startCoreMu       sync.Mutex
+	startCoreInProgress bool
+	lastStartFailTime time.Time
+	startCooldown     = 15 * time.Second
 )
 
 type ConfigService struct {
@@ -85,12 +90,33 @@ func (s *ConfigService) StartCore() error {
 	if corePtr.IsRunning() {
 		return nil
 	}
+	startCoreMu.Lock()
+	if startCoreInProgress {
+		startCoreMu.Unlock()
+		return nil
+	}
+	if time.Since(lastStartFailTime) < startCooldown {
+		startCoreMu.Unlock()
+		return nil
+	}
+	startCoreInProgress = true
+	startCoreMu.Unlock()
+	defer func() {
+		startCoreMu.Lock()
+		startCoreInProgress = false
+		startCoreMu.Unlock()
+	}()
+
+	logger.Info("starting core")
 	rawConfig, err := s.GetConfig("")
 	if err != nil {
 		return err
 	}
 	err = corePtr.Start(*rawConfig)
 	if err != nil {
+		startCoreMu.Lock()
+		lastStartFailTime = time.Now()
+		startCoreMu.Unlock()
 		logger.Error("start sing-box err:", err.Error())
 		return err
 	}
@@ -107,29 +133,22 @@ func (s *ConfigService) RestartCore() error {
 }
 
 func (s *ConfigService) restartCoreWithConfig(config json.RawMessage) error {
-	var err error
-	defer func() {
-		if err != nil {
-			corePtr.Stop()
-			logger.Error("restart sing-box err:", err.Error())
-		} else {
-			logger.Info("sing-box restarted with new config")
-		}
-	}()
 	if corePtr.IsRunning() {
-		err = corePtr.Stop()
-		if err != nil {
+		if err := corePtr.Stop(); err != nil {
+			logger.Error("restart sing-box err (stop):", err.Error())
 			return err
 		}
 	}
 	rawConfig, err := s.GetConfig(string(config))
 	if err != nil {
+		logger.Error("restart sing-box err (get config):", err.Error())
 		return err
 	}
-	err = corePtr.Start(*rawConfig)
-	if err != nil {
+	if err := corePtr.Start(*rawConfig); err != nil {
+		logger.Error("restart sing-box err (start):", err.Error())
 		return err
 	}
+	logger.Info("sing-box restarted with new config")
 	return nil
 }
 
