@@ -54,7 +54,7 @@ func OpenDB(dbPath string) error {
 	if strings.Contains(dbPath, "?") {
 		sep = "&"
 	}
-	dsn := dbPath + sep + "_busy_timeout=10000"
+	dsn := dbPath + sep + "_busy_timeout=10000&_journal_mode=WAL"
 	db, err = gorm.Open(sqlite.Open(dsn), c)
 
 	if config.IsDebug() {
