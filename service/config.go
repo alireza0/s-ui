@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	LastUpdate        int64
-	corePtr           *core.Core
-	startCoreMu       sync.Mutex
+	LastUpdate          int64
+	corePtr             *core.Core
+	startCoreMu         sync.Mutex
 	startCoreInProgress bool
-	lastStartFailTime time.Time
-	startCooldown     = 15 * time.Second
+	lastStartFailTime   time.Time
+	startCooldown       = 15 * time.Second
 )
 
 type ConfigService struct {

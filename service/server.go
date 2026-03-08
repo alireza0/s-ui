@@ -268,8 +268,8 @@ func (s *ServerService) GetDatabaseInfo() map[string]int64 {
 	db.Model(&model.Outbound{}).Count(&outboundsCount)
 	db.Model(&model.Service{}).Count(&servicesCount)
 	db.Model(&model.Endpoint{}).Count(&endpointsCount)
-	db.Model(&model.Client{}).Select("COALESCE(SUM(up),0)").Scan(&clientUp)
-	db.Model(&model.Client{}).Select("COALESCE(SUM(down),0)").Scan(&clientDown)
+	db.Model(&model.Client{}).Select("COALESCE(SUM(up+total_up),0)").Scan(&clientUp)
+	db.Model(&model.Client{}).Select("COALESCE(SUM(down+total_down),0)").Scan(&clientDown)
 
 	info["clients"] = clientsCount
 	info["inbounds"] = inboundsCount

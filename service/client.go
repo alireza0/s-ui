@@ -38,7 +38,9 @@ func (s *ClientService) getById(id string) (*[]model.Client, error) {
 func (s *ClientService) GetAll() (*[]model.Client, error) {
 	db := database.GetDB()
 	var clients []model.Client
-	err := db.Model(model.Client{}).Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").Scan(&clients).Error
+	err := db.Model(model.Client{}).
+		Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").
+		Scan(&clients).Error
 	if err != nil {
 		return nil, err
 	}
@@ -369,24 +371,34 @@ func (s *ClientService) DepleteClients() ([]uint, error) {
 	var users []string
 	var inboundIds []uint
 
-	now := time.Now().Unix()
+	dt := time.Now().Unix()
 	db := database.GetDB()
 
 	tx := db.Begin()
 	defer func() {
 		if err == nil {
 			tx.Commit()
+			_, err1 := db.Raw("PRAGMA wal_checkpoint(FULL)").Rows()
+			if err1 != nil {
+				logger.Error("Error checkpointing WAL: ", err1.Error())
+			}
 		} else {
 			tx.Rollback()
 		}
 	}()
 
-	err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", now).Scan(&clients).Error
+	// Reset clients
+	inboundIds, err = s.ResetClients(tx, dt)
 	if err != nil {
 		return nil, err
 	}
 
-	dt := time.Now().Unix()
+	// Deplete clients
+	err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", dt).Scan(&clients).Error
+	if err != nil {
+		return nil, err
+	}
+
 	for _, client := range clients {
 		logger.Debug("Client ", client.Name, " is going to be disabled")
 		users = append(users, client.Name)
@@ -405,7 +417,7 @@ func (s *ClientService) DepleteClients() ([]uint, error) {
 
 	// Save changes
 	if len(changes) > 0 {
-		err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", now).Update("enable", false).Error
+		err = tx.Model(model.Client{}).Where("enable = true AND ((volume >0 AND up+down > volume) OR (expiry > 0 AND expiry < ?))", dt).Update("enable", false).Error
 		if err != nil {
 			return nil, err
 		}
@@ -416,6 +428,89 @@ func (s *ClientService) DepleteClients() ([]uint, error) {
 		LastUpdate = dt
 	}
 
+	return inboundIds, nil
+}
+
+func (s *ClientService) ResetClients(tx *gorm.DB, dt int64) ([]uint, error) {
+	var err error
+	var resetClients, allClients []*model.Client
+	var changes []model.Changes
+	var inboundIds []uint
+	// Set delay start without periodic reset
+	err = tx.Model(model.Client{}).
+		Where("enable = true AND delay_start = true AND auto_reset = false AND (Up + Down) > 0").Find(&resetClients).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, client := range resetClients {
+		client.Expiry = dt + (int64(client.ResetDays) * 86400)
+		client.DelayStart = false
+		changes = append(changes, model.Changes{
+			DateTime: dt,
+			Actor:    "ResetJob",
+			Key:      "clients",
+			Action:   "reset",
+			Obj:      json.RawMessage("\"" + client.Name + "\""),
+		})
+	}
+	allClients = append(allClients, resetClients...)
+
+	// Set delay start with periodic reset
+	err = tx.Model(model.Client{}).
+		Where("enable = true AND delay_start = true AND auto_reset = true AND (Up + Down) > 0").Find(&resetClients).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, client := range resetClients {
+		client.NextReset = dt + (int64(client.ResetDays) * 86400)
+		client.DelayStart = false
+		changes = append(changes, model.Changes{
+			DateTime: dt,
+			Actor:    "ResetJob",
+			Key:      "clients",
+			Action:   "reset",
+			Obj:      json.RawMessage("\"" + client.Name + "\""),
+		})
+	}
+	allClients = append(allClients, resetClients...)
+
+	// Set periodic reset
+	err = tx.Model(model.Client{}).
+		Where("delay_start = false AND auto_reset = true AND next_reset < ?", dt).Find(&resetClients).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, client := range resetClients {
+		client.NextReset = dt + (int64(client.ResetDays) * 86400)
+		client.TotalUp += client.Up
+		client.TotalDown += client.Down
+		client.Up = 0
+		client.Down = 0
+		if !client.Enable {
+			client.Enable = true
+			var clientInboundIds []uint
+			json.Unmarshal(client.Inbounds, &clientInboundIds)
+			inboundIds = common.UnionUintArray(inboundIds, clientInboundIds)
+		}
+	}
+	allClients = append(allClients, resetClients...)
+
+	// Save clients
+	if len(allClients) > 0 {
+		err = tx.Save(allClients).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Save changes
+	if len(changes) > 0 {
+		err = tx.Model(model.Changes{}).Create(&changes).Error
+		if err != nil {
+			return nil, err
+		}
+		LastUpdate = dt
+	}
 	return inboundIds, nil
 }
 
