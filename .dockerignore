@@ -10,6 +10,8 @@ main
 tmp
 .sync*
 *.tar.gz
+frontend/node_modules
+frontend/.vite
 
 # local env files
 .env.local
