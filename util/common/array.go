@@ -1,5 +1,6 @@
 package common
 
+// UnionUintArray returns a new unique slice that contains all elements from both input slices
 func UnionUintArray(a []uint, b []uint) []uint {
 	m := make(map[uint]bool)
 	for _, v := range a {

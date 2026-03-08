@@ -62,7 +62,7 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		}
 		if act == "edit" {
 			// Find changed inbounds
-			inboundIds, err = s.findInboundsChanges(tx, client)
+			inboundIds, err = s.findInboundsChanges(tx, &client, false)
 			if err != nil {
 				return nil, err
 			}
@@ -91,6 +91,54 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 			return nil, err
 		}
 		err = tx.Save(clients).Error
+		if err != nil {
+			return nil, err
+		}
+	case "editbulk":
+		var clients []*model.Client
+		err = json.Unmarshal(data, &clients)
+		if err != nil {
+			return nil, err
+		}
+		for _, client := range clients {
+			changedInboundIds, err := s.findInboundsChanges(tx, client, true)
+			if err != nil {
+				return nil, err
+			}
+			if len(changedInboundIds) > 0 {
+				inboundIds = common.UnionUintArray(inboundIds, changedInboundIds)
+			}
+		}
+		if len(inboundIds) > 0 {
+			err = s.updateLinksWithFixedInbounds(tx, clients, hostname)
+			if err != nil {
+				return nil, err
+			}
+		}
+		err = tx.Save(clients).Error
+		if err != nil {
+			return nil, err
+		}
+	case "delbulk":
+		var ids []uint
+		err = json.Unmarshal(data, &ids)
+		if err != nil {
+			return nil, err
+		}
+		for _, id := range ids {
+			var client model.Client
+			err = tx.Where("id = ?", id).First(&client).Error
+			if err != nil {
+				return nil, err
+			}
+			var clientInbounds []uint
+			err = json.Unmarshal(client.Inbounds, &clientInbounds)
+			if err != nil {
+				return nil, err
+			}
+			inboundIds = common.UnionUintArray(inboundIds, clientInbounds)
+		}
+		err = tx.Where("id in ?", ids).Delete(model.Client{}).Error
 		if err != nil {
 			return nil, err
 		}
@@ -371,13 +419,17 @@ func (s *ClientService) DepleteClients() ([]uint, error) {
 	return inboundIds, nil
 }
 
-func (s *ClientService) findInboundsChanges(tx *gorm.DB, client model.Client) ([]uint, error) {
+func (s *ClientService) findInboundsChanges(tx *gorm.DB, client *model.Client, fillOmitted bool) ([]uint, error) {
 	var err error
 	var oldClient model.Client
 	var oldInboundIds, newInboundIds []uint
 	err = tx.Model(model.Client{}).Where("id = ?", client.Id).First(&oldClient).Error
 	if err != nil {
 		return nil, err
+	}
+	if fillOmitted {
+		client.Links = oldClient.Links
+		client.Config = oldClient.Config
 	}
 	err = json.Unmarshal(oldClient.Inbounds, &oldInboundIds)
 	if err != nil {
