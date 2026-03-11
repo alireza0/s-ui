@@ -489,6 +489,7 @@ func (s *Box) Close() error {
 		close(s.done)
 	}
 	var err error
+	s.logger.Info("closing sing-box")
 	for _, closeItem := range []struct {
 		name    string
 		service adapter.Lifecycle
@@ -552,6 +553,7 @@ func (s *Box) Close() error {
 	}
 	err = errors.Join(err, closeErr)
 	s.logger.Trace("close logger completed (", F.Seconds(time.Since(startTime).Seconds()), "s)")
+	s.logger.Info("sing-box closed (live time: ", F.Seconds(time.Since(s.createdAt).Seconds()), "s)")
 	return err
 }
 

@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"sync"
 
 	"github.com/alireza0/s-ui/logger"
 
@@ -29,7 +28,6 @@ var (
 )
 
 type Core struct {
-	mu        sync.RWMutex
 	isRunning bool
 	instance  *Box
 }
@@ -48,15 +46,10 @@ func (c *Core) GetCtx() context.Context {
 }
 
 func (c *Core) GetInstance() *Box {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	return c.instance
 }
 
 func (c *Core) Start(sbConfig []byte) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	var opt option.Options
 	err := opt.UnmarshalJSONContext(globalCtx, sbConfig)
 	if err != nil {
@@ -90,9 +83,6 @@ func (c *Core) Start(sbConfig []byte) error {
 }
 
 func (c *Core) Stop() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	c.isRunning = false
 	if c.instance == nil {
 		return nil
@@ -103,7 +93,5 @@ func (c *Core) Stop() error {
 }
 
 func (c *Core) IsRunning() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	return c.isRunning
 }

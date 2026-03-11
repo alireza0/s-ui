@@ -96,6 +96,7 @@ func (s *ConfigService) StartCore() error {
 		return nil
 	}
 	if time.Since(lastStartFailTime) < startCooldown {
+		logger.Info("start core cooldown ", startCooldown/time.Second, " seconds")
 		startCoreMu.Unlock()
 		return nil
 	}
@@ -133,6 +134,19 @@ func (s *ConfigService) RestartCore() error {
 }
 
 func (s *ConfigService) restartCoreWithConfig(config json.RawMessage) error {
+	startCoreMu.Lock()
+	if startCoreInProgress {
+		startCoreMu.Unlock()
+		return nil
+	}
+	startCoreInProgress = true
+	startCoreMu.Unlock()
+	defer func() {
+		startCoreMu.Lock()
+		startCoreInProgress = false
+		startCoreMu.Unlock()
+	}()
+
 	if corePtr.IsRunning() {
 		if err := corePtr.Stop(); err != nil {
 			logger.Error("restart sing-box err (stop):", err.Error())
