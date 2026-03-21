@@ -251,10 +251,10 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 				}
 			}
 			if sni, ok := tls["server_name"].(string); ok {
-				if t == "http" {
-					proxy["sni"] = sni
-				} else {
+				if t == "vless" || t == "vmess" {
 					proxy["servername"] = sni
+				} else {
+					proxy["sni"] = sni
 				}
 			}
 			if insecure, ok := tls["insecure"].(bool); ok && insecure {
