@@ -86,16 +86,15 @@ func (s *ClashService) GetClash(subId string) (*string, []string, error) {
 		}
 	}
 
-	othersStr, err := s.getClashConfig()
-	if err != nil || len(othersStr) == 0 {
-		othersStr = basicClashConfig
+	basicConfig, err := s.getClashConfig()
+	if err != nil || len(basicConfig) == 0 {
+		basicConfig = basicClashConfig
 	}
 
-	result, err := s.ConvertToClashMeta(outbounds)
+	resultStr, err := s.ConvertToClashMeta(outbounds, basicConfig)
 	if err != nil {
 		return nil, nil, err
 	}
-	resultStr := othersStr + "\n" + string(result)
 
 	updateInterval, _ := s.SettingService.GetSubUpdates()
 	headers := util.GetHeaders(client, updateInterval)
@@ -112,7 +111,7 @@ func (s *ClashService) getClashConfig() (string, error) {
 	return subClashExt, nil
 }
 
-func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) ([]byte, error) {
+func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, basicConfig string) (string, error) {
 	var proxies []interface{}
 	proxyTags := make([]string, 0)
 	for _, obMap := range *outbounds {
@@ -368,10 +367,28 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 	proxyGroups[1]["proxies"] = proxyTags
 	proxyGroups[0]["proxies"] = append([]string{proxyGroups[1]["name"].(string)}, proxyTags...)
 
-	output := map[string]interface{}{
-		"proxies":      proxies,
-		"proxy-groups": proxyGroups,
+	// Merge proxies and proxy groups if exist
+	var output map[string]interface{}
+	err = yaml.Unmarshal([]byte(basicConfig), &output)
+	if err != nil {
+		logger.Error(err.Error())
 	}
 
-	return yaml.Marshal(output)
+	if p, ok := output["proxies"].([]interface{}); ok {
+		output["proxies"] = append(p, proxies...)
+	} else {
+		output["proxies"] = proxies
+	}
+
+	if pg, ok := output["proxy-groups"].([]interface{}); ok {
+		output["proxy-groups"] = append(pg, proxyGroups[0], proxyGroups[1])
+	} else {
+		output["proxy-groups"] = proxyGroups
+	}
+
+	result, err := yaml.Marshal(output)
+	if err != nil {
+		return "", err
+	}
+	return string(result), nil
 }
