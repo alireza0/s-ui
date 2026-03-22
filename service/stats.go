@@ -22,10 +22,18 @@ type StatsService struct {
 }
 
 func (s *StatsService) SaveStats(enableTraffic bool) error {
-	if !corePtr.IsRunning() {
+	if corePtr == nil || !corePtr.IsRunning() {
 		return nil
 	}
-	stats := corePtr.GetInstance().StatsTracker().GetStats()
+	box := corePtr.GetInstance()
+	if box == nil {
+		return nil
+	}
+	st := box.StatsTracker()
+	if st == nil {
+		return nil
+	}
+	stats := st.GetStats()
 
 	// Reset onlines
 	onlineResources.Inbound = nil
