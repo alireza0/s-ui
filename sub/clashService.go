@@ -167,13 +167,9 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}) (
 		case "hysteria", "hysteria2":
 			if _, ok := obMap["up_mbps"].(float64); ok {
 				proxy["up"] = obMap["up_mbps"]
-			} else {
-				proxy["up"] = 1000
 			}
 			if _, ok := obMap["down_mbps"].(float64); ok {
 				proxy["down"] = obMap["down_mbps"]
-			} else {
-				proxy["down"] = 1000
 			}
 			if t == "hysteria" {
 				proxy["auth-str"] = obMap["auth_str"]
