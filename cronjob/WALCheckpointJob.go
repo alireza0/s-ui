@@ -13,8 +13,7 @@ func NewWALCheckpointJob() *WALCheckpointJob {
 
 func (s *WALCheckpointJob) Run() {
 	db := database.GetDB()
-	_, err := db.Raw("PRAGMA wal_checkpoint(FULL)").Rows()
-	if err != nil {
+	if err := db.Exec("PRAGMA wal_checkpoint(FULL)").Error; err != nil {
 		logger.Error("Error checkpointing WAL: ", err.Error())
 	}
 }
