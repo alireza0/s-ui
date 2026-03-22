@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/alireza0/s-ui/config"
 	"github.com/alireza0/s-ui/logger"
@@ -133,20 +134,26 @@ func (s *Server) Start() (err error) {
 }
 
 func (s *Server) Stop() error {
-	s.cancel()
 	var err error
 	if s.httpServer != nil {
-		err = s.httpServer.Shutdown(s.ctx)
+		shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 30*time.Second)
+		err = s.httpServer.Shutdown(shutdownCtx)
+		cancelShutdown()
 		if err != nil {
+			s.cancel()
+			if s.listener != nil {
+				_ = s.listener.Close()
+			}
 			return err
 		}
-	}
-	if s.listener != nil {
+	} else if s.listener != nil {
 		err = s.listener.Close()
 		if err != nil {
+			s.cancel()
 			return err
 		}
 	}
+	s.cancel()
 	return nil
 }
 
