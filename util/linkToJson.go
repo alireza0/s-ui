@@ -267,7 +267,7 @@ func hy2(u *url.URL, i int) (*map[string]interface{}, string, error) {
 	down, _ := strconv.Atoi(query.Get("downmbps"))
 	up, _ := strconv.Atoi(query.Get("upmbps"))
 	obfs := query.Get("obfs")
-	mport := query.Get("mport")
+	mport := strings.ReplaceAll(query.Get("mport"), "-", ":")
 	fastopen := query.Get("fastopen")
 	if down > 0 {
 		hy2["down_mbps"] = down
