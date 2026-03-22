@@ -34,6 +34,14 @@ func NewStatsTracker() *StatsTracker {
 	}
 }
 
+func (c *StatsTracker) Reset() {
+	c.access.Lock()
+	defer c.access.Unlock()
+	c.inbounds = make(map[string]Counter)
+	c.outbounds = make(map[string]Counter)
+	c.users = make(map[string]Counter)
+}
+
 func (c *StatsTracker) getReadCounters(inbound string, outbound string, user string) ([]*atomic.Int64, []*atomic.Int64) {
 	var readCounter []*atomic.Int64
 	var writeCounter []*atomic.Int64

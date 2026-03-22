@@ -554,6 +554,12 @@ func (s *Box) Close() error {
 	err = errors.Join(err, closeErr)
 	s.logger.Trace("close logger completed (", F.Seconds(time.Since(startTime).Seconds()), "s)")
 	s.logger.Info("sing-box closed (live time: ", F.Seconds(time.Since(s.createdAt).Seconds()), "s)")
+	if s.statsTracker != nil {
+		s.statsTracker.Reset()
+	}
+	if s.connTracker != nil {
+		s.connTracker.Reset()
+	}
 	return err
 }
 

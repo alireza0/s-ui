@@ -29,6 +29,20 @@ func NewConnTracker() *ConnTracker {
 	}
 }
 
+func (c *ConnTracker) Reset() {
+	c.access.Lock()
+	defer c.access.Unlock()
+	for _, connInfo := range c.connections {
+		if connInfo.Conn != nil {
+			_ = connInfo.Conn.Close()
+		}
+		if connInfo.PacketConn != nil {
+			_ = connInfo.PacketConn.Close()
+		}
+	}
+	c.connections = make(map[string]*ConnectionInfo)
+}
+
 func (c *ConnTracker) generateConnectionID() string {
 	return uuid.Must(uuid.NewV4()).String()
 }
