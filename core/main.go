@@ -22,8 +22,6 @@ var (
 	service_manager  adapter.ServiceManager
 	endpoint_manager adapter.EndpointManager
 	router           adapter.Router
-	statsTracker     *StatsTracker
-	connTracker      *ConnTracker
 	factory          log.Factory
 )
 

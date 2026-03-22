@@ -326,13 +326,9 @@ func NewBox(options Options) (*Box, error) {
 			return nil, common.NewError("initialize platform interface", err)
 		}
 	}
-	if statsTracker == nil {
-		statsTracker = NewStatsTracker()
-	}
+	statsTracker := NewStatsTracker()
+	connTracker := NewConnTracker()
 	router.AppendTracker(statsTracker)
-	if connTracker == nil {
-		connTracker = NewConnTracker()
-	}
 	router.AppendTracker(connTracker)
 
 	if needCacheFile {
