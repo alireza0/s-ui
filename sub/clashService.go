@@ -256,9 +256,8 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 				proxy["skip-cert-verify"] = insecure
 			}
 			// ech outbounds
-			if ech, ok := tls["ech"].(interface{}); ok {
-				ech_data, _ := ech.(map[string]interface{})
-				ech_config, _ := ech_data["config"].([]interface{})
+			if ech, ok := tls["ech"].(map[string]interface{}); ok && ech["enabled"].(bool) {
+				ech_config, _ := ech["config"].([]interface{})
 				ech_string := ""
 				for i := 1; i < len(ech_config)-1; i++ {
 					ech_string += ech_config[i].(string)
