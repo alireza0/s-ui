@@ -76,7 +76,7 @@ The **frontend** lives in a submodule. If you only work on the backend, you can 
    mkdir -p web/html
    rm -rf web/html/*
    cp -R frontend/dist/* web/html/
-   go build -ldflags "-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui main.go
+   go build -ldflags "-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" -o sui main.go
    ```
 
 3. Run:
@@ -89,7 +89,7 @@ The **frontend** lives in a submodule. If you only work on the backend, you can 
 
 The backend is built with these tags for full functionality:
 
-- `with_quic`, `with_grpc`, `with_utls`, `with_acme`, `with_gvisor`
+- `with_quic`, `with_grpc`, `with_utls`, `with_acme`, `with_gvisor`, `with_tailscale`
 
 Use the same tags when building locally if you need feature parity with releases.
 
@@ -167,7 +167,7 @@ When adding new features, place code in the appropriate layer (handler → servi
 1. **Build verification**: Before submitting a PR, ensure the project builds:
 
    ```bash
-   go build -ldflags "-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor" -o sui main.go
+   go build -ldflags "-w -s" -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" -o sui main.go
    ```
 
 2. **Manual testing**: Run with `./runSUI.sh`, test the changed area (panel, API, subscription, etc.).

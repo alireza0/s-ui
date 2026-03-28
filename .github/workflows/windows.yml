@@ -19,7 +19,7 @@ on:
 
 env:
   NODE_VERSION: "24"
-  TAGS: "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,badlinkname,tfogo_checklinkname0"
+  TAGS: "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,badlinkname,tfogo_checklinkname0,with_tailscale"
   LIBCRONET_BASE_URL: "https://github.com/SagerNet/cronet-go/releases/latest/download"
 
 jobs:

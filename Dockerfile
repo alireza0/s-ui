@@ -35,7 +35,7 @@ COPY --from=front-builder /app/dist/ /app/web/html/
 
 RUN if [ "$TARGETARCH" = "arm" ]; then export GOARM=7; [ "$TARGETVARIANT" = "v6" ] && export GOARM=6; fi; \
     go build -ldflags="-w -s" \
-    -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego" \
+    -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,with_tailscale" \
     -o sui main.go
 
 FROM alpine

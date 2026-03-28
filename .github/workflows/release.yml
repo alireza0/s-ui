@@ -168,7 +168,7 @@ jobs:
       - name: Build s-ui
         run: |
           set -e
-          BUILD_TAGS="with_quic,with_grpc,with_utls,with_acme,with_gvisor,badlinkname,tfogo_checklinkname0"
+          BUILD_TAGS="with_quic,with_grpc,with_utls,with_acme,with_gvisor,badlinkname,tfogo_checklinkname0,with_tailscale"
           [ "${{ matrix.naive }}" = "true" ] && BUILD_TAGS="${BUILD_TAGS},with_naive_outbound,with_musl"
           go build -ldflags="-w -s -checklinkname=0 -linkmode external -extldflags '-static'" -tags "$BUILD_TAGS" -o sui main.go
           file sui
