@@ -560,7 +560,7 @@ func (s *Box) Close() error {
 }
 
 func (s *Box) Uptime() uint32 {
-	return uint32(time.Now().Sub(s.createdAt).Seconds())
+	return uint32(time.Since(s.createdAt).Seconds())
 }
 
 func (s *Box) Network() adapter.NetworkManager {

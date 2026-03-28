@@ -19,11 +19,10 @@ on:
       - 's-ui.service'
 
 env:
-  NODE_VERSION: "24"
-  CRONET_GO_VERSION: "cba7b9ac0399055aa49fbdc57c03c374f58e1597"
+  NODE_VERSION: "25"
+  CRONET_GO_VERSION: "2fef65f9dba90ddb89a87d00a6eb6165487c10c1"
   CRONET_GO_REPO: https://github.com/sagernet/cronet-go.git
   BOOTLIN_BASE_URL: https://toolchains.bootlin.com/downloads/releases/toolchains
-  CHROMIUM_CACHE_KEY_SUFFIX: musl-cba7b9ac0399055aa49fbdc57c03c374f58e1597
 
 jobs:
   build-frontend:
@@ -45,7 +44,7 @@ jobs:
       - name: Build frontend
         run: |
           cd frontend
-          npm ci
+          npm install
           npm run build
           cd ..
 
@@ -115,7 +114,7 @@ jobs:
             ~/cronet-go/naiveproxy/src/gn/out/
             ~/cronet-go/naiveproxy/src/chrome/build/pgo_profiles/
             ~/cronet-go/naiveproxy/src/out/sysroot-build/
-          key: chromium-toolchain-${{ matrix.platform }}-${{ env.CHROMIUM_CACHE_KEY_SUFFIX }}
+          key: chromium-toolchain-${{ matrix.platform }}-musl-${{ env.CRONET_GO_VERSION }}
 
       - name: Build cronet lib and set toolchain env (CC, CXX, CGO_LDFLAGS, PATH)
         if: matrix.naive
