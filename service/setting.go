@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"runtime"
 	"strconv"
@@ -183,6 +184,10 @@ func (s *SettingService) GetWebDomain() (string, error) {
 	return s.getString("webDomain")
 }
 
+func (s *SettingService) SetWebDomain(webDomain string) error {
+	return s.setString("webDomain", webDomain)
+}
+
 func (s *SettingService) GetPort() (int, error) {
 	return s.getInt("webPort")
 }
@@ -195,8 +200,26 @@ func (s *SettingService) GetCertFile() (string, error) {
 	return s.getString("webCertFile")
 }
 
+func (s *SettingService) SetCertFile(certFile string) error {
+	if certFile != "" {
+		if err := s.fileExists(certFile); err != nil {
+			return fmt.Errorf("cert file %s does not exist", certFile)
+		}
+	}
+	return s.setString("webCertFile", certFile)
+}
+
 func (s *SettingService) GetKeyFile() (string, error) {
 	return s.getString("webKeyFile")
+}
+
+func (s *SettingService) SetKeyFile(keyFile string) error {
+	if keyFile != "" {
+		if err := s.fileExists(keyFile); err != nil {
+			return fmt.Errorf("key file %s does not exist", keyFile)
+		}
+	}
+	return s.setString("webKeyFile", keyFile)
 }
 
 func (s *SettingService) GetWebPath() (string, error) {

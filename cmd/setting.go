@@ -31,7 +31,7 @@ func resetSetting() {
 	}
 }
 
-func updateSetting(port int, path string, subPort int, subPath string) {
+func updateSetting(port int, path string, domain string, certFile string, keyFile string, subPort int, subPath string) {
 	err := database.InitDB(config.GetDBPath())
 	if err != nil {
 		fmt.Println(err)
@@ -54,6 +54,30 @@ func updateSetting(port int, path string, subPort int, subPath string) {
 			fmt.Println("set path failed:", err)
 		} else {
 			fmt.Println("set path success")
+		}
+	}
+	if domain != "" {
+		err := settingService.SetWebDomain(domain)
+		if err != nil {
+			fmt.Println("set domain failed:", err)
+		} else {
+			fmt.Println("set domain success")
+		}
+	}
+	if certFile != "" {
+		err := settingService.SetCertFile(certFile)
+		if err != nil {
+			fmt.Println("set cert file failed:", err)
+		} else {
+			fmt.Println("set cert file success")
+		}
+	}
+	if keyFile != "" {
+		err := settingService.SetKeyFile(keyFile)
+		if err != nil {
+			fmt.Println("set key file failed:", err)
+		} else {
+			fmt.Println("set key file success")
 		}
 	}
 	if subPort > 0 {
@@ -93,6 +117,12 @@ func showSetting() {
 	}
 	if (*allSetting)["webDomain"] != "" {
 		fmt.Println("\tPanel Domain:\t", (*allSetting)["webDomain"])
+	}
+	if (*allSetting)["webCertFile"] != "" {
+		fmt.Println("\tPanel Cert:\t", (*allSetting)["webCertFile"])
+	}
+	if (*allSetting)["webKeyFile"] != "" {
+		fmt.Println("\tPanel Key:\t", (*allSetting)["webKeyFile"])
 	}
 	if (*allSetting)["webURI"] != "" {
 		fmt.Println("\tPanel URI:\t", (*allSetting)["webURI"])

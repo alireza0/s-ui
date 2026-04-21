@@ -166,6 +166,12 @@ set_setting() {
     read config_port
     echo -e "Enter the ${yellow}panel path${plain} (leave blank for existing/default value):"
     read config_path
+    echo -e "Enter the ${yellow}panel domain${plain} (leave blank for existing/default value):"
+    read config_domain
+    echo -e "Enter the ${yellow}panel cert file path${plain} (leave blank for existing/default value):"
+    read config_certFile
+    echo -e "Enter the ${yellow}panel key file path${plain} (leave blank for existing/default value):"
+    read config_keyFile
 
     echo -e "Enter the ${yellow}subscription port${plain} (leave blank for existing/default value):"
     read config_subPort
@@ -176,6 +182,9 @@ set_setting() {
     params=""
     [ -z "$config_port" ] || params="$params -port $config_port"
     [ -z "$config_path" ] || params="$params -path $config_path"
+    [ -z "$config_domain" ] || params="$params -domain $config_domain"
+    [ -z "$config_certFile" ] || params="$params -certFile $config_certFile"
+    [ -z "$config_keyFile" ] || params="$params -keyFile $config_keyFile"
     [ -z "$config_subPort" ] || params="$params -subPort $config_subPort"
     [ -z "$config_subPath" ] || params="$params -subPath $config_subPath"
     /usr/local/s-ui/sui setting ${params}
