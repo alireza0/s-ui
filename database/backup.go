@@ -42,6 +42,11 @@ func GetDb(exclude string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if sqlDB, e := backupDb.DB(); e == nil {
+			_ = sqlDB.Close()
+		}
+	}()
 	defer os.Remove(dbPath)
 
 	err = backupDb.AutoMigrate(
@@ -218,7 +223,9 @@ func ImportDB(file multipart.File) error {
 		return common.NewErrorf("Error checking db: %v", err)
 	}
 	newDb_db, _ := newDb.DB()
-	newDb_db.Close()
+	if newDb_db != nil {
+		newDb_db.Close()
+	}
 
 	// Backup the current database for fallback
 	fallbackPath := fmt.Sprintf("%s.backup", config.GetDBPath())

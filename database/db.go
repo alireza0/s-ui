@@ -55,7 +55,10 @@ func OpenDB(dbPath string) error {
 	if strings.Contains(dbPath, "?") {
 		sep = "&"
 	}
-	dsn := dbPath + sep + "_busy_timeout=10000&_journal_mode=WAL"
+	// _cache_size=-200 caps each connection's page cache at ~200 KiB
+	// (default is ~2 MiB), reducing memory amplification if a connection
+	// escapes the pool.
+	dsn := dbPath + sep + "_busy_timeout=10000&_journal_mode=WAL&_cache_size=-200"
 	db, err = gorm.Open(sqlite.Open(dsn), c)
 	if err != nil {
 		return err
@@ -66,8 +69,9 @@ func OpenDB(dbPath string) error {
 		return err
 	}
 	sqlDB.SetMaxOpenConns(25)
-	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetMaxIdleConns(2)
 	sqlDB.SetConnMaxLifetime(time.Hour)
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 
 	if config.IsDebug() {
 		db = db.Debug()
