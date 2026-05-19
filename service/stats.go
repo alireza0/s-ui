@@ -83,7 +83,8 @@ func (s *StatsService) SaveStats(enableTraffic bool) error {
 	if !enableTraffic {
 		return nil
 	}
-	return tx.Create(&stats).Error
+	err = tx.Create(&stats).Error
+	return err
 }
 
 func (s *StatsService) GetStats(resource string, tag string, limit int) ([]model.Stats, error) {

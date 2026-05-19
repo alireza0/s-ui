@@ -25,6 +25,11 @@ func MigrateDb() {
 		log.Fatal(err)
 		return
 	}
+	defer func() {
+		if sqlDB, e := db.DB(); e == nil {
+			_ = sqlDB.Close()
+		}
+	}()
 	tx := db.Begin()
 	defer func() {
 		if err == nil {
