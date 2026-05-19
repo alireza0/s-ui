@@ -20,7 +20,7 @@ on:
 
 env:
   NODE_VERSION: "25"
-  CRONET_GO_VERSION: "2fef65f9dba90ddb89a87d00a6eb6165487c10c1"
+  CRONET_GO_VERSION: "2faf34666c2cc8234f10f2ab6d4c4d6104d34ae2"
   CRONET_GO_REPO: https://github.com/sagernet/cronet-go.git
   BOOTLIN_BASE_URL: https://toolchains.bootlin.com/downloads/releases/toolchains
 
