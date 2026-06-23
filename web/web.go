@@ -175,9 +175,11 @@ func (s *Server) Start() (err error) {
 			listener.Close()
 			return err
 		}
-		c := &tls.Config{
-			Certificates: []tls.Certificate{cert},
+		webDomain, err := s.settingService.GetWebDomain()
+		if err != nil {
+			return err
 		}
+		c := network.NewTLSConfig(cert, webDomain)
 		listener = network.NewAutoHttpsListener(listener)
 		listener = tls.NewListener(listener, c)
 	}
