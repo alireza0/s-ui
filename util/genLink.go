@@ -377,6 +377,10 @@ func vlessLink(
 
 	uuid, _ := userConfig["uuid"].(string)
 	baseParams := getTransportParams(inbound["transport"])
+	isTcp := false
+	if len(baseParams) == 1 && baseParams[0].Value == "tcp" {
+		isTcp = true
+	}
 	var links []string
 
 	for _, addr := range addrs {
@@ -384,7 +388,7 @@ func vlessLink(
 		copy(params, baseParams)
 		if tls, ok := addr["tls"].(map[string]interface{}); ok && tls["enabled"].(bool) {
 			getTlsParams(&params, tls, "allowInsecure")
-			if flow, ok := userConfig["flow"].(string); ok {
+			if flow, ok := userConfig["flow"].(string); ok && isTcp {
 				params = append(params, LinkParam{"flow", flow})
 			}
 		}

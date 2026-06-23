@@ -273,10 +273,16 @@ func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition s
 	if err != nil {
 		return nil, err
 	}
+	stripVision := false
+	if inboundType == "vless" {
+		transport, _ := inbound["transport"].(map[string]interface{})
+		stripVision = len(transport) > 0 || inbound["tls"] == nil
+	}
+
 	var usersJson []json.RawMessage
 	for _, user := range users {
-		if inboundType == "vless" && inbound["tls"] == nil {
-			user = strings.Replace(user, "xtls-rprx-vision", "", -1)
+		if stripVision {
+			user = strings.ReplaceAll(user, "xtls-rprx-vision", "")
 		}
 		usersJson = append(usersJson, json.RawMessage(user))
 	}
