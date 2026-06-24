@@ -197,7 +197,9 @@ func (a *ApiService) GetStats(c *gin.Context) {
 	if err != nil {
 		limit = 100
 	}
-	data, err := a.StatsService.GetStats(resource, tag, limit)
+	start, _ := strconv.ParseInt(c.Query("start"), 10, 64)
+	end, _ := strconv.ParseInt(c.Query("end"), 10, 64)
+	data, err := a.StatsService.GetStats(resource, tag, limit, start, end)
 	if err != nil {
 		jsonMsg(c, "", err)
 		return

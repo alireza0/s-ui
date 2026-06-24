@@ -86,24 +86,31 @@ func (s *StatsService) SaveStats(enableTraffic bool) error {
 	return err
 }
 
-func (s *StatsService) GetStats(resource string, tag string, limit int) (any, error) {
+func (s *StatsService) GetStats(resource string, tag string, limit int, start int64, end int64) (any, error) {
 	var err error
 	var result []model.Stats
 
-	currentTime := time.Now().Unix()
-	timeDiff := currentTime - (int64(limit) * 3600)
+	// Custom range when both start and end are provided, otherwise the last
+	// `limit` hours up to now.
+	var startTime, endTime int64
+	if start > 0 && end > start {
+		startTime, endTime = start, end
+	} else {
+		endTime = time.Now().Unix()
+		startTime = endTime - (int64(limit) * 3600)
+	}
 
 	db := database.GetDB()
 	resources := []string{resource}
 	if resource == "endpoint" {
 		resources = []string{"inbound", "outbound"}
 	}
-	err = db.Model(model.Stats{}).Where("resource in ? AND tag = ? AND date_time > ?", resources, tag, timeDiff).Order("date_time ASC").Scan(&result).Error
+	err = db.Model(model.Stats{}).Where("resource in ? AND tag = ? AND date_time > ? AND date_time <= ?", resources, tag, startTime, endTime).Order("date_time ASC").Scan(&result).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return s.downsampleStats(result, timeDiff, currentTime, 360), nil
+	return s.downsampleStats(result, startTime, endTime, 360), nil
 }
 
 func (s *StatsService) downsampleStats(stats []model.Stats, startTime, endTime int64, numBuckets int) any {
