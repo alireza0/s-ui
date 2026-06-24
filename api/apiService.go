@@ -324,6 +324,15 @@ func (a *ApiService) RestartSb(c *gin.Context) {
 	jsonMsg(c, "restartSb", err)
 }
 
+func (a *ApiService) ResetTraffic(c *gin.Context) {
+	if err := a.ClientService.ResetAllClientsTraffic(); err != nil {
+		jsonMsg(c, "resetTraffic", err)
+		return
+	}
+	err := a.ConfigService.RestartCore()
+	jsonMsg(c, "resetTraffic", err)
+}
+
 func (a *ApiService) LinkConvert(c *gin.Context) {
 	link := c.Request.FormValue("link")
 	result, _, err := util.GetOutbound(link, 0)

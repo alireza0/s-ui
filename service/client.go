@@ -537,6 +537,43 @@ func (s *ClientService) ResetClients(tx *gorm.DB, dt int64) ([]uint, error) {
 	return inboundIds, nil
 }
 
+// ResetAllClientsTraffic zeroes up/down for every client (accumulating into the
+// total counters) and re-enables all of them, in a single bulk update. Used by
+// the global periodic traffic reset; the caller restarts the core afterwards so
+// re-enabled clients take effect.
+func (s *ClientService) ResetAllClientsTraffic() error {
+	db := database.GetDB()
+	dt := time.Now().Unix()
+
+	result := db.Model(model.Client{}).
+		Where("(up + down) > 0 OR enable = false").
+		UpdateColumns(map[string]interface{}{
+			"total_up":   gorm.Expr("total_up + up"),
+			"total_down": gorm.Expr("total_down + down"),
+			"up":         0,
+			"down":       0,
+			"enable":     true,
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected > 0 {
+		if err := db.Create(&model.Changes{
+			DateTime: dt,
+			Actor:    "ResetTrafficJob",
+			Key:      "clients",
+			Action:   "reset",
+			Obj:      json.RawMessage("\"all\""),
+		}).Error; err != nil {
+			return err
+		}
+		LastUpdate = dt
+	}
+
+	return nil
+}
+
 func setConfigIdentity(client *model.Client) error {
 	if client.Name == "" || len(client.Config) < 2 {
 		return nil
