@@ -353,6 +353,12 @@ func tuicLink(
 	baseUri := fmt.Sprintf("%s%s:%s@", "tuic://", uuid, password)
 	var links []string
 
+	// udp_relay_mode is a client-side (outbound) param and lives in out_json
+	var outJson map[string]interface{}
+	if raw, ok := inbound["out_json"].(json.RawMessage); ok {
+		_ = json.Unmarshal(raw, &outJson)
+	}
+
 	for _, addr := range addrs {
 		var params []LinkParam
 		if tls, ok := addr["tls"].(map[string]interface{}); ok {
@@ -360,6 +366,9 @@ func tuicLink(
 		}
 		if congestionControl, ok := inbound["congestion_control"].(string); ok {
 			params = append(params, LinkParam{"congestion_control", congestionControl})
+		}
+		if udpRelayMode, ok := outJson["udp_relay_mode"].(string); ok && udpRelayMode != "" {
+			params = append(params, LinkParam{"udp_relay_mode", udpRelayMode})
 		}
 
 		port, _ := addr["server_port"].(float64)
