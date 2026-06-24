@@ -58,6 +58,9 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+		if err = setConfigIdentity(&client); err != nil {
+			return nil, err
+		}
 		err = s.updateLinksWithFixedInbounds(tx, []*model.Client{&client}, hostname)
 		if err != nil {
 			return nil, err
@@ -84,6 +87,11 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+		for _, client := range clients {
+			if err = setConfigIdentity(client); err != nil {
+				return nil, err
+			}
+		}
 		err = json.Unmarshal(clients[0].Inbounds, &inboundIds)
 		if err != nil {
 			return nil, err
@@ -105,6 +113,9 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		for _, client := range clients {
 			changedInboundIds, err := s.findInboundsChanges(tx, client, true)
 			if err != nil {
+				return nil, err
+			}
+			if err = setConfigIdentity(client); err != nil {
 				return nil, err
 			}
 			if len(changedInboundIds) > 0 {
@@ -511,6 +522,29 @@ func (s *ClientService) ResetClients(tx *gorm.DB, dt int64) ([]uint, error) {
 		LastUpdate = dt
 	}
 	return inboundIds, nil
+}
+
+func setConfigIdentity(client *model.Client) error {
+	if client.Name == "" || len(client.Config) < 2 {
+		return nil
+	}
+	var configs map[string]map[string]interface{}
+	if err := json.Unmarshal(client.Config, &configs); err != nil {
+		return err
+	}
+	for _, cfg := range configs {
+		if _, ok := cfg["name"]; ok {
+			cfg["name"] = client.Name
+		} else if _, ok := cfg["username"]; ok {
+			cfg["username"] = client.Name
+		}
+	}
+	newConfig, err := json.Marshal(configs)
+	if err != nil {
+		return err
+	}
+	client.Config = newConfig
+	return nil
 }
 
 func (s *ClientService) findInboundsChanges(tx *gorm.DB, client *model.Client, fillOmitted bool) ([]uint, error) {
