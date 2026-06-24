@@ -64,7 +64,7 @@ jobs:
           - { platform: amd64, arch: amd64, bootlin: x86-64, naive: true }
           - { platform: arm64, arch: arm64, bootlin: aarch64, naive: true }
           - { platform: armv7, arch: arm, goarm: "7", bootlin: armv7-eabihf, naive: true }
-          - { platform: armv6, arch: arm, goarm: "6", bootlin: armv6-eabihf, naive: true }
+          - { platform: armv6, arch: arm, goarm: "6", bootlin: armv6-eabihf, naive: false }
           - { platform: armv5, arch: arm, goarm: "5", bootlin: armv5-eabi, naive: false }
           - { platform: "386", arch: "386", bootlin: x86-i686, naive: true }
           - { platform: s390x, arch: s390x, bootlin: s390x-z13, naive: false }
