@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/alireza0/s-ui/logger"
 	"github.com/alireza0/s-ui/util/common"
@@ -16,7 +17,7 @@ func GetExternalLink(url string) string {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
-	client := &http.Client{Transport: tr}
+	client := &http.Client{Transport: tr, Timeout: 10 * time.Second}
 
 	response, err := client.Get(url)
 	if err != nil {
