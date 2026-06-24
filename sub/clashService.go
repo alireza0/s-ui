@@ -222,9 +222,13 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 		if isTls {
 			proxy["tls"] = tls["enabled"]
 
-			// ALPN if exists
-			if alpn, ok := tls["alpn"].([]interface{}); ok {
-				proxy["alpn"] = alpn
+			switch t {
+			case "hysteria", "hysteria2", "tuic":
+				proxy["alpn"] = []string{"h3"}
+			default:
+				if alpn, ok := tls["alpn"].([]interface{}); ok {
+					proxy["alpn"] = alpn
+				}
 			}
 
 			// Add reality if exists
