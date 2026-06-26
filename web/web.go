@@ -170,16 +170,15 @@ func (s *Server) Start() (err error) {
 		return err
 	}
 	if certFile != "" || keyFile != "" {
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			listener.Close()
-			return err
-		}
 		webDomain, err := s.settingService.GetWebDomain()
 		if err != nil {
 			return err
 		}
-		c := network.NewTLSConfig(cert, webDomain)
+		c, err := network.NewTLSConfig(certFile, keyFile, webDomain)
+		if err != nil {
+			listener.Close()
+			return err
+		}
 		listener = network.NewAutoHttpsListener(listener)
 		listener = tls.NewListener(listener, c)
 	}
