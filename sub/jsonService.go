@@ -251,7 +251,10 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 }
 
 func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
-	rules_start := []interface{}{
+	// Default routing rules, used only when the template doesn't define its own.
+	// When the template provides `rules`, they are used verbatim so the user has
+	// full control over ordering (e.g. rules before sniff) and which rules exist.
+	defaultRules := []interface{}{
 		map[string]interface{}{
 			"action": "sniff",
 		},
@@ -260,8 +263,6 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 			"action":     "route",
 			"outbound":   "direct",
 		},
-	}
-	rules_end := []interface{}{
 		map[string]interface{}{
 			"clash_mode": "Global",
 			"action":     "route",
@@ -271,7 +272,7 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	route := map[string]interface{}{
 		"auto_detect_interface": true,
 		"final":                 "proxy",
-		"rules":                 rules_start,
+		"rules":                 defaultRules,
 	}
 
 	othersStr, err := j.SettingService.GetSubJsonExt()
@@ -303,11 +304,16 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 		route["rule_set"] = othersJson["rule_set"]
 	}
 	if settingRules, ok := othersJson["rules"].([]interface{}); ok {
-		rules := append(rules_start, settingRules...)
-		route["rules"] = append(rules, rules_end...)
+		route["rules"] = settingRules
 	}
 	if defaultDomainResolver, ok := othersJson["default_domain_resolver"].(string); ok {
 		route["default_domain_resolver"] = defaultDomainResolver
+	}
+	if v, ok := othersJson["override_android_vpn"]; ok {
+		route["override_android_vpn"] = v
+	}
+	if final, ok := othersJson["final"].(string); ok && final != "" {
+		route["final"] = final
 	}
 	(*jsonConfig)["route"] = route
 
