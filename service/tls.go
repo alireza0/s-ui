@@ -137,7 +137,7 @@ func setCertFingerprint(t *model.Tls) {
 		delete(client, "certificate_public_key_sha256")
 	}
 
-	if newClient, err := json.Marshal(client); err == nil {
+	if newClient, err := json.MarshalIndent(client, "", "  "); err == nil {
 		t.Client = newClient
 	}
 }
