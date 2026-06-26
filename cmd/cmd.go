@@ -16,6 +16,7 @@ func ParseCmd() {
 
 	adminCmd := flag.NewFlagSet("admin", flag.ExitOnError)
 	settingCmd := flag.NewFlagSet("setting", flag.ExitOnError)
+	backupCmd := flag.NewFlagSet("backup", flag.ExitOnError)
 
 	var username string
 	var password string
@@ -25,6 +26,10 @@ func ParseCmd() {
 	var subPath string
 	var reset bool
 	var show bool
+	var output string
+	var exclude string
+	backupCmd.StringVar(&output, "output", "", "backup output file path (use - for stdout)")
+	backupCmd.StringVar(&exclude, "exclude", "", "comma-separated tables to exclude: changes,stats")
 	settingCmd.BoolVar(&reset, "reset", false, "reset all settings")
 	settingCmd.BoolVar(&show, "show", false, "show current settings")
 	settingCmd.IntVar(&port, "port", 0, "set panel port")
@@ -46,10 +51,13 @@ func ParseCmd() {
 		fmt.Println("    uri            Show panel URI")
 		fmt.Println("    migrate        migrate form older version")
 		fmt.Println("    setting        set/reset/show settings")
+		fmt.Println("    backup         create a database backup")
 		fmt.Println()
 		adminCmd.Usage()
 		fmt.Println()
 		settingCmd.Usage()
+		fmt.Println()
+		backupCmd.Usage()
 	}
 
 	flag.Parse()
@@ -105,6 +113,14 @@ func ParseCmd() {
 			updateSetting(port, path, subPort, subPath)
 			showSetting()
 		}
+
+	case "backup":
+		err := backupCmd.Parse(os.Args[2:])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		backupDb(output, exclude)
 	default:
 		fmt.Println("Invalid subcommands")
 		flag.Usage()
