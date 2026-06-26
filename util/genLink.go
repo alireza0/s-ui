@@ -606,6 +606,11 @@ func getTlsParams(params *[]LinkParam, tls map[string]interface{}, insecureKey s
 		if insecure, ok := tls["insecure"].(bool); ok && insecure {
 			*params = append(*params, LinkParam{insecureKey, "1"})
 		}
+		if pins, ok := tls["certificate_public_key_sha256"].([]interface{}); ok && len(pins) > 0 {
+			if pin, ok := pins[0].(string); ok && pin != "" {
+				*params = append(*params, LinkParam{"pinSHA256", pin})
+			}
+		}
 		if disableSni, ok := tls["disable_sni"].(bool); ok && disableSni {
 			*params = append(*params, LinkParam{"disable_sni", "1"})
 		}

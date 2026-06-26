@@ -5,6 +5,7 @@ import (
 
 	"github.com/alireza0/s-ui/database"
 	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/util"
 	"github.com/alireza0/s-ui/util/common"
 
 	"gorm.io/gorm"
@@ -36,6 +37,7 @@ func (s *TlsService) Save(tx *gorm.DB, action string, data json.RawMessage, host
 		if err != nil {
 			return err
 		}
+		setCertFingerprint(&tls)
 		err = tx.Save(&tls).Error
 		if err != nil {
 			return err
@@ -102,4 +104,40 @@ func (s *TlsService) Save(tx *gorm.DB, action string, data json.RawMessage, host
 	}
 
 	return nil
+}
+
+func setCertFingerprint(t *model.Tls) {
+	var server map[string]interface{}
+	if len(t.Server) > 0 {
+		_ = json.Unmarshal(t.Server, &server)
+	}
+
+	pin := ""
+	isReality := false
+	if r, ok := server["reality"].(map[string]interface{}); ok {
+		isReality, _ = r["enabled"].(bool)
+	}
+	if !isReality {
+		pin = util.CertPublicKeySha256(util.CertPEMFromTLS(server))
+	}
+
+	var client map[string]interface{}
+	if len(t.Client) > 0 {
+		if err := json.Unmarshal(t.Client, &client); err != nil {
+			return
+		}
+	}
+	if client == nil {
+		client = map[string]interface{}{}
+	}
+
+	if pin != "" {
+		client["certificate_public_key_sha256"] = []string{pin}
+	} else {
+		delete(client, "certificate_public_key_sha256")
+	}
+
+	if newClient, err := json.Marshal(client); err == nil {
+		t.Client = newClient
+	}
 }
