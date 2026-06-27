@@ -54,15 +54,16 @@ func (s *StatsService) SaveStats(enableTraffic bool) error {
 		}
 	}()
 
+	now := time.Now().Unix()
 	for _, stat := range *stats {
 		if stat.Resource == "user" {
+			update := map[string]interface{}{"online_at": now}
 			if stat.Direction {
-				err = tx.Model(model.Client{}).Where("name = ?", stat.Tag).
-					UpdateColumn("up", gorm.Expr("up + ?", stat.Traffic)).Error
+				update["up"] = gorm.Expr("up + ?", stat.Traffic)
 			} else {
-				err = tx.Model(model.Client{}).Where("name = ?", stat.Tag).
-					UpdateColumn("down", gorm.Expr("down + ?", stat.Traffic)).Error
+				update["down"] = gorm.Expr("down + ?", stat.Traffic)
 			}
+			err = tx.Model(model.Client{}).Where("name = ?", stat.Tag).Updates(update).Error
 			if err != nil {
 				return err
 			}

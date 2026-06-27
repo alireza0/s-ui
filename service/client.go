@@ -39,7 +39,7 @@ func (s *ClientService) GetAll() (*[]model.Client, error) {
 	db := database.GetDB()
 	var clients []model.Client
 	err := db.Model(model.Client{}).
-		Select("`id`, `enable`, `name`, `desc`, `group`, `inbounds`, `up`, `down`, `volume`, `expiry`").
+		Select("`id`, `enable`, `name`, `desc`, `group`, `remark`, `inbounds`, `up`, `down`, `volume`, `expiry`, `created_at`, `online_at`").
 		Scan(&clients).Error
 	if err != nil {
 		return nil, err
@@ -71,7 +71,10 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 			if err != nil {
 				return nil, err
 			}
+			// Preserve managed timestamps (immutable createdAt, stats-managed onlineAt)
+			s.preserveTimestamps(tx, &client)
 		} else {
+			client.CreatedAt = time.Now().Unix()
 			err = json.Unmarshal(client.Inbounds, &inboundIds)
 			if err != nil {
 				return nil, err
@@ -87,10 +90,12 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+		now := time.Now().Unix()
 		for _, client := range clients {
 			if err = setConfigIdentity(client); err != nil {
 				return nil, err
 			}
+			client.CreatedAt = now
 			var ids []uint
 			if err = json.Unmarshal(client.Inbounds, &ids); err != nil {
 				return nil, err
@@ -119,6 +124,7 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 			if err = setConfigIdentity(client); err != nil {
 				return nil, err
 			}
+			s.preserveTimestamps(tx, client)
 			if len(changedInboundIds) > 0 {
 				inboundIds = common.UnionUintArray(inboundIds, changedInboundIds)
 			}
@@ -182,6 +188,16 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 	return inboundIds, nil
 }
 
+func (s *ClientService) preserveTimestamps(tx *gorm.DB, client *model.Client) {
+	var existing model.Client
+	if err := tx.Model(model.Client{}).Select("created_at", "online_at").
+		Where("id = ?", client.Id).First(&existing).Error; err != nil {
+		return
+	}
+	client.CreatedAt = existing.CreatedAt
+	client.OnlineAt = existing.OnlineAt
+}
+
 func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*model.Client, hostname string) error {
 	clientInboundIds := make([][]uint, len(clients))
 	var allIds []uint
@@ -219,7 +235,7 @@ func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*mod
 			if !ok {
 				continue
 			}
-			newLinks := util.LinkGenerator(client.Config, inbound, hostname)
+			newLinks := util.LinkGenerator(client.Config, inbound, hostname, client.Remark)
 			for _, newLink := range newLinks {
 				newClientLinks = append(newClientLinks, map[string]string{
 					"remark": inbound.Tag,
@@ -269,7 +285,7 @@ func (s *ClientService) UpdateClientsOnInboundAdd(tx *gorm.DB, initIds string, i
 		// Add links
 		var clientLinks, newClientLinks []map[string]string
 		json.Unmarshal(client.Links, &clientLinks)
-		newLinks := util.LinkGenerator(client.Config, &inbound, hostname)
+		newLinks := util.LinkGenerator(client.Config, &inbound, hostname, client.Remark)
 		for _, newLink := range newLinks {
 			newClientLinks = append(newClientLinks, map[string]string{
 				"remark": inbound.Tag,
@@ -361,7 +377,7 @@ func (s *ClientService) UpdateLinksByInboundChange(tx *gorm.DB, inbounds *[]mode
 		for _, client := range clients {
 			var clientLinks, newClientLinks []map[string]string
 			json.Unmarshal(client.Links, &clientLinks)
-			newLinks := util.LinkGenerator(client.Config, &inbound, hostname)
+			newLinks := util.LinkGenerator(client.Config, &inbound, hostname, client.Remark)
 			for _, newLink := range newLinks {
 				newClientLinks = append(newClientLinks, map[string]string{
 					"remark": inbound.Tag,

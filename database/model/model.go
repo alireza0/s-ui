@@ -35,6 +35,11 @@ type Client struct {
 	Up       int64           `json:"up" form:"up"`
 	Desc     string          `json:"desc" form:"desc"`
 	Group    string          `json:"group" form:"group"`
+	Remark   string          `json:"remark" form:"remark"`
+
+	// Timestamps (unix seconds): creation time and last time the client had traffic
+	CreatedAt int64 `json:"createdAt" form:"createdAt" gorm:"default:0;not null"`
+	OnlineAt  int64 `json:"onlineAt" form:"onlineAt" gorm:"default:0;not null"`
 
 	// Delay start and periodic reset
 	DelayStart bool  `json:"delayStart" form:"delayStart" gorm:"default:false;not null"`
