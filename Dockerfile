@@ -11,7 +11,8 @@ ENV CGO_ENABLED=1
 ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
 ENV GOARCH=$TARGETARCH
 
-RUN apk update && apk add --no-cache \
+RUN apk upgrade --no-cache --scripts=no apk-tools && \
+    apk add --no-cache \
     gcc \
     musl-dev \
     libc-dev \
@@ -42,7 +43,8 @@ FROM alpine
 LABEL org.opencontainers.image.authors="alireza7@gmail.com"
 ENV TZ=Asia/Tehran
 WORKDIR /app
-RUN set -ex && apk add --no-cache --upgrade bash tzdata ca-certificates nftables
+RUN set -ex && apk upgrade --no-cache --scripts=no apk-tools && \
+    apk add --no-cache --upgrade bash tzdata ca-certificates nftables
 COPY --from=backend-builder /app/sui /app/libcronet.so /app/
 COPY entrypoint.sh /app/
 ENTRYPOINT [ "./entrypoint.sh" ]
