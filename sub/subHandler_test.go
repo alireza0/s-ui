@@ -52,6 +52,15 @@ func TestContentDispositionHeaderEscapesUTF8Name(t *testing.T) {
 	}
 }
 
+func TestContentDispositionHeaderEscapesReservedRFC5987Characters(t *testing.T) {
+	got := contentDispositionHeader("vpn 100%:@;,'()*=")
+	want := "attachment; filename=\"vpn 100%:@;,'()*=\"; filename*=UTF-8''vpn%20100%25%3A%40%3B%2C%27%28%29%2A%3D"
+
+	if got != want {
+		t.Fatalf("contentDispositionHeader() = %q, want %q", got, want)
+	}
+}
+
 func TestContentDispositionHeaderFallsBackWhenNameIsEmpty(t *testing.T) {
 	got := contentDispositionHeader(" ")
 	want := "attachment; filename=\"subscription\"; filename*=UTF-8''subscription"

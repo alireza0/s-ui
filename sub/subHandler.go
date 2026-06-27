@@ -2,7 +2,6 @@ package sub
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/alireza0/s-ui/logger"
@@ -88,7 +87,7 @@ func contentDispositionHeader(name string) string {
 		filename = "subscription"
 	}
 
-	return fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s", asciiSafeFilename(filename), url.PathEscape(filename))
+	return fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s", asciiSafeFilename(filename), rfc5987Encode(filename))
 }
 
 func asciiSafeFilename(filename string) string {
@@ -108,4 +107,40 @@ func asciiSafeFilename(filename string) string {
 	}
 
 	return fallback
+}
+
+func rfc5987Encode(filename string) string {
+	const hex = "0123456789ABCDEF"
+
+	var builder strings.Builder
+	for _, b := range []byte(filename) {
+		if isRFC5987AttrChar(b) {
+			builder.WriteByte(b)
+			continue
+		}
+
+		builder.WriteByte('%')
+		builder.WriteByte(hex[b>>4])
+		builder.WriteByte(hex[b&0x0f])
+	}
+
+	return builder.String()
+}
+
+func isRFC5987AttrChar(b byte) bool {
+	switch {
+	case b >= 'a' && b <= 'z':
+		return true
+	case b >= 'A' && b <= 'Z':
+		return true
+	case b >= '0' && b <= '9':
+		return true
+	}
+
+	switch b {
+	case '!', '#', '$', '&', '+', '-', '.', '^', '_', '`', '|', '~':
+		return true
+	default:
+		return false
+	}
 }
