@@ -7,6 +7,7 @@ import (
 	"github.com/alireza0/s-ui/database/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type onlines struct {
@@ -20,7 +21,7 @@ var onlineResources = &onlines{}
 type StatsService struct {
 }
 
-func (s *StatsService) SaveStats(enableTraffic bool) error {
+func (s *StatsService) SaveStats(enableTraffic bool, bucketSeconds int64) error {
 	if corePtr == nil || !corePtr.IsRunning() {
 		return nil
 	}
@@ -55,35 +56,72 @@ func (s *StatsService) SaveStats(enableTraffic bool) error {
 	}()
 
 	now := time.Now().Unix()
+
+	// Aggregate per-resource so each active inbound/outbound/user is reported
+	// online once (a tag may now appear in both directions), and each user's
+	// up+down collapse into a single UPDATE.
+	type traffic struct{ up, down int64 }
+	userTraffic := map[string]*traffic{}
+	seenInbound := map[string]bool{}
+	seenOutbound := map[string]bool{}
 	for _, stat := range *stats {
-		if stat.Resource == "user" {
-			update := map[string]interface{}{"online_at": now}
-			if stat.Direction {
-				update["up"] = gorm.Expr("up + ?", stat.Traffic)
-			} else {
-				update["down"] = gorm.Expr("down + ?", stat.Traffic)
-			}
-			err = tx.Model(model.Client{}).Where("name = ?", stat.Tag).Updates(update).Error
-			if err != nil {
-				return err
-			}
-		}
-		if stat.Direction {
-			switch stat.Resource {
-			case "inbound":
+		switch stat.Resource {
+		case "inbound":
+			if !seenInbound[stat.Tag] {
+				seenInbound[stat.Tag] = true
 				onlineResources.Inbound = append(onlineResources.Inbound, stat.Tag)
-			case "outbound":
+			}
+		case "outbound":
+			if !seenOutbound[stat.Tag] {
+				seenOutbound[stat.Tag] = true
 				onlineResources.Outbound = append(onlineResources.Outbound, stat.Tag)
-			case "user":
+			}
+		case "user":
+			t, ok := userTraffic[stat.Tag]
+			if !ok {
+				t = &traffic{}
+				userTraffic[stat.Tag] = t
 				onlineResources.User = append(onlineResources.User, stat.Tag)
 			}
+			if stat.Direction {
+				t.up += stat.Traffic
+			} else {
+				t.down += stat.Traffic
+			}
+		}
+	}
+
+	for name, t := range userTraffic {
+		update := map[string]interface{}{"online_at": now}
+		if t.up > 0 {
+			update["up"] = gorm.Expr("up + ?", t.up)
+		}
+		if t.down > 0 {
+			update["down"] = gorm.Expr("down + ?", t.down)
+		}
+		err = tx.Model(model.Client{}).Where("name = ?", name).Updates(update).Error
+		if err != nil {
+			return err
 		}
 	}
 
 	if !enableTraffic {
 		return nil
 	}
-	err = tx.Create(&stats).Error
+
+	// Round each sample down to its bucket and upsert, so all 10s cycles within
+	// the same bucket accumulate into one row per (resource, tag, direction).
+	if bucketSeconds < 1 {
+		bucketSeconds = 1
+	}
+	bucket := now - (now % bucketSeconds)
+	for i := range *stats {
+		(*stats)[i].DateTime = bucket
+	}
+	err = tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "resource"}, {Name: "tag"}, {Name: "date_time"}, {Name: "direction"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{"traffic": gorm.Expr("stats.traffic + excluded.traffic")}),
+	}).Create(&stats).Error
 	return err
 }
 

@@ -23,13 +23,13 @@ func NewCronJob() *CronJob {
 	return &CronJob{}
 }
 
-func (c *CronJob) Start(loc *time.Location, trafficAge int, globalReset string) error {
+func (c *CronJob) Start(loc *time.Location, trafficAge int, statsBucketSeconds int64, globalReset string) error {
 	c.cron = cron.New(cron.WithLocation(loc), cron.WithParser(cronParser))
 	c.cron.Start()
 
 	go func() {
 		// Start stats job
-		c.cron.AddJob("@every 10s", NewStatsJob(trafficAge > 0))
+		c.cron.AddJob("@every 10s", NewStatsJob(trafficAge > 0, statsBucketSeconds))
 		// Start expiry job
 		c.cron.AddJob("@every 1m", NewDepleteJob())
 		// Periodic global traffic reset, only when a valid cron spec is configured

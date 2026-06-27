@@ -89,65 +89,26 @@ func (c *StatsTracker) GetStats() *[]model.Stats {
 
 	dt := time.Now().Unix()
 
+	// Emit only directions that actually moved traffic; a zero-traffic row would
+	// just bloat the stats table without changing any chart bucket.
 	s := []model.Stats{}
+	appendStat := func(resource, tag string, down, up int64) {
+		if down > 0 {
+			s = append(s, model.Stats{DateTime: dt, Resource: resource, Tag: tag, Direction: false, Traffic: down})
+		}
+		if up > 0 {
+			s = append(s, model.Stats{DateTime: dt, Resource: resource, Tag: tag, Direction: true, Traffic: up})
+		}
+	}
+
 	for inbound, counter := range c.inbounds {
-		down := counter.write.Swap(0)
-		up := counter.read.Swap(0)
-		if down > 0 || up > 0 {
-			s = append(s, model.Stats{
-				DateTime:  dt,
-				Resource:  "inbound",
-				Tag:       inbound,
-				Direction: false,
-				Traffic:   down,
-			}, model.Stats{
-				DateTime:  dt,
-				Resource:  "inbound",
-				Tag:       inbound,
-				Direction: true,
-				Traffic:   up,
-			})
-		}
+		appendStat("inbound", inbound, counter.write.Swap(0), counter.read.Swap(0))
 	}
-
 	for outbound, counter := range c.outbounds {
-		down := counter.write.Swap(0)
-		up := counter.read.Swap(0)
-		if down > 0 || up > 0 {
-			s = append(s, model.Stats{
-				DateTime:  dt,
-				Resource:  "outbound",
-				Tag:       outbound,
-				Direction: false,
-				Traffic:   down,
-			}, model.Stats{
-				DateTime:  dt,
-				Resource:  "outbound",
-				Tag:       outbound,
-				Direction: true,
-				Traffic:   up,
-			})
-		}
+		appendStat("outbound", outbound, counter.write.Swap(0), counter.read.Swap(0))
 	}
-
 	for user, counter := range c.users {
-		down := counter.write.Swap(0)
-		up := counter.read.Swap(0)
-		if down > 0 || up > 0 {
-			s = append(s, model.Stats{
-				DateTime:  dt,
-				Resource:  "user",
-				Tag:       user,
-				Direction: false,
-				Traffic:   down,
-			}, model.Stats{
-				DateTime:  dt,
-				Resource:  "user",
-				Tag:       user,
-				Direction: true,
-				Traffic:   up,
-			})
-		}
+		appendStat("user", user, counter.write.Swap(0), counter.read.Swap(0))
 	}
 	return &s
 }

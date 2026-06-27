@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -94,6 +95,10 @@ func InitDB(dbPath string) error {
 		db.Create(&defaultOutbound)
 	}
 
+	if err = dedupStats(); err != nil {
+		return err
+	}
+
 	err = db.AutoMigrate(
 		&model.Setting{},
 		&model.Tls{},
@@ -116,6 +121,33 @@ func InitDB(dbPath string) error {
 	}
 
 	return nil
+}
+
+// dedupStats merges traffic for duplicate groups of (resource, tag, date_time, direction)
+func dedupStats() error {
+	if !db.Migrator().HasTable(&model.Stats{}) {
+		return nil
+	}
+
+	var dupGroups int64
+	err := db.Raw("SELECT COUNT(*) FROM (SELECT 1 FROM stats GROUP BY resource, tag, date_time, direction HAVING COUNT(*) > 1)").Scan(&dupGroups).Error
+	if err != nil {
+		return err
+	}
+	if dupGroups == 0 {
+		return nil
+	}
+	log.Printf("stats: collapsing %d duplicate group(s) before adding unique index", dupGroups)
+
+	keepIds := "SELECT MIN(id) FROM stats GROUP BY resource, tag, date_time, direction"
+	if err = db.Exec(`UPDATE stats SET traffic = (
+		SELECT SUM(s2.traffic) FROM stats s2
+		WHERE s2.resource = stats.resource AND s2.tag = stats.tag
+		  AND s2.date_time = stats.date_time AND s2.direction = stats.direction)
+		WHERE id IN (` + keepIds + `)`).Error; err != nil {
+		return err
+	}
+	return db.Exec("DELETE FROM stats WHERE id NOT IN (" + keepIds + ")").Error
 }
 
 func GetDB() *gorm.DB {

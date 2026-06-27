@@ -42,33 +42,34 @@ var defaultConfig = `{
 }`
 
 var defaultValueMap = map[string]string{
-	"webListen":       "",
-	"webDomain":       "",
-	"webPort":         "2095",
-	"secret":          common.Random(32),
-	"webCertFile":     "",
-	"webKeyFile":      "",
-	"webPath":         "/app/",
-	"webURI":          "",
-	"sessionMaxAge":   "0",
-	"trafficAge":      "30",
-	"timeLocation":    "Asia/Tehran",
-	"subListen":       "",
-	"subPort":         "2096",
-	"subPath":         "/sub/",
-	"subDomain":       "",
-	"subCertFile":     "",
-	"subKeyFile":      "",
-	"subUpdates":      "12",
-	"subEncode":       "true",
-	"subShowInfo":     "false",
-	"subURI":          "",
-	"subJsonExt":      "",
-	"subClashExt":     "",
-	"globalReset":     "",
-	"globalResetLast": "0",
-	"config":          defaultConfig,
-	"version":         config.GetVersion(),
+	"webListen":          "",
+	"webDomain":          "",
+	"webPort":            "2095",
+	"secret":             common.Random(32),
+	"webCertFile":        "",
+	"webKeyFile":         "",
+	"webPath":            "/app/",
+	"webURI":             "",
+	"sessionMaxAge":      "0",
+	"trafficAge":         "30",
+	"statsBucketSeconds": "60",
+	"timeLocation":       "Asia/Tehran",
+	"subListen":          "",
+	"subPort":            "2096",
+	"subPath":            "/sub/",
+	"subDomain":          "",
+	"subCertFile":        "",
+	"subKeyFile":         "",
+	"subUpdates":         "12",
+	"subEncode":          "true",
+	"subShowInfo":        "false",
+	"subURI":             "",
+	"subJsonExt":         "",
+	"subClashExt":        "",
+	"globalReset":        "",
+	"globalResetLast":    "0",
+	"config":             defaultConfig,
+	"version":            config.GetVersion(),
 }
 
 type SettingService struct {
@@ -244,6 +245,22 @@ func (s *SettingService) GetSessionMaxAge() (int, error) {
 
 func (s *SettingService) GetTrafficAge() (int, error) {
 	return s.getInt("trafficAge")
+}
+
+// GetStatsBucketSeconds returns the bucket size (in seconds) that traffic
+// samples are rounded down to before being stored. Larger buckets mean fewer
+// rows at the cost of chart resolution. Falls back to the default on a missing
+// or non-positive value.
+func (s *SettingService) GetStatsBucketSeconds() (int64, error) {
+	v, err := s.getInt("statsBucketSeconds")
+	if err != nil {
+		return 0, err
+	}
+	if v < 1 {
+		def, _ := strconv.Atoi(defaultValueMap["statsBucketSeconds"])
+		return int64(def), nil
+	}
+	return int64(v), nil
 }
 
 func (s *SettingService) GetTimeLocation() (*time.Location, error) {
