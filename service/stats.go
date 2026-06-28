@@ -149,7 +149,19 @@ func (s *StatsService) GetStats(resource string, tag string, limit int, start in
 		return nil, err
 	}
 
-	return s.downsampleStats(result, startTime, endTime, 360), nil
+	bucketSeconds, _ := (&SettingService{}).GetStatsBucketSeconds()
+	if bucketSeconds < 1 {
+		bucketSeconds = 1
+	}
+	numBuckets := 360
+	if maxBuckets := (endTime - startTime) / bucketSeconds; maxBuckets < int64(numBuckets) {
+		numBuckets = int(maxBuckets)
+	}
+	if numBuckets < 1 {
+		numBuckets = 1
+	}
+
+	return s.downsampleStats(result, startTime, endTime, numBuckets), nil
 }
 
 func (s *StatsService) downsampleStats(stats []model.Stats, startTime, endTime int64, numBuckets int) any {
@@ -177,7 +189,7 @@ func (s *StatsService) downsampleStats(stats []model.Stats, startTime, endTime i
 		}
 	}
 
-	return map[string]any{"stats": result, "startTime": startTime, "bucketSpan": bucketSpan}
+	return map[string]any{"stats": result, "startTime": startTime, "bucketSpan": bucketSpan, "numBuckets": numBuckets}
 }
 
 func (s *StatsService) GetOnlines() (onlines, error) {
