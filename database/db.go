@@ -139,15 +139,21 @@ func dedupStats() error {
 	}
 	log.Printf("stats: collapsing %d duplicate group(s) before adding unique index", dupGroups)
 
-	keepIds := "SELECT MIN(id) FROM stats GROUP BY resource, tag, date_time, direction"
-	if err = db.Exec(`UPDATE stats SET traffic = (
-		SELECT SUM(s2.traffic) FROM stats s2
-		WHERE s2.resource = stats.resource AND s2.tag = stats.tag
-		  AND s2.date_time = stats.date_time AND s2.direction = stats.direction)
-		WHERE id IN (` + keepIds + `)`).Error; err != nil {
-		return err
-	}
-	return db.Exec("DELETE FROM stats WHERE id NOT IN (" + keepIds + ")").Error
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(`CREATE TEMP TABLE stats_dedup AS
+			SELECT MIN(id) AS id, resource, tag, date_time, direction, SUM(traffic) AS traffic
+			FROM stats GROUP BY resource, tag, date_time, direction`).Error; err != nil {
+			return err
+		}
+		if err := tx.Exec("DELETE FROM stats").Error; err != nil {
+			return err
+		}
+		if err := tx.Exec(`INSERT INTO stats (id, resource, tag, date_time, direction, traffic)
+			SELECT id, resource, tag, date_time, direction, traffic FROM stats_dedup`).Error; err != nil {
+			return err
+		}
+		return tx.Exec("DROP TABLE stats_dedup").Error
+	})
 }
 
 func GetDB() *gorm.DB {
