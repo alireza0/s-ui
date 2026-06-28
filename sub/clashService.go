@@ -389,14 +389,50 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 		output["proxies"] = proxies
 	}
 
-	if pg, ok := output["proxy-groups"].([]interface{}); !ok || len(pg) == 0 {
+	// Inject default Proxy + Auto unless user already has "Proxy", or
+	// no custom group references it (fully custom config: don't inject).
+	pgSlice, _ := output["proxy-groups"].([]interface{})
+	inject := !hasGroupNamed(pgSlice, "Proxy")
+	if inject && len(pgSlice) > 0 {
+		inject = false
+		for _, item := range pgSlice {
+			if g, ok := item.(map[string]interface{}); ok {
+				if proxies, ok := g["proxies"].([]interface{}); ok {
+					for _, p := range proxies {
+						if name, ok := p.(string); ok && name == "Proxy" {
+							inject = true
+							break
+						}
+					}
+				}
+			}
+			if inject {
+				break
+			}
+		}
+	}
+	if inject {
 		var proxyGroups []map[string]interface{}
 		if err := yaml.Unmarshal([]byte(ProxyGroups), &proxyGroups); err != nil {
-			logger.Error(err.Error())
+			return "", err
 		}
 		proxyGroups[1]["proxies"] = proxyTags
 		proxyGroups[0]["proxies"] = append([]string{proxyGroups[1]["name"].(string)}, proxyTags...)
-		output["proxy-groups"] = proxyGroups
+		// Don't inject a duplicate "Auto" if the user already defines one.
+		if hasGroupNamed(pgSlice, "Auto") {
+			proxyGroups = proxyGroups[:1]
+			proxyGroups[0]["proxies"] = proxyTags
+		}
+		if pg, ok := output["proxy-groups"].([]interface{}); ok {
+			for _, item := range pg {
+				if g, ok := item.(map[string]interface{}); ok {
+					proxyGroups = append(proxyGroups, g)
+				}
+			}
+			output["proxy-groups"] = proxyGroups
+		} else {
+			output["proxy-groups"] = proxyGroups
+		}
 	}
 
 	result, err := yaml.Marshal(output)
@@ -404,4 +440,23 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 		return "", err
 	}
 	return string(result), nil
+}
+
+// hasGroupNamed checks whether a "proxy-groups" interface{} slice contains a group with the given name.
+// Used to avoid injecting duplicate "Proxy" / "Auto" default groups when the user already defined their own.
+func hasGroupNamed(pg interface{}, name string) bool {
+	list, ok := pg.([]interface{})
+	if !ok {
+		return false
+	}
+	for _, item := range list {
+		group, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if gname, ok := group["name"].(string); ok && gname == name {
+			return true
+		}
+	}
+	return false
 }
