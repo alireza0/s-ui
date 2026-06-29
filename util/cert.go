@@ -56,6 +56,18 @@ func parseLeafCert(pemData string) *x509.Certificate {
 	}
 }
 
+// CertIsSelfSigned reports whether the leaf certificate in pemData is
+// self-signed, i.e. its signature verifies against its own public key. Only
+// self-signed certificates should be pinned via certificate_public_key_sha256;
+// CA-signed certificates are validated normally.
+func CertIsSelfSigned(pemData string) bool {
+	cert := parseLeafCert(pemData)
+	if cert == nil {
+		return false
+	}
+	return cert.CheckSignature(cert.SignatureAlgorithm, cert.RawTBSCertificate, cert.Signature) == nil
+}
+
 // CertPublicKeySha256 returns the base64-encoded SHA256 of the certificate's
 // SubjectPublicKeyInfo (sing-box `certificate_public_key_sha256` / link pinSHA256).
 func CertPublicKeySha256(pemData string) string {

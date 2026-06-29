@@ -118,7 +118,9 @@ func setCertFingerprint(t *model.Tls) {
 		isReality, _ = r["enabled"].(bool)
 	}
 	if !isReality {
-		pin = util.CertPublicKeySha256(util.CertPEMFromTLS(server))
+		if certPEM := util.CertPEMFromTLS(server); util.CertIsSelfSigned(certPEM) {
+			pin = util.CertPublicKeySha256(certPEM)
+		}
 	}
 
 	var client map[string]interface{}
@@ -133,6 +135,8 @@ func setCertFingerprint(t *model.Tls) {
 
 	if pin != "" {
 		client["certificate_public_key_sha256"] = []string{pin}
+		delete(client, "certificate")
+		delete(client, "certificate_path")
 	} else {
 		delete(client, "certificate_public_key_sha256")
 	}
