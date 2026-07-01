@@ -1,7 +1,6 @@
 package sub
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	"github.com/alireza0/s-ui/database/model"
 	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/util"
+	protocolutil "github.com/alireza0/s-ui/util/protocol"
 )
 
 const defaultJson = `
@@ -155,7 +155,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 					continue
 				}
 				if key == "flow" {
-					if inData.TlsId == 0 || bytes.Contains(inData.Options, []byte(`"transport"`)) {
+					if protocol == "vless" && !protocolutil.VlessVisionFlowAllowedFromOptions(inData.TlsId > 0, inData.Options) {
 						continue
 					}
 				}
