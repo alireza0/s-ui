@@ -10,6 +10,7 @@ import (
 	"github.com/alireza0/s-ui/database/model"
 	"github.com/alireza0/s-ui/util"
 	"github.com/alireza0/s-ui/util/common"
+	protocolutil "github.com/alireza0/s-ui/util/protocol"
 
 	"gorm.io/gorm"
 )
@@ -275,8 +276,7 @@ func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition s
 	}
 	stripVision := false
 	if inboundType == "vless" {
-		transport, _ := inbound["transport"].(map[string]interface{})
-		stripVision = len(transport) > 0 || inbound["tls"] == nil
+		stripVision = !protocolutil.VlessVisionFlowAllowed(protocolutil.TLSEnabled(inbound["tls"]), inbound["transport"])
 	}
 
 	var usersJson []json.RawMessage
