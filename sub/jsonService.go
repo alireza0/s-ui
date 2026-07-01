@@ -155,7 +155,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 					continue
 				}
 				if key == "flow" {
-					if protocol == "vless" && !protocolutil.VlessVisionFlowAllowedFromOptions(inData.TlsId > 0, inData.Options) {
+					if protocol == "vless" && !protocolutil.VlessVisionFlowAllowedFromOptions(protocolutil.TLSEnabled(outbound["tls"]), inData.Options) {
 						continue
 					}
 				}

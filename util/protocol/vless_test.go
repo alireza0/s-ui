@@ -5,6 +5,27 @@ import (
 	"testing"
 )
 
+func TestTLSEnabled(t *testing.T) {
+	tests := []struct {
+		name string
+		tls  interface{}
+		want bool
+	}{
+		{name: "missing tls", want: false},
+		{name: "enabled tls", tls: map[string]interface{}{"enabled": true}, want: true},
+		{name: "disabled tls", tls: map[string]interface{}{"enabled": false}, want: false},
+		{name: "missing enabled", tls: map[string]interface{}{}, want: false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := TLSEnabled(test.tls); got != test.want {
+				t.Fatalf("got %v, want %v", got, test.want)
+			}
+		})
+	}
+}
+
 func TestVlessVisionFlowAllowed(t *testing.T) {
 	tests := []struct {
 		name      string

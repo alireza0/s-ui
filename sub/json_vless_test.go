@@ -31,6 +31,14 @@ func TestJsonOutboundsStripVlessVisionFlowWithoutTLS(t *testing.T) {
 	}
 }
 
+func TestJsonOutboundsStripVlessVisionFlowWithDisabledTLS(t *testing.T) {
+	outbound := vlessOutboundFromOptions(t, json.RawMessage(`{"transport":{}}`), map[string]interface{}{"enabled": false})
+
+	if got, ok := outbound["flow"]; ok {
+		t.Fatalf("flow was not stripped: %v", got)
+	}
+}
+
 func vlessOutboundFromOptions(t *testing.T, options json.RawMessage, tls map[string]interface{}) map[string]interface{} {
 	t.Helper()
 

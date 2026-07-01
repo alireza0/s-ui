@@ -22,6 +22,13 @@ func TestVlessVisionFlowWithRealityTcpTransport(t *testing.T) {
 	})
 }
 
+func TestVlessVisionFlowWithDisabledTLSTcpTransport(t *testing.T) {
+	user := fetchVlessUser(t, map[string]interface{}{"enabled": false}, map[string]interface{}{"type": "tcp"})
+	if got := user["flow"]; got != "" {
+		t.Fatalf("flow was not stripped: %q", got)
+	}
+}
+
 func testVlessVisionFlowWithTcpTransport(t *testing.T, tls map[string]interface{}) {
 	t.Helper()
 	user := fetchVlessUser(t, tls, map[string]interface{}{"type": "tcp"})

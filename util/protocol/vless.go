@@ -2,6 +2,15 @@ package protocol
 
 import "encoding/json"
 
+func TLSEnabled(tls interface{}) bool {
+	tlsMap, ok := tls.(map[string]interface{})
+	if !ok {
+		return false
+	}
+	enabled, _ := tlsMap["enabled"].(bool)
+	return enabled
+}
+
 func VlessVisionFlowAllowed(hasTLS bool, transport interface{}) bool {
 	if !hasTLS {
 		return false

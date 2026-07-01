@@ -276,7 +276,7 @@ func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition s
 	}
 	stripVision := false
 	if inboundType == "vless" {
-		stripVision = !protocolutil.VlessVisionFlowAllowed(inbound["tls"] != nil, inbound["transport"])
+		stripVision = !protocolutil.VlessVisionFlowAllowed(protocolutil.TLSEnabled(inbound["tls"]), inbound["transport"])
 	}
 
 	var usersJson []json.RawMessage
