@@ -116,6 +116,9 @@ func prepareTls(t *model.Tls) map[string]interface{} {
 	if err := json.Unmarshal(t.Server, &iTls); err != nil {
 		return nil
 	}
+	if fp := CertSha256Hex(CertPEMFromTLS(iTls)); fp != "" {
+		oTls["certificate_public_key_sha256"] = []interface{}{fp}
+	}
 
 	for k, v := range iTls {
 		switch k {
