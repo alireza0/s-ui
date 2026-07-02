@@ -117,7 +117,7 @@ func prepareTls(t *model.Tls) map[string]interface{} {
 		return nil
 	}
 	if fp := CertSha256Hex(CertPEMFromTLS(iTls)); fp != "" {
-		oTls["certificate_public_key_sha256"] = []string{fp}
+		oTls["certificate_public_key_sha256"] = []interface{}{fp}
 	}
 
 	for k, v := range iTls {
