@@ -91,7 +91,7 @@ update() {
 
 custom_version() {
     echo "Enter the panel version (like 0.0.1):"
-    read panel_version
+    read panel_version && panel_version="v${panel_version}"
 
     if [ -z "$panel_version" ]; then
         echo "Panel version cannot be empty. Exiting."
