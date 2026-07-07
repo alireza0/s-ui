@@ -33,15 +33,18 @@ type ConfigService struct {
 }
 
 type SingBoxConfig struct {
-	Log          json.RawMessage   `json:"log"`
-	Dns          json.RawMessage   `json:"dns"`
-	Ntp          json.RawMessage   `json:"ntp"`
-	Inbounds     []json.RawMessage `json:"inbounds"`
-	Outbounds    []json.RawMessage `json:"outbounds"`
-	Services     []json.RawMessage `json:"services"`
-	Endpoints    []json.RawMessage `json:"endpoints"`
-	Route        json.RawMessage   `json:"route"`
-	Experimental json.RawMessage   `json:"experimental"`
+	Log                  json.RawMessage   `json:"log"`
+	Dns                  json.RawMessage   `json:"dns"`
+	Ntp                  json.RawMessage   `json:"ntp"`
+	Certificate          json.RawMessage   `json:"certificate"`
+	CertificateProviders []json.RawMessage `json:"certificate_providers"`
+	HTTPClients          []json.RawMessage `json:"http_clients"`
+	Inbounds             []json.RawMessage `json:"inbounds"`
+	Outbounds            []json.RawMessage `json:"outbounds"`
+	Services             []json.RawMessage `json:"services"`
+	Endpoints            []json.RawMessage `json:"endpoints"`
+	Route                json.RawMessage   `json:"route"`
+	Experimental         json.RawMessage   `json:"experimental"`
 }
 
 func NewConfigService(core *core.Core) *ConfigService {
