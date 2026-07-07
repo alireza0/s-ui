@@ -259,9 +259,7 @@ func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition s
 	}
 	if inboundType == "shadowsocks" {
 		method, _ := inbound["method"].(string)
-		if method == "2022-blake3-aes-128-gcm" {
-			inboundType = "shadowsocks16"
-		}
+		inboundType = util.ShadowsocksClientConfigKey(method)
 	}
 
 	var users []string
