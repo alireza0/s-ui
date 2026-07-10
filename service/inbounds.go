@@ -272,18 +272,33 @@ func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition s
 		return nil, err
 	}
 	stripVision := false
+	inboundFlow := ""
 	if inboundType == "vless" {
 		transportType := ""
 		if tr, ok := inbound["transport"].(map[string]interface{}); ok {
 			transportType, _ = tr["type"].(string)
 		}
 		stripVision = inbound["tls"] == nil || transportType != ""
+		if !stripVision {
+			inboundFlow, _ = inbound["flow"].(string)
+		}
 	}
 
 	var usersJson []json.RawMessage
 	for _, user := range users {
 		if stripVision {
 			user = strings.ReplaceAll(user, "xtls-rprx-vision", "")
+		} else if inboundType == "vless" && inboundFlow != "" {
+			// inject inbound flow for users with no explicit flow (inherit)
+			var u map[string]interface{}
+			if err := json.Unmarshal([]byte(user), &u); err == nil {
+				if _, hasFlow := u["flow"]; !hasFlow {
+					u["flow"] = inboundFlow
+					if b, err := json.Marshal(u); err == nil {
+						user = string(b)
+					}
+				}
+			}
 		}
 		usersJson = append(usersJson, json.RawMessage(user))
 	}
