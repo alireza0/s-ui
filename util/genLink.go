@@ -175,10 +175,21 @@ func shadowsocksLink(
 
 	uriBase := fmt.Sprintf("ss://%s", toBase64([]byte(fmt.Sprintf("%s:%s", method, strings.Join(userPass, ":")))))
 
+	plugin, _ := inbound["plugin"].(string)
+	pluginOpts, _ := inbound["plugin_opts"].(string)
+
 	var links []string
 	for _, addr := range addrs {
 		port, _ := addr["server_port"].(float64)
-		links = append(links, fmt.Sprintf("%s@%s:%.0f#%s", uriBase, addr["server"].(string), port, addr["remark"].(string)))
+		link := fmt.Sprintf("%s@%s:%.0f", uriBase, addr["server"].(string), port)
+		if plugin != "" {
+			link += "?plugin=" + plugin
+			if pluginOpts != "" {
+				link += ";" + pluginOpts
+			}
+		}
+		link += "#" + addr["remark"].(string)
+		links = append(links, link)
 	}
 	return links
 }
