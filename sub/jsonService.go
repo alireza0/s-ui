@@ -143,6 +143,13 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 			pass, _ = configs[util.ShadowsocksClientConfigKey(method)].(map[string]interface{})["password"].(string)
 			userPass = append(userPass, pass)
 			outbound["password"] = strings.Join(userPass, ":")
+		} else if protocol == "snell" {
+			config, _ := configs["snell"].(map[string]interface{})
+			if userKey, _ := config["userkey"].(string); userKey != "" {
+				outbound["userkey"] = userKey
+			} else if password, _ := config["password"].(string); password != "" {
+				outbound["userkey"] = password
+			}
 		} else { // Other protocols
 			config, _ := configs[protocol].(map[string]interface{})
 			for key, value := range config {

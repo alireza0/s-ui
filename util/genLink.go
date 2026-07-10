@@ -11,7 +11,7 @@ import (
 	"github.com/alireza0/s-ui/util/common"
 )
 
-var InboundTypeWithLink = []string{"socks", "http", "mixed", "shadowsocks", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}
+var InboundTypeWithLink = []string{"socks", "http", "mixed", "shadowsocks", "snell", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}
 
 type LinkParam struct {
 	Key   string
@@ -87,6 +87,8 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 		)
 	case "shadowsocks":
 		return shadowsocksLink(userConfig, *inbound, Addrs)
+	case "snell":
+		return snellLink(userConfig["snell"], *inbound, Addrs)
 	case "naive":
 		return naiveLink(userConfig["naive"], *inbound, Addrs)
 	case "hysteria":
@@ -179,6 +181,42 @@ func shadowsocksLink(
 	for _, addr := range addrs {
 		port, _ := addr["server_port"].(float64)
 		links = append(links, fmt.Sprintf("%s@%s:%.0f#%s", uriBase, addr["server"].(string), port, addr["remark"].(string)))
+	}
+	return links
+}
+
+func snellLink(
+	userConfig map[string]interface{},
+	inbound map[string]interface{},
+	addrs []map[string]interface{}) []string {
+
+	psk, _ := inbound["psk"].(string)
+	userKey, _ := userConfig["userkey"].(string)
+	if userKey == "" {
+		userKey, _ = userConfig["password"].(string)
+	}
+
+	var links []string
+	for _, addr := range addrs {
+		var params []LinkParam
+		version := 4
+		if v, ok := inbound["version"].(float64); ok && int(v) == 6 {
+			version = 6
+		}
+		params = append(params, LinkParam{"version", fmt.Sprintf("%d", version)})
+		if obfsMode, ok := inbound["obfs_mode"].(string); ok && version == 4 && obfsMode != "" {
+			params = append(params, LinkParam{"obfs_mode", obfsMode})
+		}
+		if mode, ok := inbound["mode"].(string); ok && version == 6 && mode != "" {
+			params = append(params, LinkParam{"mode", mode})
+		}
+		if userKey != "" {
+			params = append(params, LinkParam{"userkey", userKey})
+		}
+
+		port, _ := addr["server_port"].(float64)
+		uri := fmt.Sprintf("snell://%s@%s:%.0f", psk, addr["server"].(string), port)
+		links = append(links, addParams(uri, params, addr["remark"].(string)))
 	}
 	return links
 }

@@ -31,6 +31,8 @@ func GetOutbound(uri string, i int) (*map[string]interface{}, string, error) {
 			return tuic(u, i)
 		case "ss", "shadowsocks":
 			return ss(u, i)
+		case "snell":
+			return snell(u, i)
 		case "naive+https", "naive+quic", "http2":
 			return parseNaiveLink(u, i)
 		}
@@ -408,6 +410,45 @@ func ss(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		}
 	}
 	return &ss, tag, nil
+}
+
+func snell(u *url.URL, i int) (*map[string]interface{}, string, error) {
+	query, _ := url.ParseQuery(u.RawQuery)
+	host, portStr, _ := net.SplitHostPort(u.Host)
+	port := 1080
+	if len(portStr) > 0 {
+		port, _ = strconv.Atoi(portStr)
+	}
+	version, _ := strconv.Atoi(query.Get("version"))
+	if version == 0 {
+		version = 4
+	}
+
+	tag := u.Fragment
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, u.Fragment)
+	}
+	if tag == "" {
+		tag = fmt.Sprintf("snell-%d", i)
+	}
+
+	snell := map[string]interface{}{
+		"type":        "snell",
+		"tag":         tag,
+		"server":      host,
+		"server_port": port,
+		"version":     version,
+		"psk":         u.User.Username(),
+	}
+	for _, key := range []string{"userkey", "obfs_mode", "obfs_host", "mode", "network"} {
+		if value := query.Get(key); value != "" {
+			snell[key] = value
+		}
+	}
+	if reuse := query.Get("reuse"); reuse == "1" || reuse == "true" {
+		snell["reuse"] = true
+	}
+	return &snell, tag, nil
 }
 
 func parseNaiveLink(u *url.URL, i int) (*map[string]interface{}, string, error) {
