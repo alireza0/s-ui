@@ -32,7 +32,7 @@ type Core struct {
 
 func NewCore() *Core {
 	globalCtx = context.Background()
-	globalCtx = sb.Context(globalCtx, InboundRegistry(), OutboundRegistry(), EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry())
+	globalCtx = sb.Context(globalCtx, InboundRegistry(), OutboundRegistry(), EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry(), CertificateProviderRegistry())
 	return &Core{
 		isRunning: false,
 		instance:  nil,

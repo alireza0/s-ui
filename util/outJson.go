@@ -46,6 +46,8 @@ func FillOutJson(i *model.Inbound, hostname string) error {
 		naiveOut(&outJson, *inbound)
 	case "shadowsocks":
 		shadowsocksOut(&outJson, *inbound)
+	case "snell":
+		snellOut(&outJson, *inbound)
 	case "shadowtls":
 		shadowTlsOut(&outJson, *inbound)
 	case "hysteria":
@@ -146,6 +148,29 @@ func naiveOut(out *map[string]interface{}, inbound map[string]interface{}) {
 func shadowsocksOut(out *map[string]interface{}, inbound map[string]interface{}) {
 	if method, ok := inbound["method"].(string); ok {
 		(*out)["method"] = method
+	}
+}
+
+func snellOut(out *map[string]interface{}, inbound map[string]interface{}) {
+	version, _ := inbound["version"].(float64)
+	for _, key := range []string{"version", "psk", "obfs_mode"} {
+		if value, ok := inbound[key]; ok {
+			(*out)[key] = value
+		} else {
+			delete(*out, key)
+		}
+	}
+	if int(version) == 5 {
+		(*out)["version"] = 4
+		delete(*out, "mode")
+	} else if int(version) == 6 {
+		if value, ok := inbound["mode"]; ok {
+			(*out)["mode"] = value
+		} else {
+			delete(*out, "mode")
+		}
+	} else {
+		delete(*out, "mode")
 	}
 }
 

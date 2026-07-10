@@ -1,8 +1,9 @@
-//go:build with_tailscale
+//go:build with_tailscale && with_gvisor
 
 package core
 
 import (
+	"github.com/sagernet/sing-box/adapter/certificate"
 	"github.com/sagernet/sing-box/adapter/endpoint"
 	"github.com/sagernet/sing-box/adapter/service"
 	"github.com/sagernet/sing-box/dns"
@@ -16,6 +17,10 @@ func registerTailscaleEndpoint(registry *endpoint.Registry) {
 
 func registerTailscaleTransport(registry *dns.TransportRegistry) {
 	tailscale.RegistryTransport(registry)
+}
+
+func registerTailscaleCertificateProvider(registry *certificate.Registry) {
+	tailscale.RegisterCertificateProvider(registry)
 }
 
 func registerDERPService(registry *service.Registry) {

@@ -11,7 +11,7 @@ import (
 	"github.com/alireza0/s-ui/util/common"
 )
 
-var InboundTypeWithLink = []string{"socks", "http", "mixed", "shadowsocks", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}
+var InboundTypeWithLink = []string{"socks", "http", "mixed", "shadowsocks", "snell", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}
 
 type LinkParam struct {
 	Key   string
@@ -87,6 +87,8 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 		)
 	case "shadowsocks":
 		return shadowsocksLink(userConfig, *inbound, Addrs)
+	case "snell":
+		return snellLink(userConfig["snell"], *inbound, Addrs)
 	case "naive":
 		return naiveLink(userConfig["naive"], *inbound, Addrs)
 	case "hysteria":
@@ -175,10 +177,57 @@ func shadowsocksLink(
 
 	uriBase := fmt.Sprintf("ss://%s", toBase64([]byte(fmt.Sprintf("%s:%s", method, strings.Join(userPass, ":")))))
 
+	plugin, _ := inbound["plugin"].(string)
+	pluginOpts, _ := inbound["plugin_opts"].(string)
+
 	var links []string
 	for _, addr := range addrs {
 		port, _ := addr["server_port"].(float64)
-		links = append(links, fmt.Sprintf("%s@%s:%.0f#%s", uriBase, addr["server"].(string), port, addr["remark"].(string)))
+		link := fmt.Sprintf("%s@%s:%.0f", uriBase, addr["server"].(string), port)
+		if plugin != "" {
+			link += "?plugin=" + plugin
+			if pluginOpts != "" {
+				link += ";" + pluginOpts
+			}
+		}
+		link += "#" + addr["remark"].(string)
+		links = append(links, link)
+	}
+	return links
+}
+
+func snellLink(
+	userConfig map[string]interface{},
+	inbound map[string]interface{},
+	addrs []map[string]interface{}) []string {
+
+	psk, _ := inbound["psk"].(string)
+	userKey, _ := userConfig["userkey"].(string)
+	if userKey == "" {
+		userKey, _ = userConfig["password"].(string)
+	}
+
+	var links []string
+	for _, addr := range addrs {
+		var params []LinkParam
+		version := 4
+		if v, ok := inbound["version"].(float64); ok && int(v) == 6 {
+			version = 6
+		}
+		params = append(params, LinkParam{"version", fmt.Sprintf("%d", version)})
+		if obfsMode, ok := inbound["obfs_mode"].(string); ok && version == 4 && obfsMode != "" {
+			params = append(params, LinkParam{"obfs_mode", obfsMode})
+		}
+		if mode, ok := inbound["mode"].(string); ok && version == 6 && mode != "" {
+			params = append(params, LinkParam{"mode", mode})
+		}
+		if userKey != "" {
+			params = append(params, LinkParam{"userkey", userKey})
+		}
+
+		port, _ := addr["server_port"].(float64)
+		uri := fmt.Sprintf("snell://%s@%s:%.0f", psk, addr["server"].(string), port)
+		links = append(links, addParams(uri, params, addr["remark"].(string)))
 	}
 	return links
 }
@@ -236,10 +285,10 @@ func hysteriaLink(
 	for _, addr := range addrs {
 		var params []LinkParam
 		if upmbps, ok := inbound["up_mbps"].(float64); ok {
-			params = append(params, LinkParam{"downmbps", fmt.Sprintf("%.0f", upmbps)})
+			params = append(params, LinkParam{"upmbps", fmt.Sprintf("%.0f", upmbps)})
 		}
 		if downmbps, ok := inbound["down_mbps"].(float64); ok {
-			params = append(params, LinkParam{"upmbps", fmt.Sprintf("%.0f", downmbps)})
+			params = append(params, LinkParam{"downmbps", fmt.Sprintf("%.0f", downmbps)})
 		}
 		if auth, ok := userConfig["auth_str"].(string); ok {
 			params = append(params, LinkParam{"auth", auth})
@@ -287,10 +336,10 @@ func hysteria2Link(
 	for _, addr := range addrs {
 		var params []LinkParam
 		if upmbps, ok := inbound["up_mbps"].(float64); ok {
-			params = append(params, LinkParam{"downmbps", fmt.Sprintf("%.0f", upmbps)})
+			params = append(params, LinkParam{"upmbps", fmt.Sprintf("%.0f", upmbps)})
 		}
 		if downmbps, ok := inbound["down_mbps"].(float64); ok {
-			params = append(params, LinkParam{"upmbps", fmt.Sprintf("%.0f", downmbps)})
+			params = append(params, LinkParam{"downmbps", fmt.Sprintf("%.0f", downmbps)})
 		}
 		if tls, ok := addr["tls"].(map[string]interface{}); ok {
 			getTlsParams(&params, tls, "hysteria2")

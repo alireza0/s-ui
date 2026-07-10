@@ -12,6 +12,7 @@ import (
 	"github.com/sagernet/sing/common"
 	F "github.com/sagernet/sing/common/format"
 	"github.com/sagernet/sing/common/observable"
+	"github.com/sagernet/sing/common/x/list"
 	"github.com/sagernet/sing/service/filemanager"
 )
 
@@ -94,6 +95,7 @@ type defaultFactory struct {
 	level      log.Level
 	subscriber *observable.Subscriber[log.Entry]
 	observer   *observable.Observer[log.Entry]
+	writers    list.List[log.PlatformWriter]
 }
 
 func NewDefaultFactory(
@@ -110,6 +112,7 @@ func NewDefaultFactory(
 		level:      log.LevelTrace,
 		subscriber: observable.NewSubscriber[log.Entry](128),
 	}
+	factory.observer = observable.NewObserver[log.Entry](factory.subscriber, 64)
 	return factory
 }
 
@@ -130,6 +133,12 @@ func (f *defaultFactory) Close() error {
 		common.PtrOrNil(f.file),
 		f.subscriber,
 	)
+}
+
+func (f *defaultFactory) AttachPlatformWriter(writer log.PlatformWriter) {
+	if writer != nil {
+		f.writers.PushBack(writer)
+	}
 }
 
 func (f *defaultFactory) Level() log.Level {
@@ -163,25 +172,34 @@ type observableLogger struct {
 
 func (l *observableLogger) Log(ctx context.Context, level log.Level, args []any) {
 	level = log.OverrideLevelFromContext(level, ctx)
-	if level > l.level {
+	hasPlatformWriters := l.writers.Len() > 0
+	if level > l.level && !hasPlatformWriters {
 		return
 	}
 	msg := F.ToString(args...)
-	switch level {
-	case log.LevelInfo:
-		suiLog.Info(l.tag, msg)
-	case log.LevelWarn:
-		suiLog.Warning(l.tag, msg)
-	case log.LevelPanic:
-	case log.LevelFatal:
-	case log.LevelError:
-		suiLog.Error(l.tag, msg)
-	default:
-		suiLog.Debug(l.tag, msg)
+	if level <= l.level {
+		switch level {
+		case log.LevelInfo:
+			suiLog.Info(l.tag, msg)
+		case log.LevelWarn:
+			suiLog.Warning(l.tag, msg)
+		case log.LevelPanic:
+		case log.LevelFatal:
+		case log.LevelError:
+			suiLog.Error(l.tag, msg)
+		default:
+			suiLog.Debug(l.tag, msg)
+		}
 	}
-	if (l.filePath != "" || l.writer != os.Stderr) && l.writer != nil {
+	if level <= l.level && (l.filePath != "" || l.writer != os.Stderr) && l.writer != nil {
 		message := l.formatter.Format(ctx, level, l.tag, msg, time.Now())
 		l.writer.Write([]byte(message))
+	}
+	if hasPlatformWriters {
+		message := l.formatter.Format(ctx, level, l.tag, msg, time.Now())
+		for item := l.writers.Front(); item != nil; item = item.Next() {
+			item.Value.WriteMessage(level, message)
+		}
 	}
 }
 
