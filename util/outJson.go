@@ -152,15 +152,25 @@ func shadowsocksOut(out *map[string]interface{}, inbound map[string]interface{})
 }
 
 func snellOut(out *map[string]interface{}, inbound map[string]interface{}) {
-	for _, key := range []string{"version", "psk", "obfs_mode", "mode"} {
+	version, _ := inbound["version"].(float64)
+	for _, key := range []string{"version", "psk", "obfs_mode"} {
 		if value, ok := inbound[key]; ok {
 			(*out)[key] = value
 		} else {
 			delete(*out, key)
 		}
 	}
-	if version, ok := inbound["version"].(float64); ok && int(version) == 5 {
+	if int(version) == 5 {
 		(*out)["version"] = 4
+		delete(*out, "mode")
+	} else if int(version) == 6 {
+		if value, ok := inbound["mode"]; ok {
+			(*out)["mode"] = value
+		} else {
+			delete(*out, "mode")
+		}
+	} else {
+		delete(*out, "mode")
 	}
 }
 

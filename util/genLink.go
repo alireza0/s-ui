@@ -274,10 +274,10 @@ func hysteriaLink(
 	for _, addr := range addrs {
 		var params []LinkParam
 		if upmbps, ok := inbound["up_mbps"].(float64); ok {
-			params = append(params, LinkParam{"downmbps", fmt.Sprintf("%.0f", upmbps)})
+			params = append(params, LinkParam{"upmbps", fmt.Sprintf("%.0f", upmbps)})
 		}
 		if downmbps, ok := inbound["down_mbps"].(float64); ok {
-			params = append(params, LinkParam{"upmbps", fmt.Sprintf("%.0f", downmbps)})
+			params = append(params, LinkParam{"downmbps", fmt.Sprintf("%.0f", downmbps)})
 		}
 		if auth, ok := userConfig["auth_str"].(string); ok {
 			params = append(params, LinkParam{"auth", auth})
@@ -325,10 +325,10 @@ func hysteria2Link(
 	for _, addr := range addrs {
 		var params []LinkParam
 		if upmbps, ok := inbound["up_mbps"].(float64); ok {
-			params = append(params, LinkParam{"downmbps", fmt.Sprintf("%.0f", upmbps)})
+			params = append(params, LinkParam{"upmbps", fmt.Sprintf("%.0f", upmbps)})
 		}
 		if downmbps, ok := inbound["down_mbps"].(float64); ok {
-			params = append(params, LinkParam{"upmbps", fmt.Sprintf("%.0f", downmbps)})
+			params = append(params, LinkParam{"downmbps", fmt.Sprintf("%.0f", downmbps)})
 		}
 		if tls, ok := addr["tls"].(map[string]interface{}); ok {
 			getTlsParams(&params, tls, "hysteria2")

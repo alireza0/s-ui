@@ -277,9 +277,9 @@ func hy2(u *url.URL, i int) (*map[string]interface{}, string, error) {
 	if up > 0 {
 		hy2["up_mbps"] = up
 	}
-	if obfs == "salamander" {
+	if obfs == "salamander" || obfs == "gecko" {
 		hy2["obfs"] = map[string]interface{}{
-			"type":     "salamander",
+			"type":     obfs,
 			"password": query.Get("obfs-password"),
 		}
 	}
