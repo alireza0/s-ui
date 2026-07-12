@@ -175,10 +175,28 @@ func shadowsocksLink(
 
 	uriBase := fmt.Sprintf("ss://%s", toBase64([]byte(fmt.Sprintf("%s:%s", method, strings.Join(userPass, ":")))))
 
+	// plugin/plugin_opts are outbound-only fields, stored in out_json
+	var plugin, pluginOpts string
+	var outJson map[string]interface{}
+	if raw, ok := inbound["out_json"].(json.RawMessage); ok {
+		_ = json.Unmarshal(raw, &outJson)
+		plugin, _ = outJson["plugin"].(string)
+		pluginOpts, _ = outJson["plugin_opts"].(string)
+	}
+
 	var links []string
 	for _, addr := range addrs {
 		port, _ := addr["server_port"].(float64)
-		links = append(links, fmt.Sprintf("%s@%s:%.0f#%s", uriBase, addr["server"].(string), port, addr["remark"].(string)))
+		link := fmt.Sprintf("%s@%s:%.0f", uriBase, addr["server"].(string), port)
+		if plugin != "" {
+			pluginVal := plugin
+			if pluginOpts != "" {
+				pluginVal += ";" + pluginOpts
+			}
+			link += "?plugin=" + url.QueryEscape(pluginVal)
+		}
+		link += "#" + addr["remark"].(string)
+		links = append(links, link)
 	}
 	return links
 }
