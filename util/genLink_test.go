@@ -97,3 +97,67 @@ func TestShadowsocksLinkPlugin(t *testing.T) {
 		t.Errorf("empty out_json should not produce plugin param: %s", links[0])
 	}
 }
+
+func TestVlessFlowGate(t *testing.T) {
+	userConfigWithFlow := map[string]interface{}{
+		"uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+		"flow": "xtls-rprx-vision",
+	}
+	userConfigNoFlow := map[string]interface{}{
+		"uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+	}
+	addrs := []map[string]interface{}{
+		{
+			"server":      "1.2.3.4",
+			"server_port": float64(443),
+			"remark":      "test",
+			"tls": map[string]interface{}{
+				"enabled": true,
+				"reality": map[string]interface{}{"enabled": true},
+			},
+		},
+	}
+
+	makeInbound := func(realityEnabled bool, allowFlow interface{}) map[string]interface{} {
+		reality := map[string]interface{}{"enabled": realityEnabled}
+		tls := map[string]interface{}{"reality": reality}
+		outJsonMap := map[string]interface{}{"tls": tls}
+		if allowFlow != nil {
+			outJsonMap["allow_flow"] = allowFlow
+		}
+		b, _ := json.Marshal(outJsonMap)
+		return map[string]interface{}{"out_json": json.RawMessage(b)}
+	}
+
+	getFlow := func(link string) string {
+		u, _ := url.Parse(link)
+		q, _ := url.ParseQuery(u.RawQuery)
+		return q.Get("flow")
+	}
+
+	// no out_json at all — flow must be absent even with user flow set
+	links := vlessLink(userConfigWithFlow, map[string]interface{}{}, addrs)
+	if getFlow(links[0]) != "" {
+		t.Errorf("no out_json: flow should be absent, got: %s", links[0])
+	}
+
+	// allow_flow = false explicitly — flow suppressed
+	if getFlow(vlessLink(userConfigWithFlow, makeInbound(true, false), addrs)[0]) != "" {
+		t.Errorf("allow_flow=false: flow should be absent")
+	}
+
+	// allow_flow = true explicitly — flow present
+	if getFlow(vlessLink(userConfigWithFlow, makeInbound(true, true), addrs)[0]) != "xtls-rprx-vision" {
+		t.Errorf("allow_flow=true: flow should be 'xtls-rprx-vision'")
+	}
+
+	// reality enabled + no allow_flow flag — backwards compat defaults to enabled
+	if getFlow(vlessLink(userConfigWithFlow, makeInbound(true, nil), addrs)[0]) != "xtls-rprx-vision" {
+		t.Errorf("reality+no allow_flow: flow should default to 'xtls-rprx-vision'")
+	}
+
+	// allow_flow = true but user has no flow value — param must be absent
+	if getFlow(vlessLink(userConfigNoFlow, makeInbound(true, true), addrs)[0]) != "" {
+		t.Errorf("allow_flow=true, no user flow: flow param should be absent")
+	}
+}

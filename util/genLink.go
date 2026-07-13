@@ -421,10 +421,11 @@ func vlessLink(
 	if raw, ok := inbound["out_json"].(json.RawMessage); ok {
 		var outJson map[string]interface{}
 		if json.Unmarshal(raw, &outJson) == nil {
-			if af, ok := outJson["allow_flow"].(bool); ok && af {
-				inboundFlowEnabled = true
+			if af, ok := outJson["allow_flow"]; ok {
+				// Key is present: honour the explicit value
+				inboundFlowEnabled, _ = af.(bool)
 			} else {
-				// Reality TLS implies flow by default even if flag not persisted yet
+				// Key absent: auto-enable for reality TLS (backwards compat)
 				if tls, ok := outJson["tls"].(map[string]interface{}); ok {
 					if reality, ok := tls["reality"].(map[string]interface{}); ok {
 						if enabled, ok := reality["enabled"].(bool); ok && enabled {
