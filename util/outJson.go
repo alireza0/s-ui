@@ -221,6 +221,16 @@ func vlessOut(out *map[string]interface{}, inbound map[string]interface{}) {
 	if transport, ok := inbound["transport"]; ok {
 		(*out)["transport"] = transport
 	}
+	// Default allow_flow on when TLS reality is enabled (vision flow is standard with reality)
+	if _, exists := (*out)["allow_flow"]; !exists {
+		if tls, ok := (*out)["tls"].(map[string]interface{}); ok {
+			if reality, ok := tls["reality"].(map[string]interface{}); ok {
+				if enabled, ok := reality["enabled"].(bool); ok && enabled {
+					(*out)["allow_flow"] = true
+				}
+			}
+		}
+	}
 }
 
 func trojanOut(out *map[string]interface{}, inbound map[string]interface{}) {

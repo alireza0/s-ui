@@ -150,6 +150,10 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 					continue
 				}
 				if key == "flow" {
+					// Inbound-level flow gate: skip client flow unless out_json.allow_flow is true
+					if allowFlow, _ := outbound["allow_flow"].(bool); !allowFlow {
+						continue
+					}
 					if inData.TlsId == 0 {
 						continue
 					}

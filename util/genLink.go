@@ -415,6 +415,27 @@ func vlessLink(
 	if len(baseParams) == 1 && baseParams[0].Value == "tcp" {
 		isTcp = true
 	}
+
+	// Inbound-level flow gate: only allow client flow when out_json.allow_flow is true
+	var inboundFlowEnabled bool
+	if raw, ok := inbound["out_json"].(json.RawMessage); ok {
+		var outJson map[string]interface{}
+		if json.Unmarshal(raw, &outJson) == nil {
+			if af, ok := outJson["allow_flow"].(bool); ok && af {
+				inboundFlowEnabled = true
+			} else {
+				// Reality TLS implies flow by default even if flag not persisted yet
+				if tls, ok := outJson["tls"].(map[string]interface{}); ok {
+					if reality, ok := tls["reality"].(map[string]interface{}); ok {
+						if enabled, ok := reality["enabled"].(bool); ok && enabled {
+							inboundFlowEnabled = true
+						}
+					}
+				}
+			}
+		}
+	}
+
 	var links []string
 
 	for _, addr := range addrs {
@@ -422,7 +443,7 @@ func vlessLink(
 		copy(params, baseParams)
 		if tls, ok := addr["tls"].(map[string]interface{}); ok && tls["enabled"].(bool) {
 			getTlsParams(&params, tls, "vless")
-			if flow, ok := userConfig["flow"].(string); ok && isTcp {
+			if flow, ok := userConfig["flow"].(string); ok && flow != "" && isTcp && inboundFlowEnabled {
 				params = append(params, LinkParam{"flow", flow})
 			}
 		}
