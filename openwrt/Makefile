@@ -44,12 +44,12 @@ endef
 
 define Package/sui/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/sui $(1)/usr/bin/sui
+	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/s-ui $(1)/usr/bin/sui
 	$(INSTALL_DIR) $(1)/usr/share/s-ui/web
 	$(CP) $(PKG_BUILD_DIR)/frontend/dist/* $(1)/usr/share/s-ui/web/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./s-ui.init $(1)/etc/init.d/s-ui
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwrt/s-ui.init $(1)/etc/init.d/s-ui
 endef
 
-$(eval $(call GoBinPackage,sui))
+$(eval $(call GoPackage,sui))
 $(eval $(call BuildPackage,sui))
