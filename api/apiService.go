@@ -557,8 +557,8 @@ func (a *ApiService) NodeApplyInbound(c *gin.Context) {
 		jsonMsg(c, "nodeApplyInbound", err)
 		return
 	}
-	// For now, just acknowledge. Full local apply will be wired in M4.
-	jsonMsg(c, "nodeApplyInbound", nil)
+	err = a.InboundService.ApplyNodeManagedInbound(&req)
+	jsonMsg(c, "nodeApplyInbound", err)
 }
 
 // NodeDeleteInbound removes a managed inbound on this node.
@@ -573,7 +573,8 @@ func (a *ApiService) NodeDeleteInbound(c *gin.Context) {
 		jsonMsg(c, "nodeDeleteInbound", err)
 		return
 	}
-	jsonMsg(c, "nodeDeleteInbound", nil)
+	err = a.InboundService.DeleteNodeManagedInbound(req.Tag)
+	jsonMsg(c, "nodeDeleteInbound", err)
 }
 
 // NodeApplyUsers replaces users on a managed inbound on this node.
@@ -588,7 +589,8 @@ func (a *ApiService) NodeApplyUsers(c *gin.Context) {
 		jsonMsg(c, "nodeApplyUsers", err)
 		return
 	}
-	jsonMsg(c, "nodeApplyUsers", nil)
+	err = a.InboundService.ApplyNodeManagedUsers(&req)
+	jsonMsg(c, "nodeApplyUsers", err)
 }
 
 func readDataPayload(c *gin.Context) ([]byte, error) {
