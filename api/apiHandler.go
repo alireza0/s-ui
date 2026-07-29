@@ -62,6 +62,14 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		a.apiv2.ReloadTokens()
 	case "getCertPing":
 		a.ApiService.GetCertPing(c)
+	case "saveNode":
+		a.ApiService.SaveNode(c)
+	case "deleteNode":
+		a.ApiService.DeleteNode(c)
+	case "setNodeEnable":
+		a.ApiService.SetNodeEnable(c)
+	case "testNode":
+		a.ApiService.TestNode(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
@@ -83,6 +91,10 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		return
 	case "users":
 		a.ApiService.GetUsers(c)
+	case "nodes":
+		a.ApiService.GetNodes(c)
+	case "node":
+		a.ApiService.GetNode(c)
 	case "settings":
 		a.ApiService.GetSettings(c)
 	case "stats":

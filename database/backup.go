@@ -59,6 +59,7 @@ func GetDb(exclude string) ([]byte, error) {
 		&model.Stats{},
 		&model.Client{},
 		&model.Changes{},
+		&model.Node{},
 	)
 	if err != nil {
 		return nil, err

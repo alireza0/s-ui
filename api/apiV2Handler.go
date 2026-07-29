@@ -57,6 +57,14 @@ func (a *APIv2Handler) postHandler(c *gin.Context) {
 		a.ApiService.ImportDb(c)
 	case "getCertPing":
 		a.ApiService.GetCertPing(c)
+	case "saveNode":
+		a.ApiService.SaveNode(c)
+	case "deleteNode":
+		a.ApiService.DeleteNode(c)
+	case "setNodeEnable":
+		a.ApiService.SetNodeEnable(c)
+	case "testNode":
+		a.ApiService.TestNode(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
@@ -68,7 +76,7 @@ func (a *APIv2Handler) getHandler(c *gin.Context) {
 	switch action {
 	case "load":
 		a.ApiService.LoadData(c)
-	case "inbounds", "outbounds", "endpoints", "services", "tls", "clients", "config":
+	case "inbounds", "outbounds", "endpoints", "services", "tls", "clients", "nodes", "config":
 		err := a.ApiService.LoadPartialData(c, []string{action})
 		if err != nil {
 			jsonMsg(c, action, err)

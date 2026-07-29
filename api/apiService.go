@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/alireza0/s-ui/database"
+	"github.com/alireza0/s-ui/database/model"
 	"github.com/alireza0/s-ui/logger"
 	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/util"
+	"github.com/alireza0/s-ui/util/common"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,6 +29,7 @@ type ApiService struct {
 	service.PanelService
 	service.StatsService
 	service.ServerService
+	service.NodeService
 }
 
 func (a *ApiService) LoadData(c *gin.Context) {
@@ -167,6 +170,12 @@ func (a *ApiService) LoadPartialData(c *gin.Context, objs []string) error {
 				return err
 			}
 			data[obj] = settings
+		case "nodes":
+			nodes, err := a.NodeService.GetAll()
+			if err != nil {
+				return err
+			}
+			data[obj] = nodes
 		}
 	}
 
@@ -422,4 +431,135 @@ func (a *ApiService) GetCertPing(c *gin.Context) {
 	port := c.PostForm("port")
 	tlsPing, err := util.GetTlsPing(domain, port)
 	jsonObj(c, tlsPing, err)
+}
+
+func (a *ApiService) GetNodes(c *gin.Context) {
+	nodes, err := a.NodeService.GetAll()
+	if err != nil {
+		jsonMsg(c, "nodes", err)
+		return
+	}
+	jsonObj(c, nodes, nil)
+}
+
+func (a *ApiService) GetNode(c *gin.Context) {
+	id, err := parseIDFormOrQuery(c)
+	if err != nil {
+		jsonMsg(c, "node", err)
+		return
+	}
+	node, err := a.NodeService.GetById(id)
+	if err != nil {
+		jsonMsg(c, "node", err)
+		return
+	}
+	jsonObj(c, node, nil)
+}
+
+func (a *ApiService) SaveNode(c *gin.Context) {
+	raw, err := readDataPayload(c)
+	if err != nil {
+		jsonMsg(c, "saveNode", err)
+		return
+	}
+	var node model.Node
+	if err := json.Unmarshal(raw, &node); err != nil {
+		jsonMsg(c, "saveNode", err)
+		return
+	}
+	if node.Id == 0 {
+		err = a.NodeService.Create(&node)
+	} else {
+		err = a.NodeService.Update(node.Id, &node)
+	}
+	if err != nil {
+		jsonMsg(c, "saveNode", err)
+		return
+	}
+	jsonObj(c, node, nil)
+}
+
+func (a *ApiService) DeleteNode(c *gin.Context) {
+	id, err := parseIDFormOrQuery(c)
+	if err != nil {
+		jsonMsg(c, "deleteNode", err)
+		return
+	}
+	err = a.NodeService.Delete(id)
+	jsonMsg(c, "deleteNode", err)
+}
+
+func (a *ApiService) SetNodeEnable(c *gin.Context) {
+	id, err := parseIDFormOrQuery(c)
+	if err != nil {
+		jsonMsg(c, "setNodeEnable", err)
+		return
+	}
+	enableRaw := c.PostForm("enable")
+	if enableRaw == "" {
+		enableRaw = c.Query("enable")
+	}
+	enable := enableRaw == "1" || enableRaw == "true" || enableRaw == "TRUE"
+	err = a.NodeService.SetEnable(id, enable)
+	jsonMsg(c, "setNodeEnable", err)
+}
+
+func (a *ApiService) TestNode(c *gin.Context) {
+	raw, err := readDataPayload(c)
+	if err != nil {
+		jsonMsg(c, "testNode", err)
+		return
+	}
+	var node model.Node
+	if err := json.Unmarshal(raw, &node); err != nil {
+		jsonMsg(c, "testNode", err)
+		return
+	}
+	if node.Id > 0 && node.Address == "" {
+		existing, err := a.NodeService.GetById(node.Id)
+		if err != nil {
+			jsonMsg(c, "testNode", err)
+			return
+		}
+		node = *existing
+	}
+	res, err := a.NodeService.Probe(c.Request.Context(), &node)
+	if err != nil {
+		jsonMsg(c, "testNode", err)
+		return
+	}
+	if node.Id > 0 {
+		_ = a.NodeService.ApplyProbeResult(node.Id, res)
+	}
+	jsonObj(c, res, nil)
+}
+
+func readDataPayload(c *gin.Context) ([]byte, error) {
+	raw := c.PostForm("data")
+	if raw != "" {
+		return []byte(raw), nil
+	}
+	body, err := c.GetRawData()
+	if err != nil {
+		return nil, err
+	}
+	if len(body) == 0 {
+		return nil, common.NewError("data is required")
+	}
+	return body, nil
+}
+
+func parseIDFormOrQuery(c *gin.Context) (uint, error) {
+	raw := c.PostForm("id")
+	if raw == "" {
+		raw = c.Query("id")
+	}
+	if raw == "" {
+		return 0, common.NewError("id is required")
+	}
+	id, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil || id == 0 {
+		return 0, common.NewError("invalid id")
+	}
+	return uint(id), nil
 }
