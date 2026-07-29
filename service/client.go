@@ -223,6 +223,19 @@ func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*mod
 		inboundById[inbounds[i].Id] = &inbounds[i]
 	}
 
+	// Resolve node public hosts for remote inbounds
+	nodeHostById := make(map[uint]string)
+	for _, ib := range inbounds {
+		if ib.NodeId != nil && *ib.NodeId > 0 {
+			if _, seen := nodeHostById[*ib.NodeId]; !seen {
+				var node model.Node
+				if err := tx.Model(&model.Node{}).Select("public_host").Where("id = ?", *ib.NodeId).First(&node).Error; err == nil && node.PublicHost != "" {
+					nodeHostById[*ib.NodeId] = node.PublicHost
+				}
+			}
+		}
+	}
+
 	for index, client := range clients {
 		var clientLinks []map[string]string
 		if err := json.Unmarshal(client.Links, &clientLinks); err != nil {
@@ -235,19 +248,30 @@ func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*mod
 			if !ok {
 				continue
 			}
-			newLinks := util.LinkGenerator(client.Config, inbound, hostname, client.Remark)
+
+			// Determine hostname: use node's PublicHost for remote inbounds
+			linkHostname := hostname
+			linkType := "local"
+			if inbound.NodeId != nil && *inbound.NodeId > 0 {
+				if nodeHost, ok := nodeHostById[*inbound.NodeId]; ok && nodeHost != "" {
+					linkHostname = nodeHost
+				}
+				linkType = "node"
+			}
+
+			newLinks := util.LinkGenerator(client.Config, inbound, linkHostname, client.Remark)
 			for _, newLink := range newLinks {
 				newClientLinks = append(newClientLinks, map[string]string{
 					"remark": inbound.Tag,
-					"type":   "local",
+					"type":   linkType,
 					"uri":    newLink,
 				})
 			}
 		}
 
-		// Add non local links
+		// Add non-managed links (external, custom)
 		for _, clientLink := range clientLinks {
-			if clientLink["type"] != "local" {
+			if clientLink["type"] != "local" && clientLink["type"] != "node" {
 				newClientLinks = append(newClientLinks, clientLink)
 			}
 		}

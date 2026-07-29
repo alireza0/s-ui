@@ -103,6 +103,23 @@ func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, er
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// For node-hosted inbounds, override OutJson server with node's PublicHost.
+	for _, ib := range inbounds {
+		if ib.NodeId != nil && *ib.NodeId > 0 && len(ib.OutJson) > 2 {
+			var node model.Node
+			if err := db.Model(&model.Node{}).Select("public_host").Where("id = ?", *ib.NodeId).First(&node).Error; err == nil && node.PublicHost != "" {
+				var outJson map[string]interface{}
+				if json.Unmarshal(ib.OutJson, &outJson) == nil {
+					outJson["server"] = node.PublicHost
+					if newJson, err := json.Marshal(outJson); err == nil {
+						ib.OutJson = newJson
+					}
+				}
+			}
+		}
+	}
+
 	return client, inbounds, nil
 }
 
