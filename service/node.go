@@ -183,7 +183,18 @@ func (s *NodeService) GetAll() ([]*model.Node, error) {
 	db := database.GetDB()
 	var nodes []*model.Node
 	err := db.Model(&model.Node{}).Order("id asc").Find(&nodes).Error
-	return nodes, err
+	if err != nil {
+		return nil, err
+	}
+	// Mask API tokens in list responses (write-only security)
+	for _, n := range nodes {
+		if len(n.ApiToken) > 4 {
+			n.ApiToken = n.ApiToken[:4] + "****"
+		} else if n.ApiToken != "" {
+			n.ApiToken = "****"
+		}
+	}
+	return nodes, nil
 }
 
 func (s *NodeService) GetById(id uint) (*model.Node, error) {

@@ -23,6 +23,10 @@ func (s *NodeService) MergeNodeTraffic(nodeID uint, traffic map[string]*UserTraf
 		if t == nil {
 			continue
 		}
+		// Skip zero-traffic entries (prevents stale snapshots from being applied)
+		if t.Up == 0 && t.Down == 0 {
+			continue
+		}
 
 		// Get or create baseline
 		var baseline model.NodeClientTraffic

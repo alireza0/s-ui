@@ -97,7 +97,7 @@ func (s *NodeService) getUsersForInbound(inboundId uint, inboundType string) ([]
 		return nil, err
 	}
 
-	var result []json.RawMessage
+	var result []json.RawMessage = []json.RawMessage{}
 	for _, u := range users {
 		if u != "" {
 			result = append(result, json.RawMessage(u))
