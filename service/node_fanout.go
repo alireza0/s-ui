@@ -44,6 +44,9 @@ func (s *NodeService) FanOutUsersToNodes(inboundIds []uint) {
 		}
 	}
 
+	// Cache user lookups per inbound to avoid re-querying for repeated inbounds
+	userCache := map[uint][]json.RawMessage{}
+
 	for nodeID, inbounds := range nodeInbounds {
 		node, err := s.GetById(nodeID)
 		if err != nil {
@@ -55,12 +58,16 @@ func (s *NodeService) FanOutUsersToNodes(inboundIds []uint) {
 		}
 
 		for _, ib := range inbounds {
-			// Build user list for this inbound
-			users, err := s.getUsersForInbound(ib.Id, ib.Type)
-			if err != nil {
-				logger.Warning("fanout: failed to get users for inbound ", ib.Tag, ": ", err)
-				_ = s.MarkDirty(nodeID)
-				continue
+			// Use cached users if available
+			users, ok := userCache[ib.Id]
+			if !ok {
+				users, err = s.getUsersForInbound(ib.Id, ib.Type)
+				if err != nil {
+					logger.Warning("fanout: failed to get users for inbound ", ib.Tag, ": ", err)
+					_ = s.MarkDirty(nodeID)
+					continue
+				}
+				userCache[ib.Id] = users
 			}
 
 			req := &NodeApplyUsersRequest{

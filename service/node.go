@@ -70,6 +70,17 @@ func (s *NodeService) Normalize(n *model.Node) error {
 		}
 	}
 
+	// SSRF guard: always reject link-local, multicast, and unspecified IP
+	// literals regardless of allowPrivateAddress. Those ranges (169.254.x.x,
+	// 224.0.0.0/4, 0.0.0.0) have no legitimate use as a node endpoint.
+	//
+	// ponytail: only checks IP literals; DNS hostnames are validated at dial
+	// time via isPrivateIP in the custom dialer. Add DNS resolution here if we
+	// want save-time rejection of hostnames that resolve to special ranges.
+	if ip := net.ParseIP(n.Address); ip != nil && isSpecialAddressIP(ip) {
+		return common.NewError("node address must not be link-local, multicast, or unspecified")
+	}
+
 	if n.Port <= 0 || n.Port > 65535 {
 		return common.NewError("node port must be 1-65535")
 	}
@@ -519,6 +530,15 @@ func subtleConstantTimeCompare(a, b []byte) bool {
 
 func isPrivateIP(ip net.IP) bool {
 	return ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsPrivate()
+}
+
+// isSpecialAddressIP reports whether the IP is in a range that must NEVER be
+// used as a node endpoint, regardless of allowPrivateAddress. isPrivateIP keeps
+// the 10.x/172.16.x/192.168.x gate behind allowPrivateAddress in the dialer;
+// this stricter check runs in Normalize so a misconfigured node can never be
+// saved with a non-routable destination.
+func isSpecialAddressIP(ip net.IP) bool {
+	return ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsMulticast() || ip.IsUnspecified()
 }
 
 // ApplyProbeResult writes heartbeat fields for an existing node id.

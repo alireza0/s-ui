@@ -169,6 +169,10 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 			ns := &NodeService{}
 			node, err := ns.GetById(*inbound.NodeId)
 			if err == nil && node.Enable {
+				// Proactively mark dirty before push; clear only on success.
+				// This ensures reconcile if the server crashes between DB save and push.
+				_ = ns.MarkDirty(node.Id)
+
 				inboundConfig, _ := inbound.MarshalJSON()
 				inboundConfig = SanitizeRemoteInboundJSON(inboundConfig)
 				users, _ := ns.getUsersForInbound(inbound.Id, inbound.Type)
@@ -179,8 +183,16 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 					Type:    inbound.Type,
 				}
 				go func() {
+					defer func() {
+						if r := recover(); r != nil {
+							logger.Error("panic recovered in inbound push: ", r)
+						}
+					}()
 					if err := ns.PushInboundToNode(node, req); err != nil {
-						_ = ns.MarkDirty(node.Id)
+						logger.Debug("inbound push to node ", node.Name, " failed: ", err)
+						// Leave dirty for reconcile
+					} else {
+						_ = ns.ClearDirty(node.Id)
 					}
 				}()
 			}
