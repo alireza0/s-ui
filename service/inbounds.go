@@ -225,7 +225,8 @@ func (s *InboundService) UpdateOutJsons(tx *gorm.DB, inboundIds []uint, hostname
 func (s *InboundService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 	var inboundsJson []json.RawMessage
 	var inbounds []*model.Inbound
-	err := db.Model(model.Inbound{}).Preload("Tls").Find(&inbounds).Error
+	// Only load local inbounds (node_id IS NULL) for the local sing-box config.
+	err := db.Model(model.Inbound{}).Preload("Tls").Where("node_id IS NULL").Find(&inbounds).Error
 	if err != nil {
 		return nil, err
 	}

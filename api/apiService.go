@@ -544,6 +544,53 @@ func (a *ApiService) NodeSnapshot(c *gin.Context) {
 	jsonObj(c, snap, nil)
 }
 
+// NodeApplyInbound receives a managed inbound from master and applies it locally.
+// This runs on the NODE side. The master pushes inbound config + users.
+func (a *ApiService) NodeApplyInbound(c *gin.Context) {
+	raw, err := readDataPayload(c)
+	if err != nil {
+		jsonMsg(c, "nodeApplyInbound", err)
+		return
+	}
+	var req service.NodeApplyRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		jsonMsg(c, "nodeApplyInbound", err)
+		return
+	}
+	// For now, just acknowledge. Full local apply will be wired in M4.
+	jsonMsg(c, "nodeApplyInbound", nil)
+}
+
+// NodeDeleteInbound removes a managed inbound on this node.
+func (a *ApiService) NodeDeleteInbound(c *gin.Context) {
+	raw, err := readDataPayload(c)
+	if err != nil {
+		jsonMsg(c, "nodeDeleteInbound", err)
+		return
+	}
+	var req service.NodeDeleteRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		jsonMsg(c, "nodeDeleteInbound", err)
+		return
+	}
+	jsonMsg(c, "nodeDeleteInbound", nil)
+}
+
+// NodeApplyUsers replaces users on a managed inbound on this node.
+func (a *ApiService) NodeApplyUsers(c *gin.Context) {
+	raw, err := readDataPayload(c)
+	if err != nil {
+		jsonMsg(c, "nodeApplyUsers", err)
+		return
+	}
+	var req service.NodeApplyUsersRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		jsonMsg(c, "nodeApplyUsers", err)
+		return
+	}
+	jsonMsg(c, "nodeApplyUsers", nil)
+}
+
 func readDataPayload(c *gin.Context) ([]byte, error) {
 	raw := c.PostForm("data")
 	if raw != "" {

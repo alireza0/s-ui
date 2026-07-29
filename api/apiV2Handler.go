@@ -65,6 +65,12 @@ func (a *APIv2Handler) postHandler(c *gin.Context) {
 		a.ApiService.SetNodeEnable(c)
 	case "testNode":
 		a.ApiService.TestNode(c)
+	case "nodeApplyInbound":
+		a.ApiService.NodeApplyInbound(c)
+	case "nodeDeleteInbound":
+		a.ApiService.NodeDeleteInbound(c)
+	case "nodeApplyUsers":
+		a.ApiService.NodeApplyUsers(c)
 	default:
 		jsonMsg(c, "failed", common.NewError("unknown action: ", action))
 	}
