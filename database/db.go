@@ -112,6 +112,7 @@ func InitDB(dbPath string) error {
 		&model.Client{},
 		&model.Changes{},
 		&model.Node{},
+		&model.NodeClientTraffic{},
 	)
 	if err != nil {
 		return err

@@ -30,6 +30,11 @@ func (h *HeartbeatJob) Run() {
 		if err := h.NodeService.ApplySnapshot(node.Id, snap); err != nil {
 			logger.Warning("heartbeat: failed to save snapshot for ", node.Name, ": ", err)
 		}
+
+		// Merge traffic from this node into master client counters
+		if snap.UserTraffic != nil {
+			h.NodeService.MergeNodeTraffic(node.Id, snap.UserTraffic)
+		}
 	}
 
 	// Reconcile dirty nodes after heartbeat

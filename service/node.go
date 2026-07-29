@@ -252,6 +252,8 @@ func (s *NodeService) Delete(id uint) error {
 	if res.RowsAffected == 0 {
 		return common.NewError("node not found")
 	}
+	// Cleanup traffic baselines
+	s.CleanupNodeTraffic(id)
 	return nil
 }
 
