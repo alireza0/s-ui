@@ -534,6 +534,16 @@ func (a *ApiService) TestNode(c *gin.Context) {
 	jsonObj(c, res, nil)
 }
 
+// NodeSnapshot returns this node's snapshot for the master heartbeat.
+func (a *ApiService) NodeSnapshot(c *gin.Context) {
+	snap, err := a.NodeService.BuildNodeSnapshot()
+	if err != nil {
+		jsonMsg(c, "nodeSnapshot", err)
+		return
+	}
+	jsonObj(c, snap, nil)
+}
+
 func readDataPayload(c *gin.Context) ([]byte, error) {
 	raw := c.PostForm("data")
 	if raw != "" {

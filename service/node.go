@@ -522,3 +522,14 @@ func (s *NodeService) ApplyProbeResult(id uint, res *NodeProbeResult) error {
 	}
 	return database.GetDB().Model(&model.Node{}).Where("id = ?", id).Updates(updates).Error
 }
+
+// newNodeRequest creates an HTTP request with the node's API token.
+func newNodeRequest(ctx context.Context, method, url, token string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Token", token)
+	req.Header.Set("Accept", "application/json")
+	return req, nil
+}

@@ -47,6 +47,8 @@ func (c *CronJob) Start(loc *time.Location, trafficAge int, statsBucketSeconds i
 		}
 		// Start core if it is not running
 		c.cron.AddJob("@every 5s", NewCheckCoreJob())
+		// Heartbeat nodes
+		c.cron.AddJob("@every 30s", NewHeartbeatJob())
 		// database WAL checkpoint
 		c.cron.AddJob("@every 10m", NewWALCheckpointJob())
 	}()
