@@ -145,18 +145,23 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+		var clientNames []string
 		for _, id := range ids {
 			var client model.Client
 			err = tx.Where("id = ?", id).First(&client).Error
 			if err != nil {
 				return nil, err
 			}
+			clientNames = append(clientNames, client.Name)
 			var clientInbounds []uint
 			err = json.Unmarshal(client.Inbounds, &clientInbounds)
 			if err != nil {
 				return nil, err
 			}
 			inboundIds = common.UnionUintArray(inboundIds, clientInbounds)
+		}
+		if len(clientNames) > 0 {
+			tx.Where("client_name in ?", clientNames).Delete(&model.NodeClientTraffic{})
 		}
 		err = tx.Where("id in ?", ids).Delete(model.Client{}).Error
 		if err != nil {
@@ -172,6 +177,9 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		err = tx.Where("id = ?", id).First(&client).Error
 		if err != nil {
 			return nil, err
+		}
+		if client.Name != "" {
+			tx.Where("client_name = ?", client.Name).Delete(&model.NodeClientTraffic{})
 		}
 		err = json.Unmarshal(client.Inbounds, &inboundIds)
 		if err != nil {

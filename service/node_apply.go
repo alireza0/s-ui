@@ -108,5 +108,24 @@ func (s *NodeService) doNodePOST(n *model.Node, targetURL string, payload interf
 
 // IsRemoteInbound checks if an inbound is assigned to a remote node.
 func IsRemoteInbound(inbound *model.Inbound) bool {
-	return inbound.NodeId != nil && *inbound.NodeId > 0
+	return inbound != nil && inbound.NodeId != nil && *inbound.NodeId > 0
+}
+
+// SanitizeRemoteInboundJSON cleans master-specific fields (like local TLS cert paths if non-existent)
+// before sending an inbound JSON payload to a remote node.
+func SanitizeRemoteInboundJSON(raw []byte) []byte {
+	var m map[string]interface{}
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return raw
+	}
+
+	// Remove internal master database fields
+	delete(m, "id")
+	delete(m, "node_id")
+
+	b, err := json.Marshal(m)
+	if err != nil {
+		return raw
+	}
+	return b
 }

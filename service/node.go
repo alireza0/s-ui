@@ -245,7 +245,15 @@ func (s *NodeService) Delete(id uint) error {
 	if id == 0 {
 		return common.NewError("node id is required")
 	}
-	res := database.GetDB().Where("id = ?", id).Delete(&model.Node{})
+	db := database.GetDB()
+
+	// Block deletion if inbounds are still assigned to this node
+	var count int64
+	if err := db.Model(&model.Inbound{}).Where("node_id = ?", id).Count(&count).Error; err == nil && count > 0 {
+		return common.NewErrorf("cannot delete node: %d inbound(s) are still assigned to this node", count)
+	}
+
+	res := db.Where("id = ?", id).Delete(&model.Node{})
 	if res.Error != nil {
 		return res.Error
 	}

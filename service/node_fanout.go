@@ -11,6 +11,12 @@ import (
 // FanOutUsersToNodes pushes user updates to all remote nodes that host
 // any of the given inbound IDs. Called after client save on master.
 func (s *NodeService) FanOutUsersToNodes(inboundIds []uint) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("panic recovered in FanOutUsersToNodes: ", r)
+		}
+	}()
+
 	if len(inboundIds) == 0 {
 		return
 	}
@@ -103,6 +109,12 @@ func (s *NodeService) getUsersForInbound(inboundId uint, inboundType string) ([]
 // ReconcileDirtyNodes pushes full inbound+user state to all dirty nodes.
 // Called periodically by the heartbeat job.
 func (s *NodeService) ReconcileDirtyNodes() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("panic recovered in ReconcileDirtyNodes: ", r)
+		}
+	}()
+
 	db := database.GetDB()
 
 	var dirtyNodes []*model.Node
@@ -134,16 +146,26 @@ func (s *NodeService) ReconcileDirtyNodes() {
 				continue
 			}
 
-			req := &NodeApplyUsersRequest{
-				Tag:   ib.Tag,
-				Type:  ib.Type,
-				Users: users,
+			// First push full inbound config to ensure listener exists on node
+			ibConfig, err := ib.MarshalJSON()
+			if err != nil {
+				logger.Warning("reconcile: failed to marshal inbound ", ib.Tag, ": ", err)
+				allOK = false
+				continue
+			}
+			ibConfig = SanitizeRemoteInboundJSON(ibConfig)
+
+			applyReq := &NodeApplyRequest{
+				Inbound: ibConfig,
+				Users:   users,
+				Tag:     ib.Tag,
+				Type:    ib.Type,
 			}
 
-			if err := s.PushUsersToNode(node, req); err != nil {
-				logger.Debug("reconcile: node ", node.Name, " still offline: ", err)
+			if err := s.PushInboundToNode(node, applyReq); err != nil {
+				logger.Debug("reconcile: node ", node.Name, " push failed for ", ib.Tag, ": ", err)
 				allOK = false
-				break
+				continue // Don't break — continue reconciling remaining inbounds for this node!
 			}
 		}
 

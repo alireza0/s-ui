@@ -170,6 +170,7 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 			node, err := ns.GetById(*inbound.NodeId)
 			if err == nil && node.Enable {
 				inboundConfig, _ := inbound.MarshalJSON()
+				inboundConfig = SanitizeRemoteInboundJSON(inboundConfig)
 				users, _ := ns.getUsersForInbound(inbound.Id, inbound.Type)
 				req := &NodeApplyRequest{
 					Inbound: inboundConfig,

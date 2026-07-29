@@ -15,6 +15,12 @@ func NewHeartbeatJob() *HeartbeatJob {
 }
 
 func (h *HeartbeatJob) Run() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("panic recovered in HeartbeatJob: ", r)
+		}
+	}()
+
 	nodes, err := h.NodeService.GetEnabledNodes()
 	if err != nil {
 		logger.Warning("heartbeat: failed to list nodes: ", err)
