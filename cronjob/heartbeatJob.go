@@ -31,4 +31,7 @@ func (h *HeartbeatJob) Run() {
 			logger.Warning("heartbeat: failed to save snapshot for ", node.Name, ": ", err)
 		}
 	}
+
+	// Reconcile dirty nodes after heartbeat
+	h.NodeService.ReconcileDirtyNodes()
 }
