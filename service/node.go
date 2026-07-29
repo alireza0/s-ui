@@ -73,12 +73,23 @@ func (s *NodeService) Normalize(n *model.Node) error {
 	// SSRF guard: always reject link-local, multicast, and unspecified IP
 	// literals regardless of allowPrivateAddress. Those ranges (169.254.x.x,
 	// 224.0.0.0/4, 0.0.0.0) have no legitimate use as a node endpoint.
-	//
-	// ponytail: only checks IP literals; DNS hostnames are validated at dial
-	// time via isPrivateIP in the custom dialer. Add DNS resolution here if we
-	// want save-time rejection of hostnames that resolve to special ranges.
 	if ip := net.ParseIP(n.Address); ip != nil && isSpecialAddressIP(ip) {
 		return common.NewError("node address must not be link-local, multicast, or unspecified")
+	}
+
+	// SSRF guard for DNS hostnames: resolve hostname and reject if any
+	// returned IP is in a special range. Catches hostnames that resolve to
+	// internal/metadata IPs that the IP-literal check alone would miss.
+	if net.ParseIP(n.Address) == nil {
+		if ips, err := net.LookupIP(n.Address); err == nil {
+			for _, ip := range ips {
+				if isSpecialAddressIP(ip) {
+					return common.NewErrorf("node address %s resolves to special-use IP %s", n.Address, ip.String())
+				}
+			}
+		}
+		// DNS resolution failure is non-fatal — the dialer will surface
+		// the real connection error at probe time.
 	}
 
 	if n.Port <= 0 || n.Port > 65535 {

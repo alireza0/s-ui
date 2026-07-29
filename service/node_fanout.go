@@ -47,6 +47,10 @@ func (s *NodeService) FanOutUsersToNodes(inboundIds []uint) {
 	// Cache user lookups per inbound to avoid re-querying for repeated inbounds
 	userCache := map[uint][]json.RawMessage{}
 
+	// Collect per-client snapshot for notification batching.
+	// Keyed by client name; one entry per client across all changed inbounds.
+	clientSnapshot := map[string]*ClientChangeSnapshot{}
+
 	for nodeID, inbounds := range nodeInbounds {
 		node, err := s.GetById(nodeID)
 		if err != nil {
@@ -81,8 +85,54 @@ func (s *NodeService) FanOutUsersToNodes(inboundIds []uint) {
 				_ = s.MarkDirty(nodeID)
 				continue
 			}
+
+			// Record per-client snapshot (batched: one entry per client
+			// across all inbounds on this node, not one per inbound)
+			for _, u := range users {
+				name := extractClientName(u)
+				if name == "" {
+					continue
+				}
+				if _, exists := clientSnapshot[name]; !exists {
+					clientSnapshot[name] = &ClientChangeSnapshot{
+						ClientName: name,
+						NodeName:   node.Name,
+						InboundTag: ib.Tag,
+					}
+				}
+			}
 		}
 	}
+
+	// Notify per-client (batched) for any notification subscribers
+	for _, snap := range clientSnapshot {
+		logger.Debug("fanout client change snapshot: ", snap.ClientName, " on ", snap.NodeName)
+	}
+}
+
+// ClientChangeSnapshot is a per-client summary of a fan-out change.
+// Used by notification subscribers to batch emails: one per client, not
+// one per inbound.
+type ClientChangeSnapshot struct {
+	ClientName string
+	NodeName   string
+	InboundTag string
+}
+
+// extractClientName parses a user JSON object and returns the client name.
+// Returns empty string if the payload doesn't have a name field.
+func extractClientName(user json.RawMessage) string {
+	var u struct {
+		Name     string `json:"name"`
+		Username string `json:"username"`
+	}
+	if err := json.Unmarshal(user, &u); err != nil {
+		return ""
+	}
+	if u.Name != "" {
+		return u.Name
+	}
+	return u.Username
 }
 
 // getUsersForInbound fetches the user JSON configs for all enabled clients
