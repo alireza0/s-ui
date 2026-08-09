@@ -19,8 +19,8 @@ on:
       - 's-ui.service'
 
 env:
-  NODE_VERSION: "25"
-  CRONET_GO_VERSION: "98d539ce67568fb911654e66a14cf4247ed833ec"
+  NODE_VERSION: "26"
+  CRONET_GO_VERSION: "ec9a39c5ba3b4a8d625ede04deaf3c9020afb916"
   CRONET_GO_REPO: https://github.com/sagernet/cronet-go.git
   BOOTLIN_BASE_URL: https://toolchains.bootlin.com/downloads/releases/toolchains
 
