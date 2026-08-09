@@ -239,6 +239,22 @@ func naiveLink(
 		port, _ := addr["server_port"].(float64)
 		uri := baseUri + toBase64([]byte(fmt.Sprintf("%s:%s@%s:%.0f", username, password, addr["server"].(string), port)))
 		links = append(links, addParams(uri, params, addr["remark"].(string)))
+
+		network, _ := inbound["network"].(string)
+		var schemes []string
+		switch network {
+		case "tcp":
+			schemes = []string{"naive+https"}
+		case "udp":
+			schemes = []string{"naive+quic"}
+		default:
+			schemes = []string{"naive+https", "naive+quic"}
+		}
+		for _, scheme := range schemes {
+			plainUri := fmt.Sprintf("%s://%s:%s@%s:%.0f", scheme,
+				url.QueryEscape(username), url.QueryEscape(password), addr["server"].(string), port)
+			links = append(links, addParams(plainUri, params, addr["remark"].(string)))
+		}
 	}
 	return links
 }
