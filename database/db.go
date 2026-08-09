@@ -59,7 +59,11 @@ func OpenDB(dbPath string) error {
 	// _cache_size=-200 caps each connection's page cache at ~200 KiB
 	// (default is ~2 MiB), reducing memory amplification if a connection
 	// escapes the pool.
-	dsn := dbPath + sep + "_busy_timeout=10000&_journal_mode=WAL&_cache_size=-200"
+	// _txlock=immediate makes transactions take the write lock up front.
+	// Deferred transactions that read first and then write (e.g. the deplete
+	// job) cannot wait on the lock upgrade and fail instantly with "database
+	// is locked" whenever another writer (stats job) is active (#1209).
+	dsn := dbPath + sep + "_busy_timeout=10000&_journal_mode=WAL&_cache_size=-200&_txlock=immediate"
 	db, err = gorm.Open(sqlite.Open(dsn), c)
 	if err != nil {
 		return err
