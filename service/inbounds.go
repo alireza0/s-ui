@@ -125,7 +125,8 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 			}
 		}
 
-		if corePtr.IsRunning() {
+		// Only manage in local core if this is a local inbound (node_id IS NULL)
+		if corePtr.IsRunning() && !IsRemoteInbound(&inbound) {
 			if act == "edit" {
 				err = corePtr.RemoveInbound(oldTag)
 				if err != nil && err != os.ErrInvalid {
@@ -162,6 +163,40 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 		if err != nil {
 			return err
 		}
+
+		// If this is a remote inbound, push it to the node
+		if IsRemoteInbound(&inbound) {
+			ns := &NodeService{}
+			node, err := ns.GetById(*inbound.NodeId)
+			if err == nil && node.Enable {
+				// Proactively mark dirty before push; clear only on success.
+				// This ensures reconcile if the server crashes between DB save and push.
+				_ = ns.MarkDirty(node.Id)
+
+				inboundConfig, _ := inbound.MarshalJSON()
+				inboundConfig = SanitizeRemoteInboundJSON(inboundConfig)
+				users, _ := ns.getUsersForInbound(inbound.Id, inbound.Type)
+				req := &NodeApplyRequest{
+					Inbound: inboundConfig,
+					Users:   users,
+					Tag:     inbound.Tag,
+					Type:    inbound.Type,
+				}
+				go func() {
+					defer func() {
+						if r := recover(); r != nil {
+							logger.Error("panic recovered in inbound push: ", r)
+						}
+					}()
+					if err := ns.PushInboundToNode(node, req); err != nil {
+						logger.Debug("inbound push to node ", node.Name, " failed: ", err)
+						// Leave dirty for reconcile
+					} else {
+						_ = ns.ClearDirty(node.Id)
+					}
+				}()
+			}
+		}
 		switch act {
 		case "new":
 			err = s.ClientService.UpdateClientsOnInboundAdd(tx, initUserIds, inbound.Id, hostname)
@@ -177,6 +212,9 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 		if err != nil {
 			return err
 		}
+		var inbound model.Inbound
+		_ = tx.Model(model.Inbound{}).Where("tag = ?", tag).First(&inbound).Error
+
 		if corePtr.IsRunning() {
 			err = corePtr.RemoveInbound(tag)
 			if err != nil && err != os.ErrInvalid {
@@ -184,10 +222,23 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 			}
 		}
 		var id uint
-		err = tx.Model(model.Inbound{}).Select("id").Where("tag = ?", tag).Scan(&id).Error
-		if err != nil {
-			return err
+		id = inbound.Id
+		if id == 0 {
+			err = tx.Model(model.Inbound{}).Select("id").Where("tag = ?", tag).Scan(&id).Error
+			if err != nil {
+				return err
+			}
 		}
+
+		// If this was a remote inbound, notify the remote node
+		if IsRemoteInbound(&inbound) {
+			ns := &NodeService{}
+			node, err := ns.GetById(*inbound.NodeId)
+			if err == nil && node.Enable {
+				go func() { _ = ns.DeleteInboundOnNode(node, tag) }()
+			}
+		}
+
 		err = s.ClientService.UpdateClientsOnInboundDelete(tx, id, tag)
 		if err != nil {
 			return err
@@ -225,7 +276,8 @@ func (s *InboundService) UpdateOutJsons(tx *gorm.DB, inboundIds []uint, hostname
 func (s *InboundService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 	var inboundsJson []json.RawMessage
 	var inbounds []*model.Inbound
-	err := db.Model(model.Inbound{}).Preload("Tls").Find(&inbounds).Error
+	// Only load local inbounds (node_id IS NULL) for the local sing-box config.
+	err := db.Model(model.Inbound{}).Preload("Tls").Where("node_id IS NULL").Find(&inbounds).Error
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +408,8 @@ func (s *InboundService) UpdateInboundsUsers(tx *gorm.DB, ids []uint) error {
 		return nil
 	}
 	var inbounds []*model.Inbound
-	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ?", ids).Find(&inbounds).Error
+	// Only update local inbounds in the local core
+	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? AND node_id IS NULL", ids).Find(&inbounds).Error
 	if err != nil {
 		return err
 	}
@@ -404,7 +457,7 @@ func (s *InboundService) RestartInbounds(tx *gorm.DB, ids []uint) error {
 		return nil
 	}
 	var inbounds []*model.Inbound
-	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ?", ids).Find(&inbounds).Error
+	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? AND node_id IS NULL", ids).Find(&inbounds).Error
 	if err != nil {
 		return err
 	}

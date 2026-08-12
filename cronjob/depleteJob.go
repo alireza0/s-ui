@@ -9,6 +9,7 @@ import (
 type DepleteJob struct {
 	service.ClientService
 	service.InboundService
+	service.NodeService
 }
 
 func NewDepleteJob() *DepleteJob {
@@ -26,5 +27,7 @@ func (s *DepleteJob) Run() {
 		if err != nil {
 			logger.Error("unable to update inbound users: ", err)
 		}
+		// Fan out to remote nodes
+		go s.NodeService.FanOutUsersToNodes(inboundIds)
 	}
 }

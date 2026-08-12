@@ -30,6 +30,7 @@ type ConfigService struct {
 	OutboundService
 	ServicesService
 	EndpointService
+	NodeService
 }
 
 type SingBoxConfig struct {
@@ -213,6 +214,8 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 			if err != nil {
 				return nil, common.NewErrorf("failed to update users for inbounds: %v", err)
 			}
+			// Fan out user changes to remote nodes (async, best-effort)
+			go s.NodeService.FanOutUsersToNodes(inboundIds)
 		}
 	case "tls":
 		err = s.TlsService.Save(tx, act, data, hostname)

@@ -32,7 +32,7 @@ func (s *LinkService) GetLinks(linkJson *json.RawMessage, types string, clientIn
 		case "sub":
 			subLinks := util.GetExternalLink(link.Uri)
 			result = append(result, strings.Split(subLinks, "\n")...)
-		case "local":
+		case "local", "node":
 			if types == "all" {
 				result = append(result, s.addClientInfo(link.Uri, clientInfo))
 			}
