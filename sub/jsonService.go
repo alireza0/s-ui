@@ -186,7 +186,8 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 					newOut[key] = value
 				}
 				// Change and push copied config
-				newOut["server"], _ = addr["server"].(string)
+				server, _ := addr["server"].(string)
+				newOut["server"] = util.NormalizeHost(server)
 				port, _ := addr["server_port"].(float64)
 				newOut["server_port"] = int(port)
 

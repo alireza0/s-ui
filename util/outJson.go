@@ -37,7 +37,7 @@ func FillOutJson(i *model.Inbound, hostname string) error {
 
 	outJson["type"] = i.Type
 	outJson["tag"] = i.Tag
-	outJson["server"] = hostname
+	outJson["server"] = NormalizeHost(hostname)
 	outJson["server_port"] = (*inbound)["listen_port"]
 
 	switch i.Type {
