@@ -18,7 +18,9 @@ type LinkParam struct {
 	Value string
 }
 
-func joinRemark(clientRemark, inboundRemark string) string {
+// JoinRemark prefixes a node name with the client's remark, so every
+// subscriber sees their own alias on the nodes they get.
+func JoinRemark(clientRemark, inboundRemark string) string {
 	if clientRemark != "" {
 		return clientRemark + "-" + inboundRemark
 	}
@@ -49,7 +51,7 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 		Addrs = append(Addrs, map[string]interface{}{
 			"server":      hostname,
 			"server_port": (*inbound)["listen_port"],
-			"remark":      joinRemark(clientRemark, i.Tag),
+			"remark":      JoinRemark(clientRemark, i.Tag),
 		})
 		if i.TlsId > 0 {
 			Addrs[0]["tls"] = tls
@@ -57,7 +59,7 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 	} else {
 		for index, addr := range Addrs {
 			addrRemark, _ := addr["remark"].(string)
-			Addrs[index]["remark"] = joinRemark(clientRemark, i.Tag+addrRemark)
+			Addrs[index]["remark"] = JoinRemark(clientRemark, i.Tag+addrRemark)
 			if i.TlsId > 0 {
 				newTls := map[string]interface{}{}
 				for k, v := range tls {

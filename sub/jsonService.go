@@ -56,7 +56,7 @@ func (j *JsonService) GetJson(subId string, format string) (*string, []string, e
 		return nil, nil, err
 	}
 
-	outbounds, outTags, err := j.getOutbounds(client.Config, inDatas)
+	outbounds, outTags, err := j.getOutbounds(client.Config, inDatas, client.Remark)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -106,7 +106,7 @@ func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, er
 	return client, inbounds, nil
 }
 
-func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*model.Inbound) (*[]map[string]interface{}, *[]string, error) {
+func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*model.Inbound, clientRemark string) (*[]map[string]interface{}, *[]string, error) {
 	var outbounds []map[string]interface{}
 	var configs map[string]interface{}
 	var outTags []string
@@ -170,9 +170,10 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 		}
 		tag, _ := outbound["tag"].(string)
 		if len(addrs) == 0 {
+			tag = util.JoinRemark(clientRemark, tag)
+			outbound["tag"] = tag
 			// For mixed protocol, use separated socks and http
 			if protocol == "mixed" {
-				outbound["tag"] = tag
 				j.pushMixed(&outbounds, &outTags, outbound)
 			} else {
 				outTags = append(outTags, tag)
@@ -204,7 +205,7 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 				}
 
 				remark, _ := addr["remark"].(string)
-				newTag := fmt.Sprintf("%d.%s%s", index+1, tag, remark)
+				newTag := fmt.Sprintf("%d.%s", index+1, util.JoinRemark(clientRemark, tag+remark))
 				newOut["tag"] = newTag
 				// For mixed protocol, use separated socks and http
 				if protocol == "mixed" {
