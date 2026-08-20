@@ -68,6 +68,7 @@ var defaultValueMap = map[string]string{
 	"subClashExt":        "",
 	"subClashNoDefGrp":   "false",
 	"subClashSprtAll":    "false",
+	"subClashUdp":        "false",
 	"globalReset":        "",
 	"globalResetLast":    "0",
 	"config":             defaultConfig,
@@ -469,6 +470,13 @@ func (s *SettingService) GetSubClashNoDefGrp() (bool, error) {
 // proxy tag.
 func (s *SettingService) GetSubClashSprtAll() (bool, error) {
 	return s.getBool("subClashSprtAll")
+}
+
+// GetSubClashUdp reports whether generated Clash proxies should carry
+// "udp: true" by default. Mihomo disables UDP unless the proxy opts in, so
+// without it VLESS/VMess/Trojan/... nodes reach the client with UDP off.
+func (s *SettingService) GetSubClashUdp() (bool, error) {
+	return s.getBool("subClashUdp")
 }
 
 func (s *SettingService) fileExists(path string) error {

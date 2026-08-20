@@ -106,6 +106,7 @@ func (s *ClashService) getClashConfig() (string, error) {
 func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, basicConfig string) (string, error) {
 	var proxies []interface{}
 	proxyTags := make([]string, 0)
+	defaultUdp, _ := s.SettingService.GetSubClashUdp()
 	for _, obMap := range *outbounds {
 
 		t, _ := obMap["type"].(string)
@@ -198,6 +199,17 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 			}
 		default:
 			continue
+		}
+
+		// Mihomo keeps UDP off unless the proxy opts in
+		if defaultUdp {
+			switch proxy["type"] {
+			case "vmess", "vless":
+				proxy["udp"] = true
+				proxy["packet-encoding"] = "xudp"
+			case "trojan", "ss", "socks5":
+				proxy["udp"] = true
+			}
 		}
 
 		// TLS params
