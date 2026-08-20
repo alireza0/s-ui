@@ -204,7 +204,7 @@ func getPanelURI() {
 				IP := strings.Split(address.Addr, "/")[0]
 				if strings.Contains(address.Addr, ".") {
 					fmt.Println(Proto + IP + PortText + BasePath)
-				} else if address.Addr[0:6] != "fe80::" {
+				} else if !strings.HasPrefix(address.Addr, "fe80::") {
 					fmt.Println(Proto + "[" + IP + "]" + PortText + BasePath)
 				}
 			}
