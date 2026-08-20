@@ -331,8 +331,9 @@ respawn_delay=10
 supervisor=supervise-daemon
 
 depend() {
-    need net
-    after firewall
+    need localmount
+    use net dns logger firewall
+    after net firewall
 }
 EOF
     chmod +x /etc/init.d/s-ui
