@@ -73,6 +73,8 @@ d en fetch_fail "Failed to fetch s-ui version, it maybe due to Github API restri
 d en download_fail "Downloading s-ui failed, please be sure that your server can access Github"
 d en begin_install "Beginning the install s-ui v%s"
 d en download_ver_fail "download s-ui v%s failed, please check the version exists"
+d en extract_fail "Extracting s-ui failed, the archive may be corrupt or the disk is full"
+d en broken_bin "The installed s-ui binary does not run, the installation is incomplete"
 d en install_finished "installation finished, it is up and running now..."
 d en access_panel "You may access the Panel with following URL(s):"
 d en executing "Executing..."
@@ -105,6 +107,8 @@ d fa fetch_fail "دریافت نسخهٔ s-ui ناموفق بود؛ ممکن ا�
 d fa download_fail "دانلود s-ui ناموفق بود؛ مطمئن شوید سرور شما به Github دسترسی دارد"
 d fa begin_install "شروع نصب s-ui نسخهٔ v%s"
 d fa download_ver_fail "دانلود s-ui نسخهٔ v%s ناموفق بود؛ لطفاً از وجود این نسخه مطمئن شوید"
+d fa extract_fail "استخراج s-ui ناموفق بود؛ ممکن است فایل خراب باشد یا فضای دیسک پر باشد"
+d fa broken_bin "باینری نصب‌شدهٔ s-ui اجرا نمی‌شود؛ نصب ناقص است"
 d fa install_finished "نصب به پایان رسید و هم اکنون در حال اجراست..."
 d fa access_panel "می توانید از طریق آدرس (های) زیر به پنل دسترسی داشته باشید:"
 d fa executing "در حال اجرا..."
@@ -137,6 +141,8 @@ d ru fetch_fail "Не удалось получить версию s-ui, воз�
 d ru download_fail "Не удалось загрузить s-ui, убедитесь, что ваш сервер имеет доступ к Github"
 d ru begin_install "Начинается установка s-ui v%s"
 d ru download_ver_fail "загрузка s-ui v%s не удалась, проверьте существование этой версии"
+d ru extract_fail "Не удалось распаковать s-ui: архив повреждён или на диске нет места"
+d ru broken_bin "Установленный файл s-ui не запускается, установка неполная"
 d ru install_finished "установка завершена, панель запущена и работает..."
 d ru access_panel "Вы можете получить доступ к панели по следующим URL:"
 d ru executing "Выполнение..."
@@ -169,6 +175,8 @@ d vi fetch_fail "Không thể lấy phiên bản s-ui, có thể do giới hạn
 d vi download_fail "Tải s-ui thất bại, hãy chắc chắn máy chủ của bạn có thể truy cập Github"
 d vi begin_install "Bắt đầu cài đặt s-ui v%s"
 d vi download_ver_fail "tải s-ui v%s thất bại, vui lòng kiểm tra phiên bản có tồn tại không"
+d vi extract_fail "Giải nén s-ui thất bại, tệp có thể bị hỏng hoặc đĩa đã đầy"
+d vi broken_bin "Tệp s-ui đã cài đặt không chạy được, quá trình cài đặt chưa hoàn tất"
 d vi install_finished "cài đặt hoàn tất, hiện đang chạy..."
 d vi access_panel "Bạn có thể truy cập bảng điều khiển qua (các) URL sau:"
 d vi executing "Đang thực thi..."
@@ -201,6 +209,8 @@ d zhcn fetch_fail "获取 s-ui 版本失败，可能是由于 Github API 限制�
 d zhcn download_fail "下载 s-ui 失败，请确保您的服务器可以访问 Github"
 d zhcn begin_install "开始安装 s-ui v%s"
 d zhcn download_ver_fail "下载 s-ui v%s 失败，请检查该版本是否存在"
+d zhcn extract_fail "解压 s-ui 失败，压缩包可能已损坏或磁盘空间不足"
+d zhcn broken_bin "已安装的 s-ui 程序无法运行，安装不完整"
 d zhcn install_finished "安装完成，现已运行..."
 d zhcn access_panel "您可以通过以下 URL 访问面板："
 d zhcn executing "正在执行..."
@@ -233,6 +243,8 @@ d zhtw fetch_fail "取得 s-ui 版本失敗，可能是由於 Github API 限制�
 d zhtw download_fail "下載 s-ui 失敗，請確保您的伺服器可以存取 Github"
 d zhtw begin_install "開始安裝 s-ui v%s"
 d zhtw download_ver_fail "下載 s-ui v%s 失敗，請檢查該版本是否存在"
+d zhtw extract_fail "解壓 s-ui 失敗，壓縮檔可能已損毀或磁碟空間不足"
+d zhtw broken_bin "已安裝的 s-ui 程式無法執行，安裝不完整"
 d zhtw install_finished "安裝完成，現已執行..."
 d zhtw access_panel "您可以透過以下 URL 存取面板："
 d zhtw executing "正在執行..."
@@ -449,12 +461,28 @@ install_s-ui() {
         fi
     fi
 
-    tar zxvf s-ui-linux-$(arch).tar.gz
+    if ! tar zxvf s-ui-linux-$(arch).tar.gz; then
+        echo -e "${red}$(t extract_fail)${plain}"
+        df -h /tmp /usr/local 2>/dev/null
+        rm -rf s-ui s-ui-linux-$(arch).tar.gz
+        exit 1
+    fi
     rm s-ui-linux-$(arch).tar.gz -f
 
     chmod +x s-ui/sui s-ui/s-ui.sh
     cp s-ui/s-ui.sh /usr/bin/s-ui
-    cp -rf s-ui /usr/local/
+    if ! cp -rf s-ui /usr/local/; then
+        echo -e "${red}$(t extract_fail)${plain}"
+        df -h /usr/local 2>/dev/null
+        rm -rf s-ui
+        exit 1
+    fi
+    if ! /usr/local/s-ui/sui -v >/dev/null 2>&1; then
+        echo -e "${red}$(t broken_bin)${plain}"
+        df -h /usr/local 2>/dev/null
+        rm -rf s-ui
+        exit 1
+    fi
     if [[ "${init_system}" == "systemd" ]]; then
         cp -f s-ui/*.service /etc/systemd/system/
     fi
