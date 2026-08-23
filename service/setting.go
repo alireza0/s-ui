@@ -405,6 +405,10 @@ func (s *SettingService) SaveConfig(tx *gorm.DB, config json.RawMessage) error {
 	return tx.Model(model.Setting{}).Where("key = ?", "config").Update("value", string(configs)).Error
 }
 
+func normalizeSettingValue(value string) string {
+	return strings.TrimSpace(value)
+}
+
 func (s *SettingService) Save(tx *gorm.DB, data json.RawMessage) error {
 	var err error
 	var settings map[string]string
@@ -413,6 +417,10 @@ func (s *SettingService) Save(tx *gorm.DB, data json.RawMessage) error {
 		return err
 	}
 	for key, obj := range settings {
+		// Ignore accidental surrounding whitespace while preserving spaces
+		// inside values such as certificate paths and URLs.
+		obj = normalizeSettingValue(obj)
+
 		// Secure file existence check
 		if obj != "" && (key == "webCertFile" ||
 			key == "webKeyFile" ||
