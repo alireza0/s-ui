@@ -1,0 +1,52 @@
+name: Check patched protocols
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/hysteria2-stable-user-identity
+
+jobs:
+  vet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: go vet (patched protocols)
+        env:
+          CGO_ENABLED: 0
+        run: |
+          go vet ./core/protocol/hysteria/...
+          go vet ./core/protocol/hysteria2/...
+          go vet ./core/protocol/tuic/...
+          go vet ./core/protocol/trojan/...
+          go vet ./core/protocol/vless/...
+          go vet ./core/protocol/vmess/...
+
+      - name: gofmt check
+        run: |
+          files=$(gofmt -l \
+            core/protocol/hysteria/inbound.go \
+            core/protocol/hysteria/users.go \
+            core/protocol/hysteria2/inbound.go \
+            core/protocol/hysteria2/users.go \
+            core/protocol/tuic/inbound.go \
+            core/protocol/tuic/users.go \
+            core/protocol/trojan/inbound.go \
+            core/protocol/trojan/users.go \
+            core/protocol/vless/inbound.go \
+            core/protocol/vless/users.go \
+            core/protocol/vmess/inbound.go \
+            core/protocol/vmess/users.go)
+          if [ -n "$files" ]; then
+            echo "gofmt issues in: $files"
+            exit 1
+          fi
+          echo "gofmt OK"
