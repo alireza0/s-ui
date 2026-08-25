@@ -107,6 +107,10 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	group_apiv2 := engine.Group(base_url + "apiv2")
 	apiv2 := api.NewAPIv2Handler(group_apiv2)
 
+	// Tokenless usage reporting: write-only, positive-delta-only.
+	// Registered before the group so the static path wins over /:postAction.
+	engine.POST(base_url+"apiv2/addTraffic", apiv2.ApiService.AddTraffic)
+
 	group_api := engine.Group(base_url + "api")
 	api.NewAPIHandler(group_api, apiv2)
 

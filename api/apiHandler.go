@@ -48,6 +48,8 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		a.ApiService.RestartSb(c)
 	case "resetTraffic":
 		a.ApiService.ResetTraffic(c)
+	case "addTraffic":
+		a.ApiService.AddTraffic(c)
 	case "linkConvert":
 		a.ApiService.LinkConvert(c)
 	case "subConvert":
