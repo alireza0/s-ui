@@ -5,12 +5,10 @@ import (
 )
 
 func (h *Inbound) UpdateUsers(users []option.HysteriaUser) error {
-	userList := make([]int, 0, len(users))
-	userNameList := make([]string, 0, len(users))
+	userList := make([]string, 0, len(users))
 	userPasswordList := make([]string, 0, len(users))
-	for index, user := range users {
-		userList = append(userList, index)
-		userNameList = append(userNameList, user.Name)
+	for _, user := range users {
+		userList = append(userList, user.Name)
 		var password string
 		if user.AuthString != "" {
 			password = user.AuthString
@@ -20,6 +18,5 @@ func (h *Inbound) UpdateUsers(users []option.HysteriaUser) error {
 		userPasswordList = append(userPasswordList, password)
 	}
 	h.service.UpdateUsers(userList, userPasswordList)
-	h.userNameList = userNameList
 	return nil
 }
