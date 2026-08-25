@@ -290,6 +290,7 @@ Community-made projects built around S-UI. These are not affiliated with or main
 
 - [itning/reset-s-ui-traffic](https://github.com/itning/reset-s-ui-traffic) — periodic traffic reset for all users
 - [zqh2333/s-ui-traffic-reset](https://github.com/zqh2333/s-ui-traffic-reset) — traffic reset tool
+- [Sownix21/SUI-Bot](https://github.com/Sownix21/SUI-Bot) - telegram bot
 
 > Building something on top of S-UI (a Telegram bot, monitoring, automation, ...)? Open an issue/PR to get it listed here.
 
