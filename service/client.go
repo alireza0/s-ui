@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -47,6 +48,36 @@ func (s *ClientService) GetAll() (*[]model.Client, error) {
 	return &clients, nil
 }
 
+// validateClientName rejects empty names and names that are already in use
+// by another client sharing at least one inbound, within the same transaction.
+func (s *ClientService) validateClientName(tx *gorm.DB, client *model.Client) error {
+	if strings.TrimSpace(client.Name) == "" {
+		return fmt.Errorf("client name must not be empty")
+	}
+	var inboundIds []uint
+	if err := json.Unmarshal(client.Inbounds, &inboundIds); err != nil || len(inboundIds) == 0 {
+		return nil
+	}
+	var count int64
+	query := tx.Raw(`
+		SELECT COUNT(*) FROM clients, json_each(clients.inbounds) AS je
+		WHERE clients.name = ? AND je.value IN ?`,
+		client.Name, inboundIds)
+	if client.Id != 0 {
+		query = tx.Raw(`
+			SELECT COUNT(*) FROM clients, json_each(clients.inbounds) AS je
+			WHERE clients.name = ? AND clients.id != ? AND je.value IN ?`,
+			client.Name, client.Id, inboundIds)
+	}
+	if err := query.Scan(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return fmt.Errorf("client name %q is already used by another client on the same inbound", client.Name)
+	}
+	return nil
+}
+
 func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, hostname string) ([]uint, error) {
 	var err error
 	var inboundIds []uint
@@ -56,6 +87,9 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		var client model.Client
 		err = json.Unmarshal(data, &client)
 		if err != nil {
+			return nil, err
+		}
+		if err = s.validateClientName(tx, &client); err != nil {
 			return nil, err
 		}
 		if err = setConfigIdentity(&client); err != nil {
@@ -92,6 +126,9 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		}
 		now := time.Now().Unix()
 		for _, client := range clients {
+			if err = s.validateClientName(tx, client); err != nil {
+				return nil, err
+			}
 			if err = setConfigIdentity(client); err != nil {
 				return nil, err
 			}

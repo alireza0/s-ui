@@ -188,8 +188,10 @@ func (h *Inbound) newConnection(ctx context.Context, conn net.Conn, metadata ada
 	}
 	if user != "" {
 		metadata.User = user
+		h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
+	} else {
+		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 	}
-	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	h.router.RouteConnectionEx(ctx, conn, metadata, onClose)
 }
 
@@ -203,8 +205,10 @@ func (h *Inbound) newPacketConnection(ctx context.Context, conn N.PacketConn, me
 	}
 	if user != "" {
 		metadata.User = user
+		h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
+	} else {
+		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
 	}
-	h.logger.InfoContext(ctx, "[", user, "] inbound packet connection to ", metadata.Destination)
 	h.router.RoutePacketConnectionEx(ctx, conn, metadata, onClose)
 }
 
