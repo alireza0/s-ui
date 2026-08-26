@@ -671,10 +671,11 @@ ssl_cert_issue_CF() {
             
             LOGD "******Instructions for use******"
             LOGI "This Acme script requires the following data:"
-            LOGI "1.Cloudflare Registered e-mail"
-            LOGI "2.Cloudflare Global API Key"
-            LOGI "3.The domain name that has been resolved DNS to the current server by Cloudflare"
-            LOGI "4.The script applies for a certificate. The default installation path is /root/cert "
+            LOGI "1.Cloudflare credentials, either of:"
+            LOGI "   a) An API Token scoped to Zone:DNS:Edit (recommended)"
+            LOGI "   b) The account e-mail and the Global API Key (full account access)"
+            LOGI "2.The domain name that has been resolved DNS to the current server by Cloudflare"
+            LOGI "3.The script applies for a certificate. The default installation path is /root/cert "
             confirm "Confirmed?[y/n]" "y"
             if [ $? -eq 0 ]; then
                 if ! command -v ~/.acme.sh/acme.sh &>/dev/null; then
@@ -698,15 +699,44 @@ ssl_cert_issue_CF() {
                 read -p "Input your domain here: " CF_Domain
                 LOGD "Your domain name is set to: ${CF_Domain}"
 
+                CF_Token=""
+                CF_Account_ID=""
                 CF_GlobalKey=""
                 CF_AccountEmail=""
-                LOGD "Please set the API key:"
-                read -p "Input your key here: " CF_GlobalKey
-                LOGD "Your API key is: ${CF_GlobalKey}"
+                LOGD "Choose the Cloudflare authentication method:"
+                echo -e "${green}\t1.${plain} API Token, scoped to Zone:DNS:Edit (*recommended*)"
+                echo -e "${green}\t2.${plain} Global API Key + account e-mail (full account access)"
+                read -p "Enter your choice [1-2, default 1]: " cf_auth
+                cf_auth=${cf_auth:-1}
 
-                LOGD "Please set up registered email:"
-                read -p "Input your email here: " CF_AccountEmail
-                LOGD "Your registered email address is: ${CF_AccountEmail}"
+                if [[ "${cf_auth}" == "2" ]]; then
+                    LOGD "Please set the Global API Key:"
+                    read -r -s -p "Input your key here: " CF_GlobalKey
+                    echo ""
+                    if [[ -z "${CF_GlobalKey}" ]]; then
+                        LOGE "Global API Key cannot be empty, script exiting..."
+                        exit 1
+                    fi
+
+                    LOGD "Please set up registered email:"
+                    read -p "Input your email here: " CF_AccountEmail
+                    if [[ -z "${CF_AccountEmail}" ]]; then
+                        LOGE "Registered email cannot be empty, script exiting..."
+                        exit 1
+                    fi
+                    LOGD "Your registered email address is: ${CF_AccountEmail}"
+                else
+                    LOGD "Please set the API Token:"
+                    read -r -s -p "Input your token here: " CF_Token
+                    echo ""
+                    if [[ -z "${CF_Token}" ]]; then
+                        LOGE "API Token cannot be empty, script exiting..."
+                        exit 1
+                    fi
+
+                    LOGD "Please set the Account ID (optional, press enter to skip):"
+                    read -p "Input your account id here: " CF_Account_ID
+                fi
 
                 ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
                 if [ $? -ne 0 ]; then
@@ -714,8 +744,21 @@ ssl_cert_issue_CF() {
                     exit 1
                 fi
 
-                export CF_Key="${CF_GlobalKey}"
-                export CF_Email="${CF_AccountEmail}"
+                # Export only the chosen pair; a leftover of the other method in
+                # the environment would make acme.sh pick the wrong credentials.
+                if [[ "${cf_auth}" == "2" ]]; then
+                    unset CF_Token CF_Account_ID
+                    export CF_Key="${CF_GlobalKey}"
+                    export CF_Email="${CF_AccountEmail}"
+                else
+                    unset CF_Key CF_Email
+                    export CF_Token="${CF_Token}"
+                    if [[ -n "${CF_Account_ID}" ]]; then
+                        export CF_Account_ID="${CF_Account_ID}"
+                    else
+                        unset CF_Account_ID
+                    fi
+                fi
 
                 ~/.acme.sh/acme.sh --issue --dns dns_cf -d ${CF_Domain} -d *.${CF_Domain} $force_flag --log
                 if [ $? -ne 0 ]; then
