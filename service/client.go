@@ -3,7 +3,6 @@ package service
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -48,33 +47,25 @@ func (s *ClientService) GetAll() (*[]model.Client, error) {
 	return &clients, nil
 }
 
-// validateClientName rejects empty names and names that are already in use
-// by another client sharing at least one inbound, within the same transaction.
+// validateClientName rejects empty names and globally duplicate names,
+// then stores the trimmed name back on the client.
 func (s *ClientService) validateClientName(tx *gorm.DB, client *model.Client) error {
-	if strings.TrimSpace(client.Name) == "" {
-		return fmt.Errorf("client name must not be empty")
+	name := strings.TrimSpace(client.Name)
+	if name == "" {
+		return common.NewError("client name must not be empty")
 	}
-	var inboundIds []uint
-	if err := json.Unmarshal(client.Inbounds, &inboundIds); err != nil || len(inboundIds) == 0 {
-		return nil
+	query := tx.Model(model.Client{}).Where("name = ?", name)
+	if client.Id != 0 {
+		query = query.Where("id != ?", client.Id)
 	}
 	var count int64
-	query := tx.Raw(`
-		SELECT COUNT(*) FROM clients, json_each(clients.inbounds) AS je
-		WHERE clients.name = ? AND je.value IN ?`,
-		client.Name, inboundIds)
-	if client.Id != 0 {
-		query = tx.Raw(`
-			SELECT COUNT(*) FROM clients, json_each(clients.inbounds) AS je
-			WHERE clients.name = ? AND clients.id != ? AND je.value IN ?`,
-			client.Name, client.Id, inboundIds)
-	}
-	if err := query.Scan(&count).Error; err != nil {
+	if err := query.Count(&count).Error; err != nil {
 		return err
 	}
 	if count > 0 {
-		return fmt.Errorf("client name %q is already used by another client on the same inbound", client.Name)
+		return common.NewErrorf("client name %q is already in use", name)
 	}
+	client.Name = name
 	return nil
 }
 
