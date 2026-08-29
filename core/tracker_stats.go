@@ -9,6 +9,7 @@ import (
 	"github.com/alireza0/s-ui/database/model"
 
 	"github.com/sagernet/sing-box/adapter"
+	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/atomic"
 	"github.com/sagernet/sing/common/bufio"
 	"github.com/sagernet/sing/common/network"
@@ -111,4 +112,8 @@ func (c *StatsTracker) GetStats() *[]model.Stats {
 		appendStat("user", user, counter.write.Swap(0), counter.read.Swap(0))
 	}
 	return &s
+}
+
+func (c *StatsTracker) RoutedFlow(ctx context.Context, metadata adapter.InboundContext, matchedRule adapter.Rule, matchOutbound adapter.Outbound) tun.FlowTracker {
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 	suiVless "github.com/alireza0/s-ui/core/protocol/vless"
 	suiVmess "github.com/alireza0/s-ui/core/protocol/vmess"
 
+	sbCertificate "github.com/sagernet/sing-box/adapter/certificate"
 	"github.com/sagernet/sing-box/adapter/endpoint"
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/adapter/outbound"
@@ -44,6 +45,7 @@ import (
 	"github.com/sagernet/sing-box/protocol/wireguard"
 	"github.com/sagernet/sing-box/service/ccm"
 	"github.com/sagernet/sing-box/service/ocm"
+	originca "github.com/sagernet/sing-box/service/origin_ca"
 	"github.com/sagernet/sing-box/service/resolved"
 	"github.com/sagernet/sing-box/service/ssmapi"
 	_ "github.com/sagernet/sing-box/transport/v2rayquic"
@@ -142,6 +144,14 @@ func ServiceRegistry() *service.Registry {
 	registerDERPService(registry)
 	ccm.RegisterService(registry)
 	ocm.RegisterService(registry)
+
+	return registry
+}
+
+func CertificateProviderRegistry() *sbCertificate.Registry {
+	registry := sbCertificate.NewRegistry()
+
+	originca.RegisterCertificateProvider(registry)
 
 	return registry
 }
