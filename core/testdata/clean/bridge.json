@@ -1,0 +1,16 @@
+{
+  "log": {
+    "level": "error"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "bridge",
+      "tag": "bridge-out",
+      "bridge_name": "sing-bridge"
+    }
+  ]
+}

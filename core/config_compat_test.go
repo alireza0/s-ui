@@ -125,13 +125,15 @@ func TestConfigCompat(t *testing.T) {
 	}
 }
 
-// TestConfigCompatClean asserts that the post-migration shapes produced by
-// database.migrateSingBox114 start without any deprecation warning, so the
-// migration is known to actually resolve what it claims to.
+// TestConfigCompatClean builds each config in testdata/clean and asserts it
+// raises no deprecation warning. It covers the post-migration shapes produced
+// by database.migrateSingBox114, so the migration is known to actually resolve
+// what it claims to.
 //
-// These configs are only constructed, not started: an ACME provider would try
-// to reach Let's Encrypt on start. Every deprecation these shapes could raise
-// is reported while the box is being built.
+// These configs are built but not started, which is what lets them cover cases
+// TestConfigCompat cannot: an ACME provider would reach out to Let's Encrypt on
+// start, and a bridge outbound needs privileges to create its tun. Every
+// deprecation these shapes could raise is reported while the box is built.
 func TestConfigCompatClean(t *testing.T) {
 	acmeDir := t.TempDir()
 	cacheDir := t.TempDir()
