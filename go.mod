@@ -13,9 +13,9 @@ require (
 	github.com/refraction-networking/utls v1.8.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sagernet/sing v0.9.0-beta.4
-	github.com/sagernet/sing-box v1.14.0-rc.2
+	github.com/sagernet/sing-box v1.14.0-rc.4
 	github.com/sagernet/sing-quic v0.7.0-beta.4
-	github.com/sagernet/sing-tun v0.9.0-beta.2
+	github.com/sagernet/sing-tun v0.9.0-beta.3
 	github.com/sagernet/sing-vmess v0.2.8-0.20250909125414-3aed155119a1
 	github.com/shirou/gopsutil/v4 v4.26.7
 	golang.org/x/crypto v0.55.0
@@ -172,7 +172,7 @@ require (
 	github.com/sagernet/sing-shadowsocks v0.2.8 // indirect
 	github.com/sagernet/sing-shadowsocks2 v0.2.1 // indirect
 	github.com/sagernet/sing-shadowtls v0.2.1 // indirect
-	github.com/sagernet/sing-snell v0.0.0-20260824011554-f8ab8029469a // indirect
+	github.com/sagernet/sing-snell v0.0.0-20260829071736-20f2eaec77c3 // indirect
 	github.com/sagernet/sing-usbip v0.0.0-20260817040617-28bd42667eca // indirect
 	github.com/sagernet/smux v1.5.50-sing-box-mod.1 // indirect
 	github.com/sagernet/tailscale v1.102.1-sing-box-1.14-mod.3 // indirect
