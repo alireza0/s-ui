@@ -1,0 +1,7 @@
+{
+  "dns": {
+    "servers": [{"type": "udp", "tag": "google", "server": "8.8.8.8"}],
+    "rules": [{"domain": ["example.com"], "action": "route", "server": "google", "strategy": "ipv4_only"}]
+  },
+  "outbounds": [{"type": "direct", "tag": "direct"}]
+}

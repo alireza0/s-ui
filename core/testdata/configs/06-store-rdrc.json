@@ -1,0 +1,4 @@
+{
+  "experimental": {"cache_file": {"enabled": true, "store_rdrc": true}},
+  "outbounds": [{"type": "direct", "tag": "direct"}]
+}
