@@ -16,9 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alireza0/s-ui/logger"
-
-	"github.com/op/go-logging"
 	"github.com/sagernet/sing-box/experimental/deprecated"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/service"
@@ -79,8 +76,8 @@ func writePEM(t *testing.T, path, blockType string, der []byte) {
 // s-ui's UI can produce must keep starting, and any new deprecation shows up in
 // the test log so it can be migrated before release.
 func TestConfigCompat(t *testing.T) {
-	logger.InitLogger(logging.ERROR)
 	certPath, keyPath := writeTestCert(t)
+	cacheDir := t.TempDir()
 
 	files, err := filepath.Glob(filepath.Join("testdata", "configs", "*.json"))
 	if err != nil {
@@ -96,7 +93,11 @@ func TestConfigCompat(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			data := strings.NewReplacer("__CERT__", certPath, "__KEY__", keyPath).Replace(string(raw))
+			data := strings.NewReplacer(
+				"__CERT__", certPath,
+				"__KEY__", keyPath,
+				"__CACHEDIR__", cacheDir,
+			).Replace(string(raw))
 
 			ctx := Context(context.Background(), InboundRegistry(), OutboundRegistry(),
 				EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry(), CertificateProviderRegistry())
@@ -132,8 +133,8 @@ func TestConfigCompat(t *testing.T) {
 // to reach Let's Encrypt on start. Every deprecation these shapes could raise
 // is reported while the box is being built.
 func TestConfigCompatClean(t *testing.T) {
-	logger.InitLogger(logging.ERROR)
 	acmeDir := t.TempDir()
+	cacheDir := t.TempDir()
 
 	files, err := filepath.Glob(filepath.Join("testdata", "clean", "*.json"))
 	if err != nil {
@@ -149,7 +150,7 @@ func TestConfigCompatClean(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			data := strings.ReplaceAll(string(raw), "__ACMEDIR__", acmeDir)
+			data := strings.NewReplacer("__ACMEDIR__", acmeDir, "__CACHEDIR__", cacheDir).Replace(string(raw))
 			if !acmeBuilt && strings.Contains(data, `"type": "acme"`) {
 				t.Skip("build does not include ACME")
 			}
