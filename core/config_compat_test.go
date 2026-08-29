@@ -123,3 +123,55 @@ func TestConfigCompat(t *testing.T) {
 		})
 	}
 }
+
+// TestConfigCompatClean asserts that the post-migration shapes produced by
+// database.migrateSingBox114 start without any deprecation warning, so the
+// migration is known to actually resolve what it claims to.
+//
+// These configs are only constructed, not started: an ACME provider would try
+// to reach Let's Encrypt on start. Every deprecation these shapes could raise
+// is reported while the box is being built.
+func TestConfigCompatClean(t *testing.T) {
+	logger.InitLogger(logging.ERROR)
+	acmeDir := t.TempDir()
+
+	files, err := filepath.Glob(filepath.Join("testdata", "clean", "*.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) == 0 {
+		t.Fatal("no clean test configs found")
+	}
+
+	for _, file := range files {
+		t.Run(filepath.Base(file), func(t *testing.T) {
+			raw, err := os.ReadFile(file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			data := strings.ReplaceAll(string(raw), "__ACMEDIR__", acmeDir)
+			if !acmeBuilt && strings.Contains(data, `"type": "acme"`) {
+				t.Skip("build does not include ACME")
+			}
+
+			ctx := Context(context.Background(), InboundRegistry(), OutboundRegistry(),
+				EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry(), CertificateProviderRegistry())
+			notes := &collectManager{}
+			ctx = service.ContextWith[deprecated.Manager](ctx, notes)
+
+			var opts option.Options
+			if err = opts.UnmarshalJSONContext(ctx, []byte(data)); err != nil {
+				t.Fatalf("parse: %v", err)
+			}
+			instance, err := NewBox(Options{Context: ctx, Options: opts})
+			if err != nil {
+				t.Fatalf("create box: %v", err)
+			}
+			instance.Close()
+
+			for _, note := range notes.notes {
+				t.Errorf("migrated config still reports deprecation %q: %s", note.Name, note.Description)
+			}
+		})
+	}
+}

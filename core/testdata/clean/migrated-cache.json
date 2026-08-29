@@ -1,0 +1,6 @@
+{
+  "log": {"level": "error"},
+  "dns": {"servers": [{"type": "udp", "tag": "google", "server": "8.8.8.8"}], "rules": [], "cache_capacity": 4096},
+  "experimental": {"cache_file": {"enabled": true, "store_dns": true}},
+  "outbounds": [{"type": "direct", "tag": "direct"}]
+}

@@ -124,6 +124,12 @@ func InitDB(dbPath string) error {
 		return err
 	}
 
+	err = migrateSingBox114()
+	if err != nil {
+		return err
+	}
+	reportSingBox114Manual()
+
 	return nil
 }
 
