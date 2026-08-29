@@ -151,6 +151,8 @@ func ServiceRegistry() *service.Registry {
 func CertificateProviderRegistry() *sbCertificate.Registry {
 	registry := sbCertificate.NewRegistry()
 
+	registerACMECertificateProvider(registry)
+	registerTailscaleCertificateProvider(registry)
 	originca.RegisterCertificateProvider(registry)
 
 	return registry
