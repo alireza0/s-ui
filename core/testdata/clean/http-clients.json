@@ -1,0 +1,74 @@
+{
+  "log": {"level": "error"},
+  "http_clients": [
+    {
+      "tag": "over-proxy",
+      "version": 2,
+      "detour": "proxy",
+      "idle_timeout": "30s",
+      "keep_alive_period": "15s",
+      "stream_receive_window": "8mb",
+      "connection_receive_window": "16mb",
+      "max_concurrent_streams": 64,
+      "headers": {"User-Agent": "s-ui"}
+    },
+    {
+      "tag": "over-h3",
+      "version": 3,
+      "idle_timeout": "30s",
+      "stream_receive_window": 8388608,
+      "initial_packet_size": 1280,
+      "disable_path_mtu_discovery": true
+    }
+  ],
+  "inbounds": [
+    {
+      "type": "tuic", "tag": "tuic-in", "listen": "127.0.0.1", "listen_port": 42490,
+      "users": [{"uuid": "b831381d-6324-4d53-ad4f-8cda48b30811", "password": "hunter2"}],
+      "tls": {"enabled": true, "certificate_path": "__CERT__", "key_path": "__KEY__"},
+      "idle_timeout": "30s",
+      "max_concurrent_streams": 32,
+      "initial_packet_size": 1280,
+      "disable_path_mtu_discovery": true
+    }
+  ],
+  "outbounds": [
+    {"type": "direct", "tag": "direct"},
+    {"type": "socks", "tag": "proxy", "server": "127.0.0.1", "server_port": 1080},
+    {
+      "type": "hysteria2", "tag": "hy2-out", "server": "127.0.0.1", "server_port": 443,
+      "password": "hunter2", "tls": {"enabled": true, "insecure": true},
+      "idle_timeout": "30s",
+      "connection_receive_window": "16mb",
+      "initial_packet_size": 1280
+    },
+    {
+      "type": "hysteria", "tag": "hy-out", "server": "127.0.0.1", "server_port": 443,
+      "up_mbps": 100, "down_mbps": 100, "auth_str": "hunter2",
+      "tls": {"enabled": true, "insecure": true},
+      "keep_alive_period": "15s",
+      "stream_receive_window": 67108864,
+      "connection_receive_window": 15728640,
+      "disable_path_mtu_discovery": true
+    }
+  ],
+  "services": [
+    {
+      "type": "api", "tag": "api-in", "listen": "127.0.0.1", "listen_port": 42491,
+      "secret": "hunter2",
+      "dashboard": {
+        "enabled": true,
+        "path": "__CACHEDIR__/dashboard",
+        "download_url": "https://example.com/dashboard.zip",
+        "http_client": "over-proxy",
+        "update_interval": "7d"
+      }
+    }
+  ],
+  "route": {
+    "rule_set": [
+      {"type": "remote", "tag": "geosite-ir", "format": "binary", "url": "https://example.com/a.srs", "http_client": "over-h3"}
+    ],
+    "rules": [{"rule_set": ["geosite-ir"], "action": "route", "outbound": "proxy"}]
+  }
+}

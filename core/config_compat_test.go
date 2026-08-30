@@ -137,6 +137,7 @@ func TestConfigCompat(t *testing.T) {
 func TestConfigCompatClean(t *testing.T) {
 	acmeDir := t.TempDir()
 	cacheDir := t.TempDir()
+	certPath, keyPath := writeTestCert(t)
 
 	files, err := filepath.Glob(filepath.Join("testdata", "clean", "*.json"))
 	if err != nil {
@@ -152,7 +153,12 @@ func TestConfigCompatClean(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			data := strings.NewReplacer("__ACMEDIR__", acmeDir, "__CACHEDIR__", cacheDir).Replace(string(raw))
+			data := strings.NewReplacer(
+				"__ACMEDIR__", acmeDir,
+				"__CACHEDIR__", cacheDir,
+				"__CERT__", certPath,
+				"__KEY__", keyPath,
+			).Replace(string(raw))
 
 			ctx := Context(context.Background(), InboundRegistry(), OutboundRegistry(),
 				EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry(), CertificateProviderRegistry())

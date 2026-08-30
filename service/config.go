@@ -113,9 +113,11 @@ const defaultHTTPClientTag = "default"
 // detour says exactly the same thing. It is added to the generated config
 // rather than to the stored one, so it also covers rule-sets added later.
 //
-// An operator who configured http_clients themselves is left alone.
+// An operator who named a default themselves is left alone; one who only
+// declared clients still gets a default, since otherwise the rule-sets that
+// name none keep falling back.
 func ensureDefaultHTTPClient(config *SingBoxConfig) error {
-	if len(config.HTTPClients) > 0 || len(config.Route) == 0 {
+	if len(config.Route) == 0 {
 		return nil
 	}
 	var route map[string]json.RawMessage
@@ -130,11 +132,12 @@ func ensureDefaultHTTPClient(config *SingBoxConfig) error {
 		return nil
 	}
 
-	client, err := json.Marshal(map[string]string{"tag": defaultHTTPClientTag})
+	tagName := unusedHTTPClientTag(config.HTTPClients)
+	client, err := json.Marshal(map[string]string{"tag": tagName})
 	if err != nil {
 		return err
 	}
-	tag, err := json.Marshal(defaultHTTPClientTag)
+	tag, err := json.Marshal(tagName)
 	if err != nil {
 		return err
 	}
@@ -143,9 +146,30 @@ func ensureDefaultHTTPClient(config *SingBoxConfig) error {
 	if err != nil {
 		return err
 	}
-	config.HTTPClients = []json.RawMessage{client}
+	config.HTTPClients = append(config.HTTPClients, client)
 	config.Route = encodedRoute
 	return nil
+}
+
+// unusedHTTPClientTag names the added client without colliding with one the
+// operator declared.
+func unusedHTTPClientTag(clients []json.RawMessage) string {
+	taken := make(map[string]struct{}, len(clients))
+	for _, client := range clients {
+		var fields struct {
+			Tag string `json:"tag"`
+		}
+		if err := json.Unmarshal(client, &fields); err == nil && fields.Tag != "" {
+			taken[fields.Tag] = struct{}{}
+		}
+	}
+	tag := defaultHTTPClientTag
+	for i := 2; ; i++ {
+		if _, exists := taken[tag]; !exists {
+			return tag
+		}
+		tag = defaultHTTPClientTag + "-" + strconv.Itoa(i)
+	}
 }
 
 // hasImplicitHTTPClientRuleSet reports whether any remote rule-set would fall

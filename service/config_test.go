@@ -122,9 +122,6 @@ func TestEnsureDefaultHTTPClientLeavesConfigsAlone(t *testing.T) {
 		]}}`,
 		"no rule-set": `{"route": {"rules": []}}`,
 		"no route":    `{"log": {"level": "info"}}`,
-		"operator set": `{"http_clients": [{"tag": "mine"}], "route": {"rule_set": [
-			{"type": "remote", "tag": "a", "url": "https://e.com/a.srs"}
-		]}}`,
 		"default already set": `{"route": {"default_http_client": "mine", "rule_set": [
 			{"type": "remote", "tag": "a", "url": "https://e.com/a.srs"}
 		]}}`,
@@ -144,5 +141,44 @@ func TestEnsureDefaultHTTPClientLeavesConfigsAlone(t *testing.T) {
 				t.Errorf("unexpected default_http_client: %v", got)
 			}
 		})
+	}
+}
+
+// Declaring clients without naming a default still leaves bare rule-sets
+// falling back, so one is added beside them rather than skipped.
+func TestEnsureDefaultHTTPClientAppends(t *testing.T) {
+	config := decodeConfig(t, `{
+		"http_clients": [{"tag": "over-proxy", "detour": "proxy"}],
+		"route": {"rule_set": [
+			{"type": "remote", "tag": "a", "url": "https://e.com/a.srs"},
+			{"type": "remote", "tag": "b", "url": "https://e.com/b.srs", "http_client": "over-proxy"}
+		]}
+	}`)
+
+	if len(config.HTTPClients) != 2 {
+		t.Fatalf("the operator's client must be kept alongside the added one, got %v", config.HTTPClients)
+	}
+	if routeOf(t, config)["default_http_client"] != defaultHTTPClientTag {
+		t.Errorf("expected the added client as default, got %v", routeOf(t, config)["default_http_client"])
+	}
+}
+
+// The added client must not take a tag the operator already used.
+func TestEnsureDefaultHTTPClientAvoidsTagCollision(t *testing.T) {
+	config := decodeConfig(t, `{
+		"http_clients": [{"tag": "default", "detour": "proxy"}],
+		"route": {"rule_set": [{"type": "remote", "tag": "a", "url": "https://e.com/a.srs"}]}
+	}`)
+
+	got := routeOf(t, config)["default_http_client"]
+	if got == defaultHTTPClientTag {
+		t.Fatalf("the added client must not reuse the operator's tag, got %v", got)
+	}
+	var added map[string]any
+	if err := json.Unmarshal(config.HTTPClients[len(config.HTTPClients)-1], &added); err != nil {
+		t.Fatal(err)
+	}
+	if added["tag"] != got {
+		t.Errorf("the route must point at the added client, got %v and %v", got, added)
 	}
 }
