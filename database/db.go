@@ -140,6 +140,10 @@ func InitDB(dbPath string) error {
 	if err != nil {
 		return err
 	}
+	err = migrateRemovedOptions()
+	if err != nil {
+		return err
+	}
 	reportSingBox114Manual()
 
 	return nil
