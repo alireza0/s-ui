@@ -1,0 +1,56 @@
+{
+  "log": {"level": "info", "timestamp": true},
+  "dns": {
+    "servers": [
+      {"type": "tcp", "tag": "proxy-dns", "server": "8.8.8.8", "server_port": 53, "detour": "proxy", "domain_resolver": "local-dns"},
+      {"tag": "direct-dns", "type": "local"},
+      {"tag": "local-dns", "type": "local"}
+    ],
+    "rules": [
+      {"clash_mode": "Global", "source_ip_cidr": ["172.19.0.0/30"], "action": "route", "server": "proxy-dns"},
+      {"clash_mode": "Direct", "action": "route", "server": "direct-dns"},
+      {"rule_set": ["geosite-ir"], "action": "route", "server": "direct-dns"}
+    ],
+    "final": "local-dns",
+    "strategy": "prefer_ipv4"
+  },
+  "http_clients": [{"tag": "default"}],
+  "inbounds": [
+    {
+      "type": "tun", "address": ["172.19.0.1/30", "fdfe:dcba:9876::1/126"], "mtu": 9000,
+      "auto_route": true, "strict_route": false, "endpoint_independent_nat": false, "stack": "mixed",
+      "platform": {"http_proxy": {"enabled": true, "server": "127.0.0.1", "server_port": 2080}}
+    },
+    {"type": "mixed", "listen": "127.0.0.1", "listen_port": 42480, "users": []}
+  ],
+  "experimental": {
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090", "external_ui": "ui", "secret": "",
+      "external_ui_download_url": "https://example.com/ui.zip",
+      "external_ui_download_detour": "direct", "default_mode": "rule"
+    },
+    "cache_file": {"enabled": true, "store_fakeip": false, "path": "__CACHEDIR__/sub.db"}
+  },
+  "outbounds": [
+    {"type": "selector", "tag": "proxy", "outbounds": ["auto", "direct", "node"]},
+    {"type": "urltest", "tag": "auto", "outbounds": ["node"], "url": "http://www.gstatic.com/generate_204", "interval": "10m", "tolerance": 50},
+    {"type": "direct", "tag": "direct"},
+    {"type": "vless", "tag": "node", "server": "127.0.0.1", "server_port": 443, "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"}
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "final": "proxy",
+    "default_http_client": "default",
+    "default_domain_resolver": "local-dns",
+    "rule_set": [
+      {"tag": "geosite-ir", "type": "remote", "format": "binary", "url": "https://example.com/category-ir.srs"}
+    ],
+    "rules": [
+      {"protocol": "dns", "action": "hijack-dns"},
+      {"action": "sniff"},
+      {"clash_mode": "Direct", "action": "route", "outbound": "direct"},
+      {"clash_mode": "Global", "action": "route", "outbound": "proxy"},
+      {"rule_set": ["geosite-ir"], "action": "route", "outbound": "direct"}
+    ]
+  }
+}

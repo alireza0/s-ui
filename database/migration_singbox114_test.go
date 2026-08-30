@@ -52,7 +52,8 @@ func TestMigrateSingBox114Config(t *testing.T) {
 			"rules": [{"action": "sniff"}],
 			"rule_set": [
 				{"type": "remote", "tag": "geoip-cn", "url": "https://example.com/a.srs", "download_detour": "direct"},
-				{"type": "remote", "tag": "geosite-ads", "url": "https://example.com/b.srs"}
+				{"type": "remote", "tag": "geosite-ads", "url": "https://example.com/b.srs"},
+				{"type": "remote", "tag": "geosite-ir", "url": "https://example.com/c.srs", "download_detour": "proxy"}
 			]
 		}
 	}`
@@ -85,22 +86,36 @@ func TestMigrateSingBox114Config(t *testing.T) {
 	}
 
 	ruleSets, ok := section(t, root, "route")["rule_set"].([]any)
-	if !ok || len(ruleSets) != 2 {
-		t.Fatalf("expected 2 rule sets, got %v", ruleSets)
+	if !ok || len(ruleSets) != 3 {
+		t.Fatalf("expected 3 rule sets, got %v", ruleSets)
 	}
-	migrated, _ := ruleSets[0].(map[string]any)
-	if _, ok = migrated["download_detour"]; ok {
+	// A direct detour is what sing-box does anyway, and it cannot be expressed
+	// as an http_client detour, so it just goes away.
+	direct, _ := ruleSets[0].(map[string]any)
+	if _, ok = direct["download_detour"]; ok {
 		t.Error("download_detour should have been replaced")
 	}
-	httpClient, ok := migrated["http_client"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected http_client, got %v", migrated)
-	}
-	if httpClient["detour"] != "direct" || httpClient["disable_empty_direct_check"] != true {
-		t.Errorf("unexpected http_client: %v", httpClient)
+	if _, ok = direct["http_client"]; ok {
+		t.Errorf("a direct detour must not become an http_client, got %v", direct)
 	}
 	if untouched, _ := ruleSets[1].(map[string]any); untouched["http_client"] != nil {
 		t.Error("rule sets without download_detour must be left alone")
+	}
+	proxied, _ := ruleSets[2].(map[string]any)
+	if _, ok = proxied["download_detour"]; ok {
+		t.Error("download_detour should have been replaced")
+	}
+	httpClient, ok := proxied["http_client"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected http_client, got %v", proxied)
+	}
+	if httpClient["detour"] != "proxy" {
+		t.Errorf("unexpected http_client: %v", httpClient)
+	}
+	// disable_empty_direct_check has no JSON field; emitting it makes the whole
+	// config unparseable.
+	if _, ok = httpClient["disable_empty_direct_check"]; ok {
+		t.Errorf("disable_empty_direct_check is not a real option, got %v", httpClient)
 	}
 }
 

@@ -152,8 +152,13 @@ func migrateExperimentalSection(experimental map[string]any) int {
 }
 
 // migrateRouteSection converts each remote rule-set's download_detour into the
-// equivalent http_client, matching what 1.14 builds internally for the legacy
-// field.
+// equivalent http_client.
+//
+// A detour to `direct` is the one case that does not carry over as a detour:
+// download_detour set the internal disable_empty_direct_check flag, which has
+// no JSON field of its own, and without it sing-box rejects a detour to an
+// empty direct outbound as pointless. Downloading over the default outbound is
+// what that detour meant anyway, so the field is simply dropped.
 func migrateRouteSection(route map[string]any) int {
 	ruleSets, ok := route["rule_set"].([]any)
 	if !ok {
@@ -176,11 +181,8 @@ func migrateRouteSection(route map[string]any) int {
 			changed++
 			continue
 		}
-		if detour != "" {
-			ruleSet["http_client"] = map[string]any{
-				"detour":                     detour,
-				"disable_empty_direct_check": true,
-			}
+		if detour != "" && detour != "direct" {
+			ruleSet["http_client"] = map[string]any{"detour": detour}
 		}
 		changed++
 	}
