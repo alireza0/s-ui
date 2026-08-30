@@ -153,9 +153,6 @@ func TestConfigCompatClean(t *testing.T) {
 				t.Fatal(err)
 			}
 			data := strings.NewReplacer("__ACMEDIR__", acmeDir, "__CACHEDIR__", cacheDir).Replace(string(raw))
-			if !acmeBuilt && strings.Contains(data, `"type": "acme"`) {
-				t.Skip("build does not include ACME")
-			}
 
 			ctx := Context(context.Background(), InboundRegistry(), OutboundRegistry(),
 				EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry(), CertificateProviderRegistry())
@@ -167,6 +164,7 @@ func TestConfigCompatClean(t *testing.T) {
 				t.Fatalf("parse: %v", err)
 			}
 			instance, err := NewBox(Options{Context: ctx, Options: opts})
+			skipIfFeatureMissing(t, err)
 			if err != nil {
 				t.Fatalf("create box: %v", err)
 			}

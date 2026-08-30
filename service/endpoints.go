@@ -25,10 +25,11 @@ func (o *EndpointService) GetAll() (*[]map[string]interface{}, error) {
 	var data []map[string]interface{}
 	for _, endpoint := range endpoints {
 		epData := map[string]interface{}{
-			"id":   endpoint.Id,
-			"type": endpoint.Type,
-			"tag":  endpoint.Tag,
-			"ext":  endpoint.Ext,
+			"id":     endpoint.Id,
+			"type":   endpoint.Type,
+			"tag":    endpoint.Tag,
+			"tls_id": endpoint.TlsId,
+			"ext":    endpoint.Ext,
 		}
 		if endpoint.Options != nil {
 			var restFields map[string]json.RawMessage
@@ -47,7 +48,7 @@ func (o *EndpointService) GetAll() (*[]map[string]interface{}, error) {
 func (o *EndpointService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 	var endpointsJson []json.RawMessage
 	var endpoints []*model.Endpoint
-	err := db.Model(model.Endpoint{}).Scan(&endpoints).Error
+	err := db.Model(model.Endpoint{}).Preload("Tls").Find(&endpoints).Error
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +71,12 @@ func (s *EndpointService) Save(tx *gorm.DB, act string, data json.RawMessage) er
 		err = endpoint.UnmarshalJSON(data)
 		if err != nil {
 			return err
+		}
+		if endpoint.TlsId > 0 {
+			err = tx.Model(model.Tls{}).Where("id = ?", endpoint.TlsId).Find(&endpoint.Tls).Error
+			if err != nil {
+				return err
+			}
 		}
 
 		if endpoint.Type == "warp" {
@@ -135,6 +142,34 @@ func (s *EndpointService) Save(tx *gorm.DB, act string, data json.RawMessage) er
 		}
 	default:
 		return common.NewErrorf("unknown action: %s", act)
+	}
+	return nil
+}
+
+// RestartEndpoints reloads the given endpoints in a running core, so a change
+// to the TLS config they reference takes effect without restarting the panel.
+func (s *EndpointService) RestartEndpoints(tx *gorm.DB, ids []uint) error {
+	if !corePtr.IsRunning() {
+		return nil
+	}
+	var endpoints []*model.Endpoint
+	err := tx.Model(model.Endpoint{}).Preload("Tls").Where("id in ?", ids).Find(&endpoints).Error
+	if err != nil {
+		return err
+	}
+	for _, endpoint := range endpoints {
+		err = corePtr.RemoveEndpoint(endpoint.Tag)
+		if err != nil && err != os.ErrInvalid {
+			return err
+		}
+		endpointConfig, err := endpoint.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		err = corePtr.AddEndpoint(endpointConfig)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
