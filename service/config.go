@@ -33,15 +33,19 @@ type ConfigService struct {
 }
 
 type SingBoxConfig struct {
-	Log          json.RawMessage   `json:"log"`
-	Dns          json.RawMessage   `json:"dns"`
-	Ntp          json.RawMessage   `json:"ntp"`
-	Inbounds     []json.RawMessage `json:"inbounds"`
-	Outbounds    []json.RawMessage `json:"outbounds"`
-	Services     []json.RawMessage `json:"services"`
-	Endpoints    []json.RawMessage `json:"endpoints"`
-	Route        json.RawMessage   `json:"route"`
-	Experimental json.RawMessage   `json:"experimental"`
+	Log json.RawMessage `json:"log"`
+	Dns json.RawMessage `json:"dns"`
+	Ntp json.RawMessage `json:"ntp"`
+	// Shared certificate providers, referenced by tag from a TLS config's
+	// certificate_provider. They are edited alongside the TLS configs but
+	// stored in the base config, so they are carried through unchanged.
+	CertificateProviders []json.RawMessage `json:"certificate_providers,omitempty"`
+	Inbounds             []json.RawMessage `json:"inbounds"`
+	Outbounds            []json.RawMessage `json:"outbounds"`
+	Services             []json.RawMessage `json:"services"`
+	Endpoints            []json.RawMessage `json:"endpoints"`
+	Route                json.RawMessage   `json:"route"`
+	Experimental         json.RawMessage   `json:"experimental"`
 }
 
 func NewConfigService(core *core.Core) *ConfigService {
