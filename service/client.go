@@ -116,10 +116,17 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 			return nil, err
 		}
 		now := time.Now().Unix()
+		// Every client is validated before any of them is written, so the
+		// batch has to be checked against itself as well as against the table.
+		seen := make(map[string]bool, len(clients))
 		for _, client := range clients {
 			if err = s.validateClientName(tx, client); err != nil {
 				return nil, err
 			}
+			if seen[client.Name] {
+				return nil, common.NewErrorf("duplicate client name %q in request", client.Name)
+			}
+			seen[client.Name] = true
 			if err = setConfigIdentity(client); err != nil {
 				return nil, err
 			}
@@ -144,7 +151,15 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+		seen := make(map[string]bool, len(clients))
 		for _, client := range clients {
+			if err = s.validateClientName(tx, client); err != nil {
+				return nil, err
+			}
+			if seen[client.Name] {
+				return nil, common.NewErrorf("duplicate client name %q in request", client.Name)
+			}
+			seen[client.Name] = true
 			changedInboundIds, err := s.findInboundsChanges(tx, client, true)
 			if err != nil {
 				return nil, err
