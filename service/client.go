@@ -47,6 +47,28 @@ func (s *ClientService) GetAll() (*[]model.Client, error) {
 	return &clients, nil
 }
 
+// validateClientName rejects empty names and globally duplicate names,
+// then stores the trimmed name back on the client.
+func (s *ClientService) validateClientName(tx *gorm.DB, client *model.Client) error {
+	name := strings.TrimSpace(client.Name)
+	if name == "" {
+		return common.NewError("client name must not be empty")
+	}
+	query := tx.Model(model.Client{}).Where("name = ?", name)
+	if client.Id != 0 {
+		query = query.Where("id != ?", client.Id)
+	}
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return common.NewErrorf("client name %q is already in use", name)
+	}
+	client.Name = name
+	return nil
+}
+
 func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, hostname string) ([]uint, error) {
 	var err error
 	var inboundIds []uint
@@ -56,6 +78,9 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		var client model.Client
 		err = json.Unmarshal(data, &client)
 		if err != nil {
+			return nil, err
+		}
+		if err = s.validateClientName(tx, &client); err != nil {
 			return nil, err
 		}
 		if err = setConfigIdentity(&client); err != nil {
@@ -91,7 +116,17 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 			return nil, err
 		}
 		now := time.Now().Unix()
+		// Every client is validated before any of them is written, so the
+		// batch has to be checked against itself as well as against the table.
+		seen := make(map[string]bool, len(clients))
 		for _, client := range clients {
+			if err = s.validateClientName(tx, client); err != nil {
+				return nil, err
+			}
+			if seen[client.Name] {
+				return nil, common.NewErrorf("duplicate client name %q in request", client.Name)
+			}
+			seen[client.Name] = true
 			if err = setConfigIdentity(client); err != nil {
 				return nil, err
 			}
@@ -116,7 +151,15 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		if err != nil {
 			return nil, err
 		}
+		seen := make(map[string]bool, len(clients))
 		for _, client := range clients {
+			if err = s.validateClientName(tx, client); err != nil {
+				return nil, err
+			}
+			if seen[client.Name] {
+				return nil, common.NewErrorf("duplicate client name %q in request", client.Name)
+			}
+			seen[client.Name] = true
 			changedInboundIds, err := s.findInboundsChanges(tx, client, true)
 			if err != nil {
 				return nil, err

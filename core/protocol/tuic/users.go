@@ -8,8 +8,7 @@ import (
 )
 
 func (h *Inbound) UpdateUsers(users []option.TUICUser) error {
-	userList := make([]int, 0, len(users))
-	userNameList := make([]string, 0, len(users))
+	userList := make([]string, 0, len(users))
 	userUUIDList := make([][16]byte, 0, len(users))
 	userPasswordList := make([]string, 0, len(users))
 	for index, user := range users {
@@ -20,12 +19,10 @@ func (h *Inbound) UpdateUsers(users []option.TUICUser) error {
 		if err != nil {
 			return E.Cause(err, "invalid uuid for user ", index)
 		}
-		userList = append(userList, index)
-		userNameList = append(userNameList, user.Name)
+		userList = append(userList, user.Name)
 		userUUIDList = append(userUUIDList, userUUID)
 		userPasswordList = append(userPasswordList, user.Password)
 	}
 	h.server.UpdateUsers(userList, userUUIDList, userPasswordList)
-	h.userNameList = userNameList
 	return nil
 }
