@@ -20,7 +20,6 @@ on:
 
 env:
   NODE_VERSION: "26"
-  CRONET_GO_VERSION: "ec9a39c5ba3b4a8d625ede04deaf3c9020afb916"
   CRONET_GO_REPO: https://github.com/sagernet/cronet-go.git
   BOOTLIN_BASE_URL: https://toolchains.bootlin.com/downloads/releases/toolchains
 
@@ -85,6 +84,16 @@ jobs:
           cache: false
           go-version-file: go.mod
 
+      - name: Resolve cronet-go commit
+        if: matrix.naive
+        run: |
+          set -euo pipefail
+          SHORT=$(go list -m -f '{{.Version}}' github.com/sagernet/cronet-go | sed 's/.*-//')
+          FULL=$(curl -fsSL "https://api.github.com/repos/SagerNet/cronet-go/commits/${SHORT}" | jq -r '.sha')
+          [ -n "$FULL" ] && [ "$FULL" != "null" ] || { echo "could not resolve cronet-go commit ${SHORT}" >&2; exit 1; }
+          echo "cronet-go: $FULL"
+          echo "CRONET_COMMIT=$FULL" >> "$GITHUB_ENV"
+
       # Naive platforms: use cronet toolchain only (no Bootlin).
       - name: Clone cronet-go (cronet toolchain for naive)
         if: matrix.naive
@@ -92,7 +101,7 @@ jobs:
           set -e
           git init ~/cronet-go
           git -C ~/cronet-go remote add origin ${{ env.CRONET_GO_REPO }}
-          git -C ~/cronet-go fetch --depth=1 origin "${{ env.CRONET_GO_VERSION }}"
+          git -C ~/cronet-go fetch --depth=1 origin "${{ env.CRONET_COMMIT }}"
           git -C ~/cronet-go checkout FETCH_HEAD
           git -C ~/cronet-go submodule update --init --recursive --depth=1
 
@@ -114,7 +123,7 @@ jobs:
             ~/cronet-go/naiveproxy/src/gn/out/
             ~/cronet-go/naiveproxy/src/chrome/build/pgo_profiles/
             ~/cronet-go/naiveproxy/src/out/sysroot-build/
-          key: chromium-toolchain-${{ matrix.platform }}-musl-${{ env.CRONET_GO_VERSION }}
+          key: chromium-toolchain-${{ matrix.platform }}-musl-${{ env.CRONET_COMMIT }}
 
       - name: Build cronet lib and set toolchain env (CC, CXX, CGO_LDFLAGS, PATH)
         if: matrix.naive
