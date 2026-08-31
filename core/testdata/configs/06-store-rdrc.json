@@ -1,0 +1,15 @@
+{
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "store_rdrc": true,
+      "path": "__CACHEDIR__/cache.db"
+    }
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ]
+}

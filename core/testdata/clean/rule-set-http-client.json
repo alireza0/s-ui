@@ -1,0 +1,19 @@
+{
+  "log": {"level": "error"},
+  "http_clients": [{"tag": "default"}],
+  "outbounds": [
+    {"type": "direct", "tag": "direct"},
+    {"type": "socks", "tag": "proxy", "server": "127.0.0.1", "server_port": 1080}
+  ],
+  "route": {
+    "default_http_client": "default",
+    "rule_set": [
+      {"type": "remote", "tag": "downloads-directly", "format": "binary", "url": "https://example.com/a.srs"},
+      {"type": "remote", "tag": "downloads-over-proxy", "format": "binary", "url": "https://example.com/b.srs",
+       "http_client": {"detour": "proxy"}},
+      {"type": "remote", "tag": "downloads-over-named-client", "format": "binary", "url": "https://example.com/c.srs",
+       "http_client": "default"}
+    ],
+    "rules": [{"rule_set": ["downloads-directly"], "action": "route", "outbound": "proxy"}]
+  }
+}

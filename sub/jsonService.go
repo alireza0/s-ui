@@ -296,11 +296,18 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	if _, ok := othersJson["rule_set"]; ok {
 		route["rule_set"] = othersJson["rule_set"]
 	}
+	j.addHTTPClients(jsonConfig, route, othersJson)
 	if settingRules, ok := othersJson["rules"].([]interface{}); ok {
 		route["rules"] = settingRules
 	}
-	if defaultDomainResolver, ok := othersJson["default_domain_resolver"].(string); ok {
+	if defaultDomainResolver, ok := othersJson["default_domain_resolver"].(string); ok && defaultDomainResolver != "" {
 		route["default_domain_resolver"] = defaultDomainResolver
+	} else if fallback := fallbackDomainResolver(othersJson); fallback != "" {
+		// With more than one DNS server and no resolver named for dial fields,
+		// sing-box has to guess which one resolves outbound server domains and
+		// reports the guess as deprecated. The template's final server is the
+		// one it would have to fall back to anyway.
+		route["default_domain_resolver"] = fallback
 	}
 	if v, ok := othersJson["override_android_vpn"]; ok {
 		route["override_android_vpn"] = v
@@ -311,6 +318,81 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	(*jsonConfig)["route"] = route
 
 	return nil
+}
+
+// fallbackDomainResolver returns the DNS server dial fields should resolve
+// through when the template names none, or "" when the config has too few
+// servers for the choice to matter.
+func fallbackDomainResolver(othersJson map[string]interface{}) string {
+	dns, ok := othersJson["dns"].(map[string]interface{})
+	if !ok {
+		return ""
+	}
+	servers, ok := dns["servers"].([]interface{})
+	if !ok || len(servers) < 2 {
+		return ""
+	}
+	if final, ok := dns["final"].(string); ok && final != "" {
+		return final
+	}
+	// No final server either: the first one is what sing-box treats as default.
+	if first, ok := servers[0].(map[string]interface{}); ok {
+		tag, _ := first["tag"].(string)
+		return tag
+	}
+	return ""
+}
+
+// defaultHTTPClientTag names the HTTP client the generated config declares for
+// downloading remote rule-sets.
+const defaultHTTPClientTag = "default"
+
+// addHTTPClients carries the template's HTTP clients across and, when the
+// config downloads remote rule-sets without naming a client for them, declares
+// one. Left implicit, sing-box 1.14 falls back to the default outbound and
+// reports the fallback as deprecated; an explicit client says the same thing
+// and keeps the client's log clean.
+func (j *JsonService) addHTTPClients(jsonConfig *map[string]interface{}, route map[string]interface{}, othersJson map[string]interface{}) {
+	if clients, ok := othersJson["http_clients"]; ok {
+		(*jsonConfig)["http_clients"] = clients
+	}
+	if defaultClient, ok := othersJson["default_http_client"].(string); ok && defaultClient != "" {
+		route["default_http_client"] = defaultClient
+		return
+	}
+	// A template that brings its own clients decides for itself.
+	if _, ok := (*jsonConfig)["http_clients"]; ok {
+		return
+	}
+	if !needsDefaultHTTPClient(route) {
+		return
+	}
+	(*jsonConfig)["http_clients"] = []interface{}{
+		map[string]interface{}{"tag": defaultHTTPClientTag},
+	}
+	route["default_http_client"] = defaultHTTPClientTag
+}
+
+// needsDefaultHTTPClient reports whether any remote rule-set would fall back to
+// the implicit default HTTP client.
+func needsDefaultHTTPClient(route map[string]interface{}) bool {
+	ruleSets, ok := route["rule_set"].([]interface{})
+	if !ok {
+		return false
+	}
+	for _, entry := range ruleSets {
+		ruleSet, isObject := entry.(map[string]interface{})
+		if !isObject {
+			continue
+		}
+		if ruleSetType, _ := ruleSet["type"].(string); ruleSetType != "remote" {
+			continue
+		}
+		if _, hasClient := ruleSet["http_client"]; !hasClient {
+			return true
+		}
+	}
+	return false
 }
 
 func (j *JsonService) pushMixed(outbounds *[]map[string]interface{}, outTags *[]string, out map[string]interface{}) {

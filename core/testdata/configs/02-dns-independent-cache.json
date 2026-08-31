@@ -1,0 +1,8 @@
+{
+  "dns": {
+    "servers": [{"type": "udp", "tag": "google", "server": "8.8.8.8"}],
+    "rules": [],
+    "independent_cache": true
+  },
+  "outbounds": [{"type": "direct", "tag": "direct"}]
+}

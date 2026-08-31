@@ -1,0 +1,46 @@
+{
+  "log": {
+    "level": "error"
+  },
+  "inbounds": [
+    {
+      "type": "snell",
+      "tag": "snell-v6-in",
+      "listen": "127.0.0.1",
+      "listen_port": 42101,
+      "version": 6,
+      "psk": "snell-pre-shared-key",
+      "mode": "default"
+    },
+    {
+      "type": "snell",
+      "tag": "snell-v5-in",
+      "listen": "127.0.0.1",
+      "listen_port": 42102,
+      "version": 5,
+      "psk": "snell-pre-shared-key",
+      "obfs_mode": "http"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "snell",
+      "tag": "snell-out",
+      "server": "127.0.0.1",
+      "server_port": 42101,
+      "version": 6,
+      "psk": "snell-pre-shared-key"
+    }
+  ],
+  "services": [
+    {
+      "type": "oom-killer",
+      "tag": "oom",
+      "memory_limit": "1gb"
+    }
+  ]
+}

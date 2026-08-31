@@ -1,0 +1,26 @@
+{
+  "log": {"level": "error"},
+  "inbounds": [
+    {"type": "shadowsocks", "tag": "ss-in", "listen": "127.0.0.1", "listen_port": 42001,
+     "method": "2022-blake3-aes-128-gcm", "password": "8JCsPssfgS8tiRwiMlhARg=="},
+    {"type": "vmess", "tag": "vmess-in", "listen": "127.0.0.1", "listen_port": 42002,
+     "users": [{"uuid": "b831381d-6324-4d53-ad4f-8cda48b30811", "alterId": 0}]},
+    {"type": "vless", "tag": "vless-in", "listen": "127.0.0.1", "listen_port": 42003,
+     "users": [{"uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"}]},
+    {"type": "trojan", "tag": "trojan-in", "listen": "127.0.0.1", "listen_port": 42004,
+     "users": [{"password": "trojanpass"}]},
+    {"type": "anytls", "tag": "anytls-in", "listen": "127.0.0.1", "listen_port": 42005,
+     "users": [{"password": "anytlspass"}],
+     "tls": {"enabled": true, "server_name": "t.example.com", "key_path": "__KEY__", "certificate_path": "__CERT__"}},
+    {"type": "hysteria2", "tag": "hy2-in", "listen": "127.0.0.1", "listen_port": 42006,
+     "users": [{"password": "hy2pass"}],
+     "tls": {"enabled": true, "server_name": "t.example.com", "alpn": ["h3"], "key_path": "__KEY__", "certificate_path": "__CERT__"}},
+    {"type": "tuic", "tag": "tuic-in", "listen": "127.0.0.1", "listen_port": 42007,
+     "users": [{"uuid": "b831381d-6324-4d53-ad4f-8cda48b30811", "password": "tuicpass"}],
+     "tls": {"enabled": true, "server_name": "t.example.com", "alpn": ["h3"], "key_path": "__KEY__", "certificate_path": "__CERT__"}},
+    {"type": "hysteria", "tag": "hy1-in", "listen": "127.0.0.1", "listen_port": 42008,
+     "up_mbps": 100, "down_mbps": 100, "users": [{"auth_str": "hy1pass"}],
+     "tls": {"enabled": true, "server_name": "t.example.com", "alpn": ["h3"], "key_path": "__KEY__", "certificate_path": "__CERT__"}}
+  ],
+  "outbounds": [{"type": "direct", "tag": "direct"}]
+}

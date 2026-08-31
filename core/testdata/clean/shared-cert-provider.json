@@ -1,0 +1,24 @@
+{
+  "log": {"level": "error"},
+  "certificate_providers": [{
+    "type": "acme",
+    "tag": "letsencrypt",
+    "domain": ["example.com"],
+    "email": "a@example.com",
+    "data_directory": "__ACMEDIR__",
+    "dns01_challenge": {"provider": "cloudflare", "api_token": "tok"}
+  }],
+  "inbounds": [
+    {
+      "type": "vless", "tag": "vless-in", "listen": "127.0.0.1", "listen_port": 42445,
+      "users": [{"uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"}],
+      "tls": {"enabled": true, "server_name": "example.com", "certificate_provider": "letsencrypt"}
+    },
+    {
+      "type": "trojan", "tag": "trojan-in", "listen": "127.0.0.1", "listen_port": 42446,
+      "users": [{"password": "hunter2"}],
+      "tls": {"enabled": true, "server_name": "example.com", "certificate_provider": "letsencrypt"}
+    }
+  ],
+  "outbounds": [{"type": "direct", "tag": "direct"}]
+}

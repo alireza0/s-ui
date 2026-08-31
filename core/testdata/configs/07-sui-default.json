@@ -1,0 +1,6 @@
+{
+  "log": {"level": "info"},
+  "dns": {"servers": [], "rules": []},
+  "route": {"rules": [{"action": "sniff"}, {"protocol": ["dns"], "action": "hijack-dns"}]},
+  "experimental": {}
+}

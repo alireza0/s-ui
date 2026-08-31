@@ -240,3 +240,6 @@ func (l *observableLogger) FatalContext(ctx context.Context, args ...any) {
 func (l *observableLogger) PanicContext(ctx context.Context, args ...any) {
 	l.Log(ctx, log.LevelPanic, args)
 }
+
+func (f *defaultFactory) AttachPlatformWriter(platformWriter log.PlatformWriter) {
+}

@@ -1,0 +1,5 @@
+{
+  "dns": {"servers": [{"type": "udp", "tag": "google", "server": "8.8.8.8"}],
+    "rules": [{"ip_cidr": ["10.0.0.0/8"], "action": "route", "server": "google"}]},
+  "outbounds": [{"type": "direct", "tag": "direct"}]
+}

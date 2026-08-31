@@ -32,16 +32,30 @@ type ConfigService struct {
 	EndpointService
 }
 
+// SingBoxConfig is the shape GetConfig decodes the stored base config into
+// before filling in the objects held in the database. Every top-level sing-box
+// key has to be listed here: anything missing is silently dropped on the way
+// through, even when the operator wrote it by hand.
 type SingBoxConfig struct {
-	Log          json.RawMessage   `json:"log"`
-	Dns          json.RawMessage   `json:"dns"`
-	Ntp          json.RawMessage   `json:"ntp"`
-	Inbounds     []json.RawMessage `json:"inbounds"`
-	Outbounds    []json.RawMessage `json:"outbounds"`
-	Services     []json.RawMessage `json:"services"`
-	Endpoints    []json.RawMessage `json:"endpoints"`
-	Route        json.RawMessage   `json:"route"`
-	Experimental json.RawMessage   `json:"experimental"`
+	Schema string          `json:"$schema,omitempty"`
+	Log    json.RawMessage `json:"log"`
+	Dns    json.RawMessage `json:"dns"`
+	Ntp    json.RawMessage `json:"ntp"`
+	// Global certificate store settings, and the shared certificate providers
+	// referenced by tag from a TLS config's certificate_provider. Providers are
+	// edited alongside the TLS configs but stored in the base config.
+	Certificate          json.RawMessage   `json:"certificate,omitempty"`
+	CertificateProviders []json.RawMessage `json:"certificate_providers,omitempty"`
+	// Named HTTP clients, referenced by remote rule-sets and by
+	// route.default_http_client.
+	HTTPClients       []json.RawMessage `json:"http_clients,omitempty"`
+	NetworkNamespaces []json.RawMessage `json:"network_namespaces,omitempty"`
+	Inbounds          []json.RawMessage `json:"inbounds"`
+	Outbounds         []json.RawMessage `json:"outbounds"`
+	Services          []json.RawMessage `json:"services"`
+	Endpoints         []json.RawMessage `json:"endpoints"`
+	Route             json.RawMessage   `json:"route"`
+	Experimental      json.RawMessage   `json:"experimental"`
 }
 
 func NewConfigService(core *core.Core) *ConfigService {
@@ -79,11 +93,113 @@ func (s *ConfigService) GetConfig(data string) (*[]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err = ensureDefaultHTTPClient(&singboxConfig); err != nil {
+		return nil, err
+	}
 	rawConfig, err := json.MarshalIndent(singboxConfig, "", "  ")
 	if err != nil {
 		return nil, err
 	}
 	return &rawConfig, nil
+}
+
+// defaultHTTPClientTag names the HTTP client remote rule-sets download over
+// when the operator has not set one up.
+const defaultHTTPClientTag = "default"
+
+// ensureDefaultHTTPClient declares an HTTP client for remote rule-sets that
+// name none. Left implicit, sing-box 1.14 downloads them over the default
+// outbound and reports that fallback as deprecated; declaring a client with no
+// detour says exactly the same thing. It is added to the generated config
+// rather than to the stored one, so it also covers rule-sets added later.
+//
+// An operator who named a default themselves is left alone; one who only
+// declared clients still gets a default, since otherwise the rule-sets that
+// name none keep falling back.
+func ensureDefaultHTTPClient(config *SingBoxConfig) error {
+	if len(config.Route) == 0 {
+		return nil
+	}
+	var route map[string]json.RawMessage
+	if err := json.Unmarshal(config.Route, &route); err != nil {
+		// A route section the panel cannot read is passed through untouched.
+		return nil
+	}
+	if raw, ok := route["default_http_client"]; ok && !isEmptyRawJSON(raw) {
+		return nil
+	}
+	if !hasImplicitHTTPClientRuleSet(route["rule_set"]) {
+		return nil
+	}
+
+	tagName := unusedHTTPClientTag(config.HTTPClients)
+	client, err := json.Marshal(map[string]string{"tag": tagName})
+	if err != nil {
+		return err
+	}
+	tag, err := json.Marshal(tagName)
+	if err != nil {
+		return err
+	}
+	route["default_http_client"] = tag
+	encodedRoute, err := json.Marshal(route)
+	if err != nil {
+		return err
+	}
+	config.HTTPClients = append(config.HTTPClients, client)
+	config.Route = encodedRoute
+	return nil
+}
+
+// unusedHTTPClientTag names the added client without colliding with one the
+// operator declared.
+func unusedHTTPClientTag(clients []json.RawMessage) string {
+	taken := make(map[string]struct{}, len(clients))
+	for _, client := range clients {
+		var fields struct {
+			Tag string `json:"tag"`
+		}
+		if err := json.Unmarshal(client, &fields); err == nil && fields.Tag != "" {
+			taken[fields.Tag] = struct{}{}
+		}
+	}
+	tag := defaultHTTPClientTag
+	for i := 2; ; i++ {
+		if _, exists := taken[tag]; !exists {
+			return tag
+		}
+		tag = defaultHTTPClientTag + "-" + strconv.Itoa(i)
+	}
+}
+
+// hasImplicitHTTPClientRuleSet reports whether any remote rule-set would fall
+// back to the implicit default HTTP client.
+func hasImplicitHTTPClientRuleSet(raw json.RawMessage) bool {
+	if len(raw) == 0 {
+		return false
+	}
+	var ruleSets []map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &ruleSets); err != nil {
+		return false
+	}
+	for _, ruleSet := range ruleSets {
+		var ruleSetType string
+		if err := json.Unmarshal(ruleSet["type"], &ruleSetType); err != nil || ruleSetType != "remote" {
+			continue
+		}
+		if httpClient, ok := ruleSet["http_client"]; !ok || isEmptyRawJSON(httpClient) {
+			return true
+		}
+	}
+	return false
+}
+
+func isEmptyRawJSON(raw json.RawMessage) bool {
+	switch string(raw) {
+	case "", "null", `""`, "{}", "[]":
+		return true
+	}
+	return false
 }
 
 func (s *ConfigService) StartCore() error {
