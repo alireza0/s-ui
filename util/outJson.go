@@ -129,7 +129,10 @@ func addTls(out *map[string]interface{}, tls *model.Tls) {
 }
 
 func naiveOut(out *map[string]interface{}, inbound map[string]interface{}) {
-	if quic_congestion_control, ok := inbound["quic_congestion_control"].(string); ok {
+	delete(*out, "quic")
+	delete(*out, "quic_congestion_control")
+
+	if quic_congestion_control, ok := inbound["quic_congestion_control"].(string); ok && quic_congestion_control != "" {
 		(*out)["quic"] = true
 		switch quic_congestion_control {
 		case "bbr_standard":
