@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="assets/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="assets/manifest.webmanifest" />
+  <meta name="theme-color" content="#121212" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="S-UI" />
+  <script>
+    window.BASE_URL = "{{ .BASE_URL }}"
+
+    // Dev Mode
+    if (window.BASE_URL.charAt(0) === '{') window.BASE_URL = "/app/"
+  </script>
+  <title>S-UI</title>
+  <script type="module" crossorigin src="./assets/df02d90cfd573e6a.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/49a62b4b3f39ab02.css">
+</head>
+
+<body>
+  <div id="app"></div>
+</body>
+
+</html>
