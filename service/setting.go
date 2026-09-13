@@ -119,6 +119,18 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 		}
 	}
 
+	// Bookkeeping rows share this table with the operator's settings: the
+	// migrated* flags the one-off data migrations write, and whatever a later
+	// migration adds. They used to be handed to the settings form, which posts
+	// back every key it was given, and Save rejects a key that is not a
+	// setting -- so a single migration flag made every settings save fail with
+	// "unknown setting". Only keys the operator can actually set leave here.
+	for key := range allSetting {
+		if _, known := defaultValueMap[key]; !known {
+			delete(allSetting, key)
+		}
+	}
+
 	for key := range protectedSettings {
 		delete(allSetting, key)
 	}
