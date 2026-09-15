@@ -1,11 +1,14 @@
 package service
 
 import (
+	"sort"
 	"sync"
 	"time"
 
+	"github.com/alireza0/s-ui/core"
 	"github.com/alireza0/s-ui/database"
 	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/util/common"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -40,7 +43,7 @@ func (s *StatsService) SaveStats(enableTraffic bool, bucketSeconds int64) error 
 	if box == nil {
 		return nil
 	}
-	st := box.StatsTracker()
+	st := box.SessionTracker()
 	if st == nil {
 		return nil
 	}
@@ -228,6 +231,68 @@ func (s *StatsService) GetOnlines() (onlines, error) {
 		User:     append([]string(nil), onlineResources.User...),
 		Outbound: append([]string(nil), onlineResources.Outbound...),
 	}, nil
+}
+
+// GetSessions lists the live routed connections, narrowed to one user, inbound
+// or outbound. Sorted newest first so the panel shows fresh connections on top.
+func (s *StatsService) GetSessions(resource string, tag string) ([]core.SessionInfo, error) {
+	if corePtr == nil || !corePtr.IsRunning() {
+		return []core.SessionInfo{}, nil
+	}
+	box := corePtr.GetInstance()
+	if box == nil {
+		return []core.SessionInfo{}, nil
+	}
+	sessions := box.SessionTracker().Sessions()
+	if tag != "" {
+		var match func(core.SessionInfo) bool
+		switch resource {
+		case "user":
+			match = func(session core.SessionInfo) bool { return session.User == tag }
+		case "inbound":
+			match = func(session core.SessionInfo) bool { return session.Inbound == tag }
+		case "outbound":
+			match = func(session core.SessionInfo) bool { return session.Outbound == tag }
+		case "endpoint":
+			// An endpoint can serve either side, so it is matched on both.
+			match = func(session core.SessionInfo) bool {
+				return session.Inbound == tag || session.Outbound == tag
+			}
+		default:
+			return nil, common.NewError("unknown resource: ", resource)
+		}
+		filtered := sessions[:0]
+		for _, session := range sessions {
+			if match(session) {
+				filtered = append(filtered, session)
+			}
+		}
+		sessions = filtered
+	}
+	sort.Slice(sessions, func(i, j int) bool {
+		return sessions[i].CreatedAt > sessions[j].CreatedAt
+	})
+	return sessions, nil
+}
+
+// CloseUserSessions disconnects a user: every routed connection of theirs is
+// closed, and so is every protocol-level session that has one of its own, which
+// is what a multiplex or QUIC client would otherwise keep using. The user stays
+// enabled, so nothing stops them from connecting again.
+func (s *StatsService) CloseUserSessions(user string) error {
+	if user == "" {
+		return common.NewError("empty user name")
+	}
+	if corePtr == nil || !corePtr.IsRunning() {
+		return common.NewError("core is not running")
+	}
+	box := corePtr.GetInstance()
+	if box == nil {
+		return common.NewError("core is not running")
+	}
+	box.SessionTracker().CloseByUser(user)
+	corePtr.KickUserSessions(user)
+	return nil
 }
 
 // delOldStatsChunk caps how many rows one DELETE removes, so the write lock is

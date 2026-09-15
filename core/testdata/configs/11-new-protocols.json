@@ -20,6 +20,21 @@
       "version": 5,
       "psk": "snell-pre-shared-key",
       "obfs_mode": "http"
+    },
+    {
+      "type": "snell",
+      "tag": "snell-multi-in",
+      "listen": "127.0.0.1",
+      "listen_port": 42103,
+      "version": 6,
+      "psk": "snell-pre-shared-key",
+      "mode": "default",
+      "users": [
+        {
+          "name": "user-a",
+          "userkey": "user-a-key"
+        }
+      ]
     }
   ],
   "outbounds": [

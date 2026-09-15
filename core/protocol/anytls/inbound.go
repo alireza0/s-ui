@@ -5,6 +5,8 @@ import (
 	"net"
 	"strings"
 
+	"github.com/alireza0/s-ui/core/usersession"
+
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/common/listener"
@@ -35,6 +37,7 @@ type Inbound struct {
 	logger    logger.ContextLogger
 	listener  *listener.Listener
 	service   *anytls.Service
+	sessions  *usersession.Registry
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.AnyTLSInboundOptions) (adapter.Inbound, error) {
@@ -69,6 +72,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		return nil, err
 	}
 	inbound.service = service
+	inbound.sessions = usersession.NewRegistry()
 	inbound.listener = listener.New(listener.Options{
 		Context:           ctx,
 		Logger:            logger,
@@ -106,6 +110,12 @@ func (h *Inbound) NewConnection(ctx context.Context, conn net.Conn, metadata ada
 		}
 		conn = tlsConn
 	}
+	// NewConnection blocks for the whole anytls session, and every stream it
+	// opens shares one onClose, so the session is untracked here rather than
+	// from a close handler that fires on the first stream.
+	source := metadata.Source.String()
+	h.sessions.Track(source, conn)
+	defer h.sessions.Untrack(source)
 	err := h.service.NewConnection(adapter.WithContext(ctx, &metadata), conn, metadata.Source, onClose)
 	if err != nil {
 		N.CloseOnHandshakeFailure(conn, onClose, err)
@@ -116,6 +126,10 @@ func (h *Inbound) NewConnection(ctx context.Context, conn net.Conn, metadata ada
 type inboundHandler Inbound
 
 func (h *inboundHandler) NewConnectionEx(ctx context.Context, conn net.Conn, source M.Socksaddr, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
+	if !h.sessions.Allowed(source.String()) {
+		usersession.Reject(conn, onClose)
+		return
+	}
 	var metadata adapter.InboundContext
 	metadata.Inbound = h.Tag()
 	metadata.InboundType = h.Type()
@@ -126,6 +140,7 @@ func (h *inboundHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 	metadata.Destination = destination.Unwrap()
 	if userName, _ := auth.UserFromContext[string](ctx); userName != "" {
 		metadata.User = userName
+		h.sessions.Bind(userName, source.String())
 		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)

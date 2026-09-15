@@ -62,6 +62,8 @@ func (a *APIv2Handler) postHandler(c *gin.Context) {
 		a.ApiService.SubConvert(c)
 	case "importdb":
 		a.ApiService.ImportDb(c)
+	case "closeSessions":
+		a.ApiService.CloseSessions(c)
 	case "getCertPing":
 		a.ApiService.GetCertPing(c)
 	default:
@@ -91,6 +93,8 @@ func (a *APIv2Handler) getHandler(c *gin.Context) {
 		a.ApiService.GetStatus(c)
 	case "onlines":
 		a.ApiService.GetOnlines(c)
+	case "sessions":
+		a.ApiService.GetSessions(c)
 	case "logs":
 		a.ApiService.GetLogs(c)
 	case "changes":

@@ -240,6 +240,24 @@ func (a *ApiService) GetOnlines(c *gin.Context) {
 	jsonObj(c, onlines, err)
 }
 
+func (a *ApiService) GetSessions(c *gin.Context) {
+	resource := c.Query("resource")
+	if resource == "" {
+		resource = "user"
+	}
+	sessions, err := a.StatsService.GetSessions(resource, c.Query("tag"))
+	jsonObj(c, sessions, err)
+}
+
+func (a *ApiService) CloseSessions(c *gin.Context) {
+	user := c.PostForm("u")
+	if user == "" {
+		user = c.Query("u")
+	}
+	err := a.StatsService.CloseUserSessions(user)
+	jsonMsg(c, "closeSessions", err)
+}
+
 func (a *ApiService) GetLogs(c *gin.Context) {
 	count := c.Query("c")
 	level := c.Query("l")

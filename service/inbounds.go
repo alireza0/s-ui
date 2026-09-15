@@ -384,8 +384,9 @@ func (s *InboundService) UpdateInboundsUsers(tx *gorm.DB, ids []uint) error {
 			if err != nil {
 				return err
 			}
-			closed := box.ConnTracker().CloseConnByInboundUsers(inbound.Tag, keep)
-			logger.Debug("updated users of inbound ", inbound.Tag, " in place, closed ", closed, " stale connections")
+			closed := box.SessionTracker().CloseByInboundUsers(inbound.Tag, keep)
+			cut := corePtr.CloseInboundUserSessions(inbound.Tag, keep)
+			logger.Debug("updated users of inbound ", inbound.Tag, " in place, closed ", closed, " stale connections and ", cut, " sessions")
 			continue
 		}
 
@@ -394,7 +395,7 @@ func (s *InboundService) UpdateInboundsUsers(tx *gorm.DB, ids []uint) error {
 		if err != nil && err != os.ErrInvalid {
 			return err
 		}
-		box.ConnTracker().CloseConnByInbound(inbound.Tag)
+		box.SessionTracker().CloseByInbound(inbound.Tag)
 		err = corePtr.AddInbound(inboundConfig)
 		if err != nil {
 			return err
@@ -419,7 +420,7 @@ func (s *InboundService) RestartInbounds(tx *gorm.DB, ids []uint) error {
 			return err
 		}
 		// Close all existing connections
-		box.ConnTracker().CloseConnByInbound(inbound.Tag)
+		box.SessionTracker().CloseByInbound(inbound.Tag)
 
 		inboundConfig, err := inbound.MarshalJSON()
 		if err != nil {

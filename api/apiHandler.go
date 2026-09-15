@@ -62,6 +62,8 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 	case "deleteToken":
 		a.ApiService.DeleteToken(c)
 		a.apiv2.ReloadTokens()
+	case "closeSessions":
+		a.ApiService.CloseSessions(c)
 	case "getCertPing":
 		a.ApiService.GetCertPing(c)
 	default:
@@ -93,6 +95,8 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		a.ApiService.GetStatus(c)
 	case "onlines":
 		a.ApiService.GetOnlines(c)
+	case "sessions":
+		a.ApiService.GetSessions(c)
 	case "logs":
 		a.ApiService.GetLogs(c)
 	case "changes":

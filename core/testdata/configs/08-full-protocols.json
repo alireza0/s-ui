@@ -6,6 +6,7 @@
     {"type": "vmess", "tag": "vmess-in", "listen": "127.0.0.1", "listen_port": 42002,
      "users": [{"uuid": "b831381d-6324-4d53-ad4f-8cda48b30811", "alterId": 0}]},
     {"type": "vless", "tag": "vless-in", "listen": "127.0.0.1", "listen_port": 42003,
+     "multiplex": {"enabled": true},
      "users": [{"uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"}]},
     {"type": "trojan", "tag": "trojan-in", "listen": "127.0.0.1", "listen_port": 42004,
      "users": [{"password": "trojanpass"}]},
@@ -20,7 +21,11 @@
      "tls": {"enabled": true, "server_name": "t.example.com", "alpn": ["h3"], "key_path": "__KEY__", "certificate_path": "__CERT__"}},
     {"type": "hysteria", "tag": "hy1-in", "listen": "127.0.0.1", "listen_port": 42008,
      "up_mbps": 100, "down_mbps": 100, "users": [{"auth_str": "hy1pass"}],
-     "tls": {"enabled": true, "server_name": "t.example.com", "alpn": ["h3"], "key_path": "__KEY__", "certificate_path": "__CERT__"}}
+     "tls": {"enabled": true, "server_name": "t.example.com", "alpn": ["h3"], "key_path": "__KEY__", "certificate_path": "__CERT__"}},
+    {"type": "shadowsocks", "tag": "ss-multi-in", "listen": "127.0.0.1", "listen_port": 42009,
+     "method": "2022-blake3-aes-128-gcm", "password": "MDEyMzQ1Njc4OWFiY2RlZg==",
+     "multiplex": {"enabled": true},
+     "users": [{"name": "user-a", "password": "ZmVkY2JhOTg3NjU0MzIxMA=="}]}
   ],
   "outbounds": [{"type": "direct", "tag": "direct"}]
 }

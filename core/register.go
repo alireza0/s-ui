@@ -4,6 +4,8 @@ import (
 	suiAnytls "github.com/alireza0/s-ui/core/protocol/anytls"
 	suiHysteria "github.com/alireza0/s-ui/core/protocol/hysteria"
 	suiHysteria2 "github.com/alireza0/s-ui/core/protocol/hysteria2"
+	suiShadowsocks "github.com/alireza0/s-ui/core/protocol/shadowsocks"
+	suiSnell "github.com/alireza0/s-ui/core/protocol/snell"
 	suiTrojan "github.com/alireza0/s-ui/core/protocol/trojan"
 	suiTuic "github.com/alireza0/s-ui/core/protocol/tuic"
 	suiVless "github.com/alireza0/s-ui/core/protocol/vless"
@@ -67,8 +69,8 @@ func InboundRegistry() *inbound.Registry {
 	http.RegisterInbound(registry)
 	mixed.RegisterInbound(registry)
 
-	shadowsocks.RegisterInbound(registry)
-	snell.RegisterInbound(registry)
+	suiShadowsocks.RegisterInbound(registry)
+	suiSnell.RegisterInbound(registry)
 	suiVmess.RegisterInbound(registry)
 	suiTrojan.RegisterInbound(registry)
 	naive.RegisterInbound(registry)

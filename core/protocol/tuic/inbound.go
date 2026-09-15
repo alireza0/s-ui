@@ -5,6 +5,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/alireza0/s-ui/core/usersession"
+
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/common/listener"
@@ -35,6 +37,7 @@ type Inbound struct {
 	listener  *listener.Listener
 	tlsConfig tls.ServerConfig
 	server    *tuic.Service[string]
+	sessions  *usersession.Registry
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TUICInboundOptions) (adapter.Inbound, error) {
@@ -102,11 +105,16 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		userPasswordList = append(userPasswordList, user.Password)
 	}
 	service.UpdateUsers(userList, userUUIDList, userPasswordList)
+	inbound.sessions = usersession.NewRegistry()
 	inbound.server = service
 	return inbound, nil
 }
 
 func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.Socksaddr, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
+	if !h.sessions.Allowed(source.String()) {
+		usersession.Reject(conn, onClose)
+		return
+	}
 	ctx = log.ContextWithNewID(ctx)
 	var metadata adapter.InboundContext
 	metadata.Inbound = h.Tag()
@@ -120,6 +128,7 @@ func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.S
 	h.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
 	if userName, _ := auth.UserFromContext[string](ctx); userName != "" {
 		metadata.User = userName
+		h.sessions.Bind(userName, source.String())
 		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
@@ -128,6 +137,10 @@ func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.S
 }
 
 func (h *Inbound) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, source M.Socksaddr, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
+	if !h.sessions.Allowed(source.String()) {
+		usersession.Reject(conn, onClose)
+		return
+	}
 	ctx = log.ContextWithNewID(ctx)
 	var metadata adapter.InboundContext
 	metadata.Inbound = h.Tag()
@@ -141,6 +154,7 @@ func (h *Inbound) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, 
 	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
 	if userName, _ := auth.UserFromContext[string](ctx); userName != "" {
 		metadata.User = userName
+		h.sessions.Bind(userName, source.String())
 		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)

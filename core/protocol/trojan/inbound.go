@@ -5,6 +5,8 @@ import (
 	"net"
 	"os"
 
+	"github.com/alireza0/s-ui/core/usersession"
+
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/common/listener"
@@ -15,6 +17,7 @@ import (
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/transport/trojan"
 	"github.com/sagernet/sing-box/transport/v2ray"
+	singmux "github.com/sagernet/sing-mux"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
@@ -34,6 +37,7 @@ type Inbound struct {
 	logger                   log.ContextLogger
 	listener                 *listener.Listener
 	service                  *trojan.Service[string]
+	sessions                 *usersession.Registry
 	tlsConfig                tls.ServerConfig
 	fallbackAddr             M.Socksaddr
 	fallbackAddrTLSNextProto map[string]M.Socksaddr
@@ -110,6 +114,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		Listen:            options.ListenOptions,
 		ConnectionHandler: inbound,
 	})
+	inbound.sessions = usersession.NewRegistry()
 	return inbound, nil
 }
 
@@ -188,6 +193,17 @@ func (h *Inbound) newConnection(ctx context.Context, conn net.Conn, metadata ada
 	}
 	if user != "" {
 		metadata.User = user
+	}
+	if metadata.Destination == singmux.Destination {
+		// The multiplex carrier never reaches the session tracker: the mux
+		// router takes it before the real router, and the streams it carries
+		// are never authenticated again. Cutting a removed user therefore means
+		// closing this connection. RouteConnectionEx below blocks for as long as
+		// the multiplex session lives, so the deferred untrack is not early.
+		source := metadata.Source.String()
+		h.sessions.Track(source, conn)
+		h.sessions.Bind(user, source)
+		defer h.sessions.Untrack(source)
 	}
 	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	h.router.RouteConnectionEx(ctx, conn, metadata, onClose)
