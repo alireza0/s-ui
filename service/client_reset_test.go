@@ -190,3 +190,74 @@ func TestClientNameJSONIsValid(t *testing.T) {
 		}
 	}
 }
+
+// The counter-preserving guard above also swallowed the panel's reset-usage
+// button, which is the only legitimate way a form writes these columns: the
+// zeros it posted were replaced by the stored values, so usage never reset and
+// a client over its quota was disabled again on the next deplete run. #1261
+func TestResetUsageThroughTheClientForm(t *testing.T) {
+	db := clientTestDB(t)
+	s := &ClientService{}
+
+	c := createClient(t, db, &model.Client{
+		Name:      "someone",
+		Enable:    true,
+		Up:        4_000,
+		Down:      6_000,
+		TotalUp:   10_000,
+		TotalDown: 20_000,
+	})
+
+	// What the reset button posts: counters zeroed, everything else as shown.
+	reset := &model.Client{
+		Id:     c.Id,
+		Name:   "someone",
+		Enable: true,
+		Up:     0,
+		Down:   0,
+	}
+	s.preserveServerOwnedFields(db, reset)
+
+	if reset.Up != 0 || reset.Down != 0 {
+		t.Errorf("reset was discarded: up=%d down=%d, want 0/0", reset.Up, reset.Down)
+	}
+	// The lifetime counters take on what was just cleared.
+	if reset.TotalUp != 14_000 || reset.TotalDown != 26_000 {
+		t.Errorf("totals = %d/%d, want 14000/26000", reset.TotalUp, reset.TotalDown)
+	}
+}
+
+// Traffic that arrives while the form is open is counted into the totals, not
+// lost: the totals come from the stored row, never from the form.
+func TestResetUsageCountsTrafficArrivingWhileOpen(t *testing.T) {
+	db := clientTestDB(t)
+	s := &ClientService{}
+
+	c := createClient(t, db, &model.Client{
+		Name:    "someone",
+		Enable:  true,
+		Up:      1_000,
+		Down:    1_000,
+		TotalUp: 500,
+	})
+
+	// The stats job lands after the operator opened the form.
+	if err := db.Model(model.Client{}).Where("id = ?", c.Id).
+		Updates(map[string]any{"up": 3_000, "down": 9_000}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	// A form rendered before that, with the totals it computed for itself.
+	reset := &model.Client{
+		Id:        c.Id,
+		Name:      "someone",
+		Enable:    true,
+		TotalUp:   1_500,
+		TotalDown: 1_000,
+	}
+	s.preserveServerOwnedFields(db, reset)
+
+	if reset.TotalUp != 3_500 || reset.TotalDown != 9_000 {
+		t.Errorf("totals = %d/%d, want 3500/9000", reset.TotalUp, reset.TotalDown)
+	}
+}

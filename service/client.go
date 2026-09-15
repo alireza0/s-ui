@@ -243,6 +243,13 @@ func (s *ClientService) preserveServerOwnedFields(tx *gorm.DB, client *model.Cli
 	}
 	client.CreatedAt = existing.CreatedAt
 	client.OnlineAt = existing.OnlineAt
+
+	if client.Up == 0 && client.Down == 0 {
+		client.TotalUp = existing.TotalUp + existing.Up
+		client.TotalDown = existing.TotalDown + existing.Down
+		return
+	}
+
 	client.Up = existing.Up
 	client.Down = existing.Down
 	client.TotalUp = existing.TotalUp
