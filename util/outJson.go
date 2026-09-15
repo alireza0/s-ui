@@ -48,6 +48,8 @@ func FillOutJson(i *model.Inbound, hostname string) error {
 		shadowsocksOut(&outJson, *inbound)
 	case "shadowtls":
 		shadowTlsOut(&outJson, *inbound)
+	case "snell":
+		snellOut(&outJson, *inbound)
 	case "hysteria":
 		hysteriaOut(&outJson, *inbound)
 	case "hysteria2":
@@ -175,6 +177,29 @@ func shadowTlsOut(out *map[string]interface{}, inbound map[string]interface{}) {
 		}
 	}
 	(*out)["tls"] = map[string]interface{}{"enabled": true}
+}
+
+func snellOut(out *map[string]interface{}, inbound map[string]interface{}) {
+	delete(*out, "obfs_mode")
+	delete(*out, "obfs_host")
+	delete(*out, "mode")
+
+	version, _ := inbound["version"].(float64)
+	if int(version) == 6 {
+		(*out)["version"] = 6
+		if mode, ok := inbound["mode"].(string); ok && mode != "" {
+			(*out)["mode"] = mode
+		}
+	} else {
+		(*out)["version"] = 4
+		if obfsMode, ok := inbound["obfs_mode"].(string); ok && obfsMode != "" {
+			(*out)["obfs_mode"] = obfsMode
+		}
+	}
+
+	if psk, ok := inbound["psk"].(string); ok {
+		(*out)["psk"] = psk
+	}
 }
 
 func hysteriaOut(out *map[string]interface{}, inbound map[string]interface{}) {

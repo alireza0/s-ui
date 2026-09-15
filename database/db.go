@@ -151,6 +151,10 @@ func InitDB(dbPath string) error {
 	if err != nil {
 		return err
 	}
+	err = addSnellClientConfig()
+	if err != nil {
+		return err
+	}
 	reportSingBox114Manual()
 
 	return nil
