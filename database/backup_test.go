@@ -20,6 +20,10 @@ func seedEveryTable(t *testing.T) {
 	t.Helper()
 
 	rows := []any{
+		// The settings table used to be filled in by the per-migration flags
+		// the old InitDB wrote; migrations record the version instead, and
+		// that is what a live database carries here.
+		&model.Setting{Key: "version", Value: "1.6.2"},
 		&model.Tls{Name: "cert", Server: json.RawMessage(`{"enabled":true}`), Client: json.RawMessage(`{}`)},
 		&model.Inbound{Type: "vless", Tag: "in-1", Options: json.RawMessage(`{}`), OutJson: json.RawMessage(`{}`)},
 		&model.Outbound{Type: "direct", Tag: "out-1", Options: json.RawMessage(`{}`)},

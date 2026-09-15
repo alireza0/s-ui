@@ -1,22 +1,51 @@
-package database
+package migration
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 
-	"github.com/alireza0/s-ui/database/model"
 	"github.com/alireza0/s-ui/util/common"
 
 	"gorm.io/gorm"
 )
 
-// migratedKeySnellClient marks that existing clients have been given their
-// Snell credentials.
-const migratedKeySnellClient = "migratedSnellClient"
-
 // snellUserKeyLength matches what the panel generates for a new client. Snell
 // takes an arbitrary key here; this is the same length as the inbound's psk.
 const snellUserKeyLength = 32
+
+// to1_6_3 gives every client a Snell key and clears the per-migration flags
+// that 1.6.0 through 1.6.2 left in the settings table.
+func to1_6_3(tx *gorm.DB) error {
+	if err := addSnellClientConfig(tx); err != nil {
+		return err
+	}
+	return dropMigrationFlags(tx)
+}
+
+// Between 1.6.0 and 1.6.2 each migration ran from InitDB on every start and
+// recorded a `migratedX` flag of its own in the settings table, rather than
+// running once from here against the version the same table already holds.
+// Those migrations are now steps in this chain, so the flags decide nothing
+// and are removed; a database that carries them has already had the work done,
+// and every step above skips what it finds already converted.
+func dropMigrationFlags(tx *gorm.DB) error {
+	res := tx.Exec("DELETE FROM settings WHERE key LIKE ?", "migrated%")
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected > 0 {
+		fmt.Printf("settings: removed %d per-migration flag(s), the version row tracks migrations again\n", res.RowsAffected)
+	}
+	return nil
+}
+
+// clientRow reads only the columns the migration touches, since the clients
+// table has grown columns this database may not have yet.
+type clientRow struct {
+	Id     uint
+	Name   string
+	Config json.RawMessage
+}
 
 // addSnellClientConfig gives every client a Snell key.
 //
@@ -28,34 +57,23 @@ const snellUserKeyLength = 32
 //
 // Only the `snell` key is added; nothing else in a client's config is touched,
 // and a client that already has one is left exactly as it is.
-func addSnellClientConfig() error {
-	var flag model.Setting
-	err := db.Where("key = ?", migratedKeySnellClient).First(&flag).Error
-	if err == nil {
+func addSnellClientConfig(tx *gorm.DB) error {
+	if !tx.Migrator().HasTable("clients") {
 		return nil
 	}
-	if err != gorm.ErrRecordNotFound {
+	changed, err := addSnellClientConfigIn(tx)
+	if err != nil {
 		return err
 	}
-
-	return db.Transaction(func(tx *gorm.DB) error {
-		if !tx.Migrator().HasTable("clients") {
-			return tx.Create(&model.Setting{Key: migratedKeySnellClient, Value: "true"}).Error
-		}
-		changed, err := addSnellClientConfigIn(tx)
-		if err != nil {
-			return err
-		}
-		if changed > 0 {
-			log.Printf("snell: added Snell credentials to %d client(s)", changed)
-		}
-		return tx.Create(&model.Setting{Key: migratedKeySnellClient, Value: "true"}).Error
-	})
+	if changed > 0 {
+		fmt.Printf("snell: added Snell credentials to %d client(s)\n", changed)
+	}
+	return nil
 }
 
 func addSnellClientConfigIn(tx *gorm.DB) (int, error) {
-	var clients []model.Client
-	if err := tx.Find(&clients).Error; err != nil {
+	var clients []clientRow
+	if err := tx.Raw("SELECT id, name, config FROM clients").Scan(&clients).Error; err != nil {
 		return 0, err
 	}
 
@@ -66,7 +84,7 @@ func addSnellClientConfigIn(tx *gorm.DB) (int, error) {
 			if err := json.Unmarshal(client.Config, &config); err != nil {
 				// One unreadable config must not stop the rest. The client
 				// keeps working on the protocols it already has.
-				log.Printf("snell: skipping client %q, cannot parse config: %v", client.Name, err)
+				fmt.Printf("snell: skipping client %q, cannot parse config: %v\n", client.Name, err)
 				continue
 			}
 		}
@@ -92,8 +110,7 @@ func addSnellClientConfigIn(tx *gorm.DB) (int, error) {
 		// Written as raw bytes, not a string: the column holds a BLOB
 		// everywhere else, and a TEXT value lands there as something GORM
 		// cannot scan back into json.RawMessage.
-		if err := tx.Model(model.Client{}).Where("id = ?", client.Id).
-			Update("config", json.RawMessage(encoded)).Error; err != nil {
+		if err := tx.Exec("UPDATE clients SET config = ? WHERE id = ?", encoded, client.Id).Error; err != nil {
 			return 0, err
 		}
 		changed++

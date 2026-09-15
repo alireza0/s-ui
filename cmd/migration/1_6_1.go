@@ -1,17 +1,11 @@
-package database
+package migration
 
 import (
 	"encoding/json"
-	"log"
-
-	"github.com/alireza0/s-ui/database/model"
+	"fmt"
 
 	"gorm.io/gorm"
 )
-
-// migratedKeyEndpointTls marks that endpoints referencing a shared TLS config
-// have been given their own inline `tls` object instead.
-const migratedKeyEndpointTls = "migratedEndpointTls"
 
 // OpenConnect and OpenVPN endpoints used to point at a panel TLS config, which
 // the core projected into the shape each one accepts. The projection could only
@@ -19,50 +13,41 @@ const migratedKeyEndpointTls = "migratedEndpointTls"
 // endpoint set up that way never had enough to build a TLS session; those
 // endpoints now hold their own `tls` object written in sing-box's own names.
 //
-// migrateEndpointTls runs the old projection one last time and stores the
-// result inline, so an endpoint that did work keeps working and one that did
-// not at least keeps the certificates the operator chose, ready to be completed
-// in the endpoint's own form.
-func migrateEndpointTls() error {
-	var flag model.Setting
-	err := db.Where("key = ?", migratedKeyEndpointTls).First(&flag).Error
-	if err == nil {
+// to1_6_1 runs the old projection one last time and stores the result inline,
+// so an endpoint that did work keeps working and one that did not at least
+// keeps the certificates the operator chose, ready to be completed in the
+// endpoint's own form. It then drops the options each OpenVPN mode rejects and
+// settles the client-certificate policy a server left unstated.
+func to1_6_1(tx *gorm.DB) error {
+	// A database from before endpoints existed has nothing to move.
+	if !tx.Migrator().HasTable("endpoints") {
 		return nil
 	}
-	if err != gorm.ErrRecordNotFound {
+	// A database created after the column was dropped has nothing to move.
+	if tx.Migrator().HasColumn("endpoints", "tls_id") {
+		changed, err := inlineEndpointTls(tx)
+		if err != nil {
+			return err
+		}
+		if changed > 0 {
+			fmt.Printf("endpoint tls: moved %d shared TLS config(s) into the endpoint(s) that used them\n", changed)
+		}
+	}
+	cleaned, err := dropModeConflictingOpenVPNOptions(tx)
+	if err != nil {
 		return err
 	}
-
-	return db.Transaction(func(tx *gorm.DB) error {
-		if !tx.Migrator().HasTable("endpoints") {
-			return tx.Create(&model.Setting{Key: migratedKeyEndpointTls, Value: "true"}).Error
-		}
-		// A database created after the column was dropped has nothing to move.
-		if tx.Migrator().HasColumn("endpoints", "tls_id") {
-			changed, err := inlineEndpointTls(tx)
-			if err != nil {
-				return err
-			}
-			if changed > 0 {
-				log.Printf("endpoint tls: moved %d shared TLS config(s) into the endpoint(s) that used them", changed)
-			}
-		}
-		cleaned, err := dropModeConflictingOpenVPNOptions(tx)
-		if err != nil {
-			return err
-		}
-		if cleaned > 0 {
-			log.Printf("endpoint tls: dropped options from %d openvpn endpoint(s) that do not belong to their mode", cleaned)
-		}
-		settled, err := settleOpenVPNClientCertificatePolicy(tx)
-		if err != nil {
-			return err
-		}
-		if settled > 0 {
-			log.Printf("endpoint tls: %d openvpn server(s) asked for client certificates with no CA to check them against, now set to not ask", settled)
-		}
-		return tx.Create(&model.Setting{Key: migratedKeyEndpointTls, Value: "true"}).Error
-	})
+	if cleaned > 0 {
+		fmt.Printf("endpoint tls: dropped options from %d openvpn endpoint(s) that do not belong to their mode\n", cleaned)
+	}
+	settled, err := settleOpenVPNClientCertificatePolicy(tx)
+	if err != nil {
+		return err
+	}
+	if settled > 0 {
+		fmt.Printf("endpoint tls: %d openvpn server(s) asked for client certificates with no CA to check them against, now set to not ask\n", settled)
+	}
+	return nil
 }
 
 // The two OpenVPN modes each reject the other's options outright, and the panel
@@ -83,8 +68,8 @@ var openVPNServerTLSConflicts = []string{"remote", "remote_port", "peer_address"
 
 func dropModeConflictingOpenVPNOptions(tx *gorm.DB) (int, error) {
 	var rows []endpointTlsRow
-	err := tx.Table("endpoints").Select("id", "type", "options").
-		Where("type in ?", []string{"openvpn-server", "openvpn-client"}).Scan(&rows).Error
+	err := tx.Raw("SELECT id, type, options FROM endpoints WHERE type in ?",
+		[]string{"openvpn-server", "openvpn-client"}).Scan(&rows).Error
 	if err != nil {
 		return 0, err
 	}
@@ -94,7 +79,7 @@ func dropModeConflictingOpenVPNOptions(tx *gorm.DB) (int, error) {
 		options := make(map[string]json.RawMessage)
 		if len(row.Options) > 0 {
 			if err = json.Unmarshal(row.Options, &options); err != nil {
-				log.Printf("endpoint tls: skipping endpoint %d, cannot parse its options: %v", row.Id, err)
+				fmt.Printf("endpoint tls: skipping endpoint %d, cannot parse its options: %v\n", row.Id, err)
 				continue
 			}
 		}
@@ -130,8 +115,7 @@ func dropModeConflictingOpenVPNOptions(tx *gorm.DB) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		if err = tx.Table("endpoints").Where("id = ?", row.Id).
-			Update("options", json.RawMessage(encoded)).Error; err != nil {
+		if err = tx.Exec("UPDATE endpoints SET options = ? WHERE id = ?", encoded, row.Id).Error; err != nil {
 			return 0, err
 		}
 		cleaned++
@@ -139,7 +123,7 @@ func dropModeConflictingOpenVPNOptions(tx *gorm.DB) (int, error) {
 	return cleaned, nil
 }
 
-// endpointTlsRow reads the two columns the migration needs by name, since the
+// endpointTlsRow reads the columns the migration needs by name, since the
 // endpoint model no longer declares tls_id.
 type endpointTlsRow struct {
 	Id      uint
@@ -150,8 +134,7 @@ type endpointTlsRow struct {
 
 func inlineEndpointTls(tx *gorm.DB) (int, error) {
 	var rows []endpointTlsRow
-	err := tx.Table("endpoints").Select("id", "type", "tls_id", "options").
-		Where("tls_id > 0").Scan(&rows).Error
+	err := tx.Raw("SELECT id, type, tls_id, options FROM endpoints WHERE tls_id > 0").Scan(&rows).Error
 	if err != nil {
 		return 0, err
 	}
@@ -159,11 +142,11 @@ func inlineEndpointTls(tx *gorm.DB) (int, error) {
 		return 0, nil
 	}
 
-	var tlsConfigs []model.Tls
-	if err = tx.Find(&tlsConfigs).Error; err != nil {
+	tlsConfigs, err := readTlsRows(tx)
+	if err != nil {
 		return 0, err
 	}
-	byId := make(map[uint]*model.Tls, len(tlsConfigs))
+	byId := make(map[uint]*tlsRow, len(tlsConfigs))
 	for i := range tlsConfigs {
 		byId[tlsConfigs[i].Id] = &tlsConfigs[i]
 	}
@@ -174,21 +157,21 @@ func inlineEndpointTls(tx *gorm.DB) (int, error) {
 		if !ok {
 			// The config was deleted out from under the endpoint. Clearing the
 			// reference is all that is left to do.
-			if err = tx.Table("endpoints").Where("id = ?", row.Id).Update("tls_id", 0).Error; err != nil {
+			if err = tx.Exec("UPDATE endpoints SET tls_id = 0 WHERE id = ?", row.Id).Error; err != nil {
 				return 0, err
 			}
 			continue
 		}
 		projected, err := projectEndpointTLS(row.Type, tlsConfig)
 		if err != nil {
-			log.Printf("endpoint tls: skipping endpoint %d, cannot read TLS config %d: %v", row.Id, row.TlsId, err)
+			fmt.Printf("endpoint tls: skipping endpoint %d, cannot read TLS config %d: %v\n", row.Id, row.TlsId, err)
 			continue
 		}
 
 		options := make(map[string]json.RawMessage)
 		if len(row.Options) > 0 {
 			if err = json.Unmarshal(row.Options, &options); err != nil {
-				log.Printf("endpoint tls: skipping endpoint %d, cannot parse its options: %v", row.Id, err)
+				fmt.Printf("endpoint tls: skipping endpoint %d, cannot parse its options: %v\n", row.Id, err)
 				continue
 			}
 		}
@@ -202,8 +185,7 @@ func inlineEndpointTls(tx *gorm.DB) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		if err = tx.Table("endpoints").Where("id = ?", row.Id).
-			Updates(map[string]interface{}{"options": json.RawMessage(encoded), "tls_id": 0}).Error; err != nil {
+		if err = tx.Exec("UPDATE endpoints SET options = ?, tls_id = 0 WHERE id = ?", encoded, row.Id).Error; err != nil {
 			return 0, err
 		}
 	}
@@ -212,7 +194,7 @@ func inlineEndpointTls(tx *gorm.DB) (int, error) {
 
 // projectEndpointTLS copies a panel TLS config into the field names the
 // endpoint type uses. Whatever the endpoint has no equivalent for is left out.
-func projectEndpointTLS(endpointType string, tlsConfig *model.Tls) (json.RawMessage, error) {
+func projectEndpointTLS(endpointType string, tlsConfig *tlsRow) (json.RawMessage, error) {
 	var source map[string]json.RawMessage
 	switch endpointType {
 	case "openvpn-server":
@@ -380,8 +362,7 @@ func isEmptyJSON(value json.RawMessage) bool {
 // so nothing an operator actually asked for is weakened.
 func settleOpenVPNClientCertificatePolicy(tx *gorm.DB) (int, error) {
 	var rows []endpointTlsRow
-	err := tx.Table("endpoints").Select("id", "type", "options").
-		Where("type = ?", "openvpn-server").Scan(&rows).Error
+	err := tx.Raw("SELECT id, type, options FROM endpoints WHERE type = ?", "openvpn-server").Scan(&rows).Error
 	if err != nil {
 		return 0, err
 	}
@@ -424,8 +405,7 @@ func settleOpenVPNClientCertificatePolicy(tx *gorm.DB) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		if err = tx.Table("endpoints").Where("id = ?", row.Id).
-			Update("options", json.RawMessage(encoded)).Error; err != nil {
+		if err = tx.Exec("UPDATE endpoints SET options = ? WHERE id = ?", encoded, row.Id).Error; err != nil {
 			return 0, err
 		}
 		settled++

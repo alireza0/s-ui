@@ -138,17 +138,9 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 	return &allSetting, nil
 }
 
-// ResetSettings restores the operator-facing settings to their defaults, and
-// deliberately keeps the bookkeeping rows: without the version row the database
-// reads as pre-1.2 and every `s-ui migrate` replays the whole legacy chain,
-// and without the migrated* flags the one-off data migrations all run again.
-//
-// These are not settings the operator set, so resetting them is not what the
-// command means in the first place.
 func (s *SettingService) ResetSettings() error {
 	db := database.GetDB()
-	return db.Where("key <> ? AND key NOT LIKE ?", "version", "migrated%").
-		Delete(model.Setting{}).Error
+	return db.Where("key <> ?", "version").Delete(model.Setting{}).Error
 }
 
 func (s *SettingService) getSetting(key string) (*model.Setting, error) {

@@ -1,10 +1,12 @@
-package database
+package migration
 
 import (
 	"encoding/json"
 	"testing"
 
 	"github.com/alireza0/s-ui/database/model"
+
+	"gorm.io/gorm"
 )
 
 // legacyEndpoint mirrors the endpoints table as it was while endpoints pointed
@@ -20,15 +22,16 @@ type legacyEndpoint struct {
 
 func (legacyEndpoint) TableName() string { return "endpoints" }
 
-func openEndpointTestDB(t *testing.T) {
+func openEndpointTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	openTestDB(t)
+	db := openTestDB(t)
 	if err := db.AutoMigrate(&legacyEndpoint{}); err != nil {
 		t.Fatal(err)
 	}
+	return db
 }
 
-func endpointOptions(t *testing.T, id uint) map[string]any {
+func endpointOptions(t *testing.T, db *gorm.DB, id uint) map[string]any {
 	t.Helper()
 	var stored legacyEndpoint
 	if err := db.Where("id = ?", id).First(&stored).Error; err != nil {
@@ -45,7 +48,7 @@ func endpointOptions(t *testing.T, id uint) map[string]any {
 }
 
 func TestMigrateEndpointTlsOpenVPNClient(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	if err := db.Create(&model.Tls{
 		Name: "vpn",
 		Client: json.RawMessage(`{
@@ -68,11 +71,11 @@ func TestMigrateEndpointTlsOpenVPNClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	options := endpointOptions(t, 1)
+	options := endpointOptions(t, db, 1)
 	if options["server"] != "vpn.example.com" {
 		t.Errorf("server was lost: %v", options)
 	}
@@ -97,7 +100,7 @@ func TestMigrateEndpointTlsOpenVPNClient(t *testing.T) {
 }
 
 func TestMigrateEndpointTlsOpenVPNServerClientAuth(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	if err := db.Create(&model.Tls{
 		Name: "vpn",
 		Server: json.RawMessage(`{
@@ -119,11 +122,11 @@ func TestMigrateEndpointTlsOpenVPNServerClientAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	tls, ok := endpointOptions(t, 1)["tls"].(map[string]any)
+	tls, ok := endpointOptions(t, db, 1)["tls"].(map[string]any)
 	if !ok {
 		t.Fatal("no inline tls object")
 	}
@@ -137,7 +140,7 @@ func TestMigrateEndpointTlsOpenVPNServerClientAuth(t *testing.T) {
 }
 
 func TestMigrateEndpointTlsOpenConnectRenamesTrustAnchor(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	if err := db.Create(&model.Tls{
 		Name:   "oc",
 		Client: json.RawMessage(`{"enabled":true,"certificate_path":"/etc/ssl/ca.crt","insecure":true}`),
@@ -153,11 +156,11 @@ func TestMigrateEndpointTlsOpenConnectRenamesTrustAnchor(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	tls, ok := endpointOptions(t, 1)["tls"].(map[string]any)
+	tls, ok := endpointOptions(t, db, 1)["tls"].(map[string]any)
 	if !ok {
 		t.Fatal("no inline tls object")
 	}
@@ -170,7 +173,7 @@ func TestMigrateEndpointTlsOpenConnectRenamesTrustAnchor(t *testing.T) {
 }
 
 func TestMigrateEndpointTlsKeepsExistingInlineTls(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	if err := db.Create(&model.Tls{
 		Name:   "vpn",
 		Client: json.RawMessage(`{"enabled":true,"certificate_path":"/etc/ssl/template-ca.crt"}`),
@@ -186,18 +189,18 @@ func TestMigrateEndpointTlsKeepsExistingInlineTls(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	tls := endpointOptions(t, 1)["tls"].(map[string]any)
+	tls := endpointOptions(t, db, 1)["tls"].(map[string]any)
 	if tls["certificate_path"] != "/etc/ssl/own-ca.crt" {
 		t.Errorf("the endpoint's own tls block was overwritten: %v", tls)
 	}
 }
 
 func TestMigrateEndpointTlsClearsDanglingReference(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	if err := db.Create(&legacyEndpoint{
 		Type:    "openvpn-client",
 		Tag:     "ovpn",
@@ -207,18 +210,18 @@ func TestMigrateEndpointTlsClearsDanglingReference(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	options := endpointOptions(t, 1)
+	options := endpointOptions(t, db, 1)
 	if _, exists := options["tls"]; exists {
 		t.Errorf("a missing TLS config produced a tls block: %v", options)
 	}
 }
 
 func TestMigrateEndpointTlsLeavesOtherTypesAlone(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	if err := db.Create(&model.Tls{
 		Name:   "vpn",
 		Client: json.RawMessage(`{"enabled":true,"certificate_path":"/etc/ssl/ca.crt"}`),
@@ -234,45 +237,30 @@ func TestMigrateEndpointTlsLeavesOtherTypesAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	options := endpointOptions(t, 1)
+	options := endpointOptions(t, db, 1)
 	if _, exists := options["tls"]; exists {
 		t.Errorf("wireguard was given a tls block: %v", options)
-	}
-}
-
-func TestMigrateEndpointTlsRunsOnce(t *testing.T) {
-	openEndpointTestDB(t)
-	if err := migrateEndpointTls(); err != nil {
-		t.Fatal(err)
-	}
-	// A second run must not fail on the flag it wrote itself.
-	if err := migrateEndpointTls(); err != nil {
-		t.Fatal(err)
-	}
-	var flag model.Setting
-	if err := db.Where("key = ?", migratedKeyEndpointTls).First(&flag).Error; err != nil {
-		t.Fatal(err)
 	}
 }
 
 // A database created after the tls_id column was dropped has no column to read,
 // which must not stop the panel from starting.
 func TestMigrateEndpointTlsWithoutColumn(t *testing.T) {
-	openTestDB(t)
+	db := openTestDB(t)
 	if err := db.AutoMigrate(&model.Endpoint{}); err != nil {
 		t.Fatal(err)
 	}
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestMigrateEndpointTlsDropsCipherInTlsMode(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	// The panel used to offer `cipher` in both modes, and sing-box rejects it
 	// in TLS mode, so the endpoint never started.
 	if err := db.Create(&legacyEndpoint{
@@ -283,11 +271,11 @@ func TestMigrateEndpointTlsDropsCipherInTlsMode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	options := endpointOptions(t, 1)
+	options := endpointOptions(t, db, 1)
 	if _, exists := options["cipher"]; exists {
 		t.Errorf("cipher survived in tls mode: %v", options)
 	}
@@ -297,7 +285,7 @@ func TestMigrateEndpointTlsDropsCipherInTlsMode(t *testing.T) {
 }
 
 func TestMigrateEndpointTlsKeepsCipherInStaticKeyMode(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	if err := db.Create(&legacyEndpoint{
 		Type:    "openvpn-client",
 		Tag:     "ovpn",
@@ -306,11 +294,11 @@ func TestMigrateEndpointTlsKeepsCipherInStaticKeyMode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	options := endpointOptions(t, 1)
+	options := endpointOptions(t, db, 1)
 	if options["cipher"] != "AES-256-CBC" {
 		t.Errorf("cipher = %v, want it kept in static_key mode", options["cipher"])
 	}
@@ -320,7 +308,7 @@ func TestMigrateEndpointTlsKeepsCipherInStaticKeyMode(t *testing.T) {
 }
 
 func TestMigrateEndpointTlsDropsPeerAddressOnTlsServer(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	// In TLS mode a server pushes addresses to whichever clients connect, so
 	// sing-box refuses the single peer a static_key tunnel would name.
 	if err := db.Create(&legacyEndpoint{
@@ -331,18 +319,18 @@ func TestMigrateEndpointTlsDropsPeerAddressOnTlsServer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	options := endpointOptions(t, 1)
+	options := endpointOptions(t, db, 1)
 	if _, exists := options["peer_address"]; exists {
 		t.Errorf("peer_address survived on a tls-mode server: %v", options)
 	}
 }
 
 func TestMigrateEndpointTlsLeavesUntouchedRowsAlone(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	original := `{"server":"vpn.example.com","mode":"tls","auth":"SHA256"}`
 	if err := db.Create(&legacyEndpoint{
 		Type:    "openvpn-client",
@@ -352,7 +340,7 @@ func TestMigrateEndpointTlsLeavesUntouchedRowsAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
@@ -366,7 +354,7 @@ func TestMigrateEndpointTlsLeavesUntouchedRowsAlone(t *testing.T) {
 }
 
 func TestMigrateEndpointTlsSettlesClientCertificatePolicy(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	// sing-box reads a missing verify_client_certificate as "require", so this
 	// server demands certificates it has no CA to check, and refuses to start.
 	if err := db.Create(&legacyEndpoint{
@@ -377,11 +365,11 @@ func TestMigrateEndpointTlsSettlesClientCertificatePolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
-	tls, ok := endpointOptions(t, 1)["tls"].(map[string]any)
+	tls, ok := endpointOptions(t, db, 1)["tls"].(map[string]any)
 	if !ok {
 		t.Fatal("tls block went missing")
 	}
@@ -394,7 +382,7 @@ func TestMigrateEndpointTlsSettlesClientCertificatePolicy(t *testing.T) {
 }
 
 func TestMigrateEndpointTlsKeepsStatedClientCertificatePolicy(t *testing.T) {
-	openEndpointTestDB(t)
+	db := openEndpointTestDB(t)
 	for _, endpoint := range []legacyEndpoint{
 		// Asked for client certificates in so many words.
 		{Type: "openvpn-server", Tag: "stated", Options: json.RawMessage(
@@ -414,12 +402,12 @@ func TestMigrateEndpointTlsKeepsStatedClientCertificatePolicy(t *testing.T) {
 		}
 	}
 
-	if err := migrateEndpointTls(); err != nil {
+	if err := to1_6_1(db); err != nil {
 		t.Fatal(err)
 	}
 
 	for id := uint(1); id <= 4; id++ {
-		tls, ok := endpointOptions(t, id)["tls"].(map[string]any)
+		tls, ok := endpointOptions(t, db, id)["tls"].(map[string]any)
 		if !ok {
 			t.Fatalf("endpoint %d lost its tls block", id)
 		}
@@ -430,5 +418,43 @@ func TestMigrateEndpointTlsKeepsStatedClientCertificatePolicy(t *testing.T) {
 		if tls["verify_client_certificate"] != want {
 			t.Errorf("endpoint %d: verify_client_certificate = %v, want %v", id, tls["verify_client_certificate"], want)
 		}
+	}
+}
+
+// Replaying the step against a database that has already been through it must
+// not fail, and must not give an endpoint a second, different TLS block.
+func TestMigrateEndpointTlsReplayed(t *testing.T) {
+	db := openEndpointTestDB(t)
+	if err := db.Create(&model.Tls{
+		Name:   "vpn",
+		Client: json.RawMessage(`{"enabled": true, "server_name": "vpn.example.com"}`),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&legacyEndpoint{
+		Type:    "openvpn-client",
+		Tag:     "ovpn",
+		TlsId:   1,
+		Options: json.RawMessage(`{"server":"vpn.example.com","mode":"tls"}`),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := to1_6_1(db); err != nil {
+		t.Fatal(err)
+	}
+	var first legacyEndpoint
+	if err := db.Where("id = ?", 1).First(&first).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := to1_6_1(db); err != nil {
+		t.Fatal(err)
+	}
+	var second legacyEndpoint
+	if err := db.Where("id = ?", 1).First(&second).Error; err != nil {
+		t.Fatal(err)
+	}
+	if string(second.Options) != string(first.Options) {
+		t.Errorf("replaying the migration changed the endpoint:\n got %s\nwant %s", second.Options, first.Options)
 	}
 }

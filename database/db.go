@@ -127,36 +127,6 @@ func InitDB(dbPath string) error {
 		return err
 	}
 
-	err = migrateSingBox114()
-	if err != nil {
-		return err
-	}
-	err = migrateCertificateProviders()
-	if err != nil {
-		return err
-	}
-	err = repairRuleSetHTTPClients()
-	if err != nil {
-		return err
-	}
-	err = migrateHysteriaQUICFields()
-	if err != nil {
-		return err
-	}
-	err = migrateRemovedOptions()
-	if err != nil {
-		return err
-	}
-	err = migrateEndpointTls()
-	if err != nil {
-		return err
-	}
-	err = addSnellClientConfig()
-	if err != nil {
-		return err
-	}
-	reportSingBox114Manual()
-
 	return nil
 }
 

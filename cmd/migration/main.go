@@ -88,6 +88,24 @@ func MigrateDb() error {
 		}
 	}
 
+	if compareVersions(dbVersion, "1.6.0") < 0 {
+		if err := to1_6_0(tx); err != nil {
+			return fmt.Errorf("migration to 1.6.0 failed: %w", err)
+		}
+	}
+
+	if compareVersions(dbVersion, "1.6.1") < 0 {
+		if err := to1_6_1(tx); err != nil {
+			return fmt.Errorf("migration to 1.6.1 failed: %w", err)
+		}
+	}
+
+	if compareVersions(dbVersion, "1.6.3") < 0 {
+		if err := to1_6_3(tx); err != nil {
+			return fmt.Errorf("migration to 1.6.3 failed: %w", err)
+		}
+	}
+
 	if err := setVersion(tx, currentVersion); err != nil {
 		return fmt.Errorf("update version failed: %w", err)
 	}
