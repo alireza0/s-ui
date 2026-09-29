@@ -69,12 +69,7 @@ func (a *APP) Start() error {
 		return err
 	}
 
-	globalReset, err := a.SettingService.GetGlobalReset()
-	if err != nil {
-		return err
-	}
-
-	err = a.cronJob.Start(loc, trafficAge, statsBucketSeconds, globalReset)
+	err = a.cronJob.Start(loc, trafficAge, statsBucketSeconds)
 	if err != nil {
 		return err
 	}

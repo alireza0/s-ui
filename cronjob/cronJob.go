@@ -4,15 +4,9 @@ import (
 	"time"
 
 	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/service"
 
 	"github.com/robfig/cron/v3"
-)
-
-// cronParser accepts standard 5-field cron, optional leading seconds (6-field)
-// and descriptors (@daily, @weekly, @every 10s, ...). Used both for the cron
-// engine and for parsing the user-provided globalReset spec.
-var cronParser = cron.NewParser(
-	cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
 )
 
 type CronJob struct {
@@ -23,14 +17,14 @@ func NewCronJob() *CronJob {
 	return &CronJob{}
 }
 
-func (c *CronJob) Start(loc *time.Location, trafficAge int, statsBucketSeconds int64, globalReset string) error {
+func (c *CronJob) Start(loc *time.Location, trafficAge int, statsBucketSeconds int64) error {
 	// Recover: robfig/cron does not recover panics by default, and gin only
 	// covers the HTTP side. SkipIfStillRunning: the stats job fires every 10s,
 	// can block that long on the write lock, and overlapping runs each drain
 	// the core's traffic counters.
 	c.cron = cron.New(
 		cron.WithLocation(loc),
-		cron.WithParser(cronParser),
+		cron.WithParser(service.CronParser),
 		cron.WithChain(
 			cron.Recover(cron.DefaultLogger),
 			cron.SkipIfStillRunning(cron.DefaultLogger),
@@ -48,15 +42,10 @@ func (c *CronJob) Start(loc *time.Location, trafficAge int, statsBucketSeconds i
 	addJob("@every 10s", NewStatsJob(trafficAge > 0, statsBucketSeconds), "stats job")
 	// Start expiry job
 	addJob("@every 1m", NewDepleteJob(), "deplete job")
-	// Periodic global traffic reset, only when a valid cron spec is configured
-	if globalReset != "" && globalReset != "off" {
-		schedule, err := cronParser.Parse(globalReset)
-		if err != nil {
-			logger.Warning("invalid globalReset cron spec <", globalReset, ">: ", err)
-		} else {
-			addJob(globalReset, NewResetTrafficJob(schedule), "traffic reset job")
-		}
-	}
+	// Periodic global traffic reset. Polled rather than scheduled on the spec
+	// itself: the spec was read once at start, so a saved change did nothing
+	// until the panel was restarted.
+	addJob("@every 1m", NewResetTrafficJob(), "traffic reset job")
 	// Start deleting old stats
 	if trafficAge > 0 {
 		addJob("@daily", NewDelStatsJob(trafficAge), "old stats cleanup")

@@ -14,7 +14,15 @@ import (
 	"github.com/alireza0/s-ui/logger"
 	"github.com/alireza0/s-ui/util/common"
 
+	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
+)
+
+// CronParser accepts standard 5-field cron, optional leading seconds (6-field)
+// and descriptors (@daily, @weekly, @every 10s, ...). Used both for the cron
+// engine and for parsing the user-provided globalReset spec.
+var CronParser = cron.NewParser(
+	cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
 )
 
 var defaultConfig = `{
@@ -374,13 +382,14 @@ func (s *SettingService) GetSubURI() (string, error) {
 	return s.getString("subURI")
 }
 
-// GetGlobalReset returns the configured period for resetting all clients'
-// traffic: "off", "weekly", "monthly" or "yearly".
+// GetGlobalReset returns the cron spec for resetting all clients' traffic;
+// empty or "off" means disabled.
 func (s *SettingService) GetGlobalReset() (string, error) {
 	return s.getString("globalReset")
 }
 
-// GetGlobalResetLast returns the unix time of the last global traffic reset.
+// GetGlobalResetLast returns the unix time of the next armed global traffic
+// reset (despite the name), or 0 when no boundary is armed yet.
 func (s *SettingService) GetGlobalResetLast() (int64, error) {
 	str, err := s.getString("globalResetLast")
 	if err != nil {
@@ -477,6 +486,25 @@ func (s *SettingService) Save(tx *gorm.DB, data json.RawMessage) error {
 			}
 			if !strings.HasSuffix(obj, "/") {
 				obj += "/"
+			}
+		}
+
+		// A bad spec used to be accepted here and only logged at the next
+		// panel start, so the reset silently never ran.
+		if key == "globalReset" && obj != "" && obj != "off" {
+			if _, err = CronParser.Parse(obj); err != nil {
+				return common.NewError("invalid cron spec <", obj, ">: ", err)
+			}
+		}
+		// globalResetLast holds the next boundary of the old schedule. Clear it
+		// on a change so the reset job arms the new one instead of waiting out
+		// the old period (a monthly-to-daily switch looked dead for a month).
+		if key == "globalReset" {
+			var old model.Setting
+			if tx.Where("key = ?", key).Limit(1).Find(&old).Error == nil && old.Value != obj {
+				if err = tx.Model(model.Setting{}).Where("key = ?", "globalResetLast").Update("value", "0").Error; err != nil {
+					return err
+				}
 			}
 		}
 
