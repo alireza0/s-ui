@@ -58,10 +58,15 @@ var protectedSettings = map[string]bool{
 	"maintenance":     true,
 }
 
+// Share listen defaults with the health check so missing settings are handled
+// consistently with the panel.
+const DefaultWebListen = ""
+const DefaultWebPort = "2095"
+
 var defaultValueMap = map[string]string{
-	"webListen":          "",
+	"webListen":          DefaultWebListen,
 	"webDomain":          "",
-	"webPort":            "2095",
+	"webPort":            DefaultWebPort,
 	"secret":             common.Random(32),
 	"webCertFile":        "",
 	"webKeyFile":         "",
