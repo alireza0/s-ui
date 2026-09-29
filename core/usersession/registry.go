@@ -26,10 +26,11 @@ const (
 	// Backstop for blocks: a client whose session is really dead stops being
 	// blocked, so the address is reusable even if the user is never re-added.
 	blockTimeout = 10 * time.Minute
-	// A kicked session is muted only while it keeps trying. Once it has been
-	// quiet this long, the next attempt from the address is a new session and
-	// is let through, so a disconnect does not turn into a lockout.
-	kickQuietWindow = 30 * time.Second
+	// A kicked session is muted for this long and no longer. It used to stay
+	// muted for as long as it kept trying, but a QUIC client never gives up:
+	// its session stays alive on keepalives and it retries on every request,
+	// so a disconnect became a lockout of up to blockTimeout (#1271).
+	kickMuteWindow = 30 * time.Second
 )
 
 // Closer is implemented by the inbounds that own a Registry.
@@ -49,12 +50,11 @@ type entry struct {
 }
 
 // block mutes one client address. A removal keeps it muted until the backstop;
-// a kick, which must not lock a still-enabled user out, lifts as soon as the
-// muted session stops trying.
+// a kick, which must not lock a still-enabled user out, lifts after
+// kickMuteWindow.
 type block struct {
-	at          time.Time
-	lastAttempt time.Time
-	kick        bool
+	at   time.Time
+	kick bool
 }
 
 // Registry maps a client address to the user it authenticated as. One instance
@@ -135,13 +135,10 @@ func (r *Registry) Allowed(source string) bool {
 		delete(r.blocked, source)
 		return true
 	}
-	// A gap this long means the muted session gave up; whatever is connecting
-	// now is a new one.
-	if b.kick && now.Sub(b.lastAttempt) > kickQuietWindow {
+	if b.kick && now.Sub(b.at) > kickMuteWindow {
 		delete(r.blocked, source)
 		return true
 	}
-	b.lastAttempt = now
 	return false
 }
 
@@ -174,7 +171,7 @@ func (r *Registry) CloseUsers(keep map[string]struct{}) int {
 			delete(r.blocked, source)
 			continue
 		}
-		r.blocked[source] = &block{at: now, lastAttempt: now}
+		r.blocked[source] = &block{at: now}
 	}
 	for source, b := range r.blocked {
 		if now.Sub(b.at) > blockTimeout {
@@ -205,8 +202,8 @@ func Reject(conn io.Closer, onClose N.CloseHandlerFunc) {
 
 // KickUserSessions disconnects a user who is still enabled. A session with a
 // closer is cut outright; one without is muted, which is the only way to stop a
-// QUIC session that the protocol gives us no handle on. The mute lifts as soon
-// as that session stops trying, so the client reconnects on its own.
+// QUIC session that the protocol gives us no handle on. The mute lifts after
+// kickMuteWindow, and that same session is then served again.
 func (r *Registry) KickUserSessions(user string) int {
 	if user == "" {
 		return 0
@@ -227,7 +224,7 @@ func (r *Registry) KickUserSessions(user string) int {
 			closers = append(closers, e.closer)
 			continue
 		}
-		r.blocked[source] = &block{at: now, lastAttempt: now, kick: true}
+		r.blocked[source] = &block{at: now, kick: true}
 	}
 	r.access.Unlock()
 

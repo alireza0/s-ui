@@ -120,8 +120,9 @@ func TestKickUserSessionsClosesTrackedSession(t *testing.T) {
 }
 
 // A session with no closer (a QUIC one) is muted instead, and the mute lifts
-// once that session stops trying, so the user is not locked out.
-func TestKickUserSessionsMutesUntilSessionGivesUp(t *testing.T) {
+// after the window even while that session keeps retrying, so the user is not
+// locked out.
+func TestKickUserSessionsMutesForWindow(t *testing.T) {
 	registry := NewRegistry()
 	registry.Bind("alice", "10.0.0.1:1000")
 
@@ -136,12 +137,11 @@ func TestKickUserSessionsMutesUntilSessionGivesUp(t *testing.T) {
 		t.Fatal("expected the kicked session to stay muted while it retries")
 	}
 
-	// Once it has been quiet for the window, the next attempt is a new session.
 	registry.access.Lock()
-	registry.blocked["10.0.0.1:1000"].lastAttempt = time.Now().Add(-2 * kickQuietWindow)
+	registry.blocked["10.0.0.1:1000"].at = time.Now().Add(-2 * kickMuteWindow)
 	registry.access.Unlock()
 	if !registry.Allowed("10.0.0.1:1000") {
-		t.Fatal("expected the mute to lift after the session went quiet")
+		t.Fatal("expected the mute to lift after the window despite retries")
 	}
 }
 
@@ -152,7 +152,7 @@ func TestCloseUsersMuteDoesNotLiftOnQuiet(t *testing.T) {
 	registry.CloseUsers(map[string]struct{}{})
 
 	registry.access.Lock()
-	registry.blocked["10.0.0.1:1000"].lastAttempt = time.Now().Add(-2 * kickQuietWindow)
+	registry.blocked["10.0.0.1:1000"].at = time.Now().Add(-2 * kickMuteWindow)
 	registry.access.Unlock()
 	if registry.Allowed("10.0.0.1:1000") {
 		t.Fatal("expected a removed user to stay muted")
