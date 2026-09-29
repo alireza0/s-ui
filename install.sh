@@ -473,6 +473,16 @@ prepare_services() {
     fi
 }
 
+# fetch downloads $1 to $2. --show-progress is wget 1.16+, and older wget
+# (CentOS 7) rejects the whole command over it. -q also hides why a download
+# failed, so on failure curl retries and prints the reason (TLS, DNS, 404).
+fetch() {
+    local opts=(-q)
+    wget --help 2>&1 | grep -q -- '--show-progress' && opts+=(--show-progress)
+    wget "${opts[@]}" -O "$2" "$1" && return 0
+    curl -fL --progress-bar -o "$2" "$1"
+}
+
 # verify_checksum checks the downloaded archive against the SHA256SUMS file the
 # release publishes. A release without one (anything built before this was
 # added) is installed with a warning rather than refused, so an older version
@@ -531,7 +541,7 @@ install_s-ui() {
     # whole install into an unauthenticated fetch: anyone able to intercept it
     # chooses the binary that then runs as root.
     local base="https://github.com/alireza0/s-ui/releases/download/${last_version}"
-    if ! wget -q --show-progress -O "$archive" "${base}/s-ui-linux-$(arch).tar.gz"; then
+    if ! fetch "${base}/s-ui-linux-$(arch).tar.gz" "$archive"; then
         if [ $# == 0 ]; then
             echo -e "${red}$(t download_fail)${plain}"
         else
