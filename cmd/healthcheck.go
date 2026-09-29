@@ -12,9 +12,9 @@ import (
 	"github.com/alireza0/s-ui/service"
 )
 
-// healthCheckTimeout is per dial. A container health check runs on a schedule
-// and must not hang until the orchestrator's own timeout.
-const healthCheckTimeout = 3 * time.Second
+// healthCheckTimeout is per dial. Two dials must fit in the container's
+// five-second health check timeout.
+const healthCheckTimeout = 2 * time.Second
 
 // healthCheck reports whether the panel is accepting connections on the port it
 // is actually configured with.
@@ -28,7 +28,11 @@ const healthCheckTimeout = 3 * time.Second
 // depending on whether a certificate is configured, and a check that assumed
 // one of them would fail on the other.
 func healthCheck() {
-	if err := database.InitDB(config.GetDBPath()); err != nil {
+	// OpenDB, not InitDB: this runs every 30 seconds beside the live panel, and
+	// InitDB migrates and writes, so it waited on the panel's write lock for up
+	// to the busy timeout and the container went unhealthy (#1274). Under WAL a
+	// plain read does not wait on a writer.
+	if err := database.OpenDB(config.GetDBPath()); err != nil {
 		fmt.Println("healthcheck: unable to open the database:", err)
 		os.Exit(1)
 	}
@@ -39,20 +43,31 @@ func healthCheck() {
 		fmt.Println("healthcheck: unable to read the panel port:", err)
 		os.Exit(1)
 	}
-
-	// The listen address may be a specific interface, but the check runs
-	// inside the container, so loopback is what it can reach.
-	addr := net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
-	conn, err := net.DialTimeout("tcp", addr, healthCheckTimeout)
+	listen, err := settingService.GetListen()
 	if err != nil {
-		// IPv6-only loopback is possible when the panel binds "::".
-		addr6 := net.JoinHostPort("::1", strconv.Itoa(port))
-		conn, err = net.DialTimeout("tcp", addr6, healthCheckTimeout)
-		if err != nil {
-			fmt.Printf("healthcheck: nothing listening on port %d: %v\n", port, err)
-			os.Exit(1)
-		}
+		fmt.Println("healthcheck: unable to read the panel listen address:", err)
+		os.Exit(1)
 	}
-	conn.Close()
-	fmt.Printf("healthcheck: panel is listening on port %d\n", port)
+
+	// A panel bound to one interface is not reachable on loopback. For an
+	// empty or unspecified address, try IPv4 loopback, then IPv6 for a panel
+	// on an IPv6-only "::".
+	hosts := []string{"127.0.0.1", "::1"}
+	if ip := net.ParseIP(listen); listen != "" && (ip == nil || !ip.IsUnspecified()) {
+		hosts = []string{listen}
+	}
+
+	for _, host := range hosts {
+		addr := net.JoinHostPort(host, strconv.Itoa(port))
+		conn, dialErr := net.DialTimeout("tcp", addr, healthCheckTimeout)
+		if dialErr != nil {
+			err = dialErr
+			continue
+		}
+		conn.Close()
+		fmt.Printf("healthcheck: panel is listening on %s\n", addr)
+		return
+	}
+	fmt.Printf("healthcheck: nothing listening on port %d: %v\n", port, err)
+	os.Exit(1)
 }
