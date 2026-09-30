@@ -106,6 +106,12 @@ func MigrateDb() error {
 		}
 	}
 
+	if compareVersions(dbVersion, "1.6.4") < 0 {
+		if err := to1_6_4(tx); err != nil {
+			return fmt.Errorf("migration to 1.6.4 failed: %w", err)
+		}
+	}
+
 	if err := setVersion(tx, currentVersion); err != nil {
 		return fmt.Errorf("update version failed: %w", err)
 	}
