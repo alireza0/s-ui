@@ -824,8 +824,8 @@ func clearRemovedTunOptions(tx *gorm.DB) (int, error) {
 	return changed, nil
 }
 
-// The ECH options live on the outbound side of a TLS config, which is what the
-// panel hands to clients and share links.
+// Only the client side of a TLS config is cleared here; the server side and the
+// stored out_json are cleared in to1_6_4.
 func clearRemovedECHOptions(tx *gorm.DB) (int, error) {
 	configs, err := readTlsRows(tx)
 	if err != nil {
