@@ -136,8 +136,11 @@ func addTls(out *map[string]interface{}, tls *model.Tls) {
 			echConfig = map[string]interface{}{}
 		}
 		echConfig["enabled"] = true
-		echConfig["pq_signature_schemes_enabled"] = ech["pq_signature_schemes_enabled"]
-		echConfig["dynamic_record_sizing_disabled"] = ech["dynamic_record_sizing_disabled"]
+		// pq_signature_schemes_enabled and dynamic_record_sizing_disabled were
+		// removed in sing-box 1.13.0: emitting them makes the client config
+		// fail to start on 1.14.x, so they are never carried over.
+		delete(echConfig, "pq_signature_schemes_enabled")
+		delete(echConfig, "dynamic_record_sizing_disabled")
 		tlsConfig["ech"] = echConfig
 	}
 

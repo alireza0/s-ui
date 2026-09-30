@@ -187,3 +187,52 @@ func TestFillOutJsonSnellClearsStaleVersionOptions(t *testing.T) {
 		t.Errorf("version = %v, want 6", out["version"])
 	}
 }
+
+// pq_signature_schemes_enabled and dynamic_record_sizing_disabled were removed
+// in sing-box 1.13.0: a client config carrying them fails to start on 1.14.x
+// ("legacy ECH options are deprecated in sing-box 1.12.0 and removed in
+// sing-box 1.13.0"). FillOutJson must never copy them from the server TLS
+// record into the generated outbound.
+func TestFillOutJsonDropsRemovedECHOptions(t *testing.T) {
+	inbound := &model.Inbound{
+		Type:    "vless",
+		Tag:     "vless-in",
+		Options: json.RawMessage(`{"listen_port": 443}`),
+		OutJson: json.RawMessage(`{}`),
+		TlsId:   1,
+		Tls: &model.Tls{
+			Id:     1,
+			Name:   "tls",
+			Server: json.RawMessage(`{"enabled": true, "server_name": "example.com", "ech": {"enabled": true, "pq_signature_schemes_enabled": true, "dynamic_record_sizing_disabled": false}}`),
+			Client: json.RawMessage(`{"ech": {"enabled": true, "config": ["ech-config"]}}`),
+		},
+	}
+
+	if err := FillOutJson(inbound, "example.com"); err != nil {
+		t.Fatal(err)
+	}
+
+	var out map[string]interface{}
+	if err := json.Unmarshal(inbound.OutJson, &out); err != nil {
+		t.Fatal(err)
+	}
+	tls, ok := out["tls"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("tls is missing from out_json: %s", inbound.OutJson)
+	}
+	ech, ok := tls["ech"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("ech is missing from out_json: %s", inbound.OutJson)
+	}
+	for _, removed := range []string{"pq_signature_schemes_enabled", "dynamic_record_sizing_disabled"} {
+		if _, present := ech[removed]; present {
+			t.Errorf("ech.%s must not be emitted for sing-box 1.14.x, got %v", removed, ech[removed])
+		}
+	}
+	if ech["enabled"] != true {
+		t.Errorf("ech.enabled should stay true, got %v", ech["enabled"])
+	}
+	if config, ok := ech["config"].([]interface{}); !ok || len(config) != 1 {
+		t.Errorf("ech.config should be carried over from the client TLS record, got %v", ech["config"])
+	}
+}
