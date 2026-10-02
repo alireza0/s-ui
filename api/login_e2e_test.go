@@ -27,6 +27,14 @@ func loginEngine(t *testing.T) *gin.Engine {
 		t.Fatal(err)
 	}
 
+	t.Cleanup(func() {
+		if db := database.GetDB(); db != nil {
+			if sqlDB, err := db.DB(); err == nil {
+				sqlDB.Close()
+			}
+		}
+	})
+
 	engine := gin.New()
 	store := cookie.NewStore([]byte("test-secret-not-used-anywhere-else"))
 	store.Options(BaseSessionOptions(0))
