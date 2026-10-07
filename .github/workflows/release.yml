@@ -30,16 +30,16 @@ jobs:
     needs: test
     # A skipped gate is not a failed one, so the build still runs on a tag.
     if: ${{ always() && needs.test.result != 'failure' && needs.test.result != 'cancelled' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository (frontend only)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           fetch-depth: 1
 
       - name: Setup Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -48,12 +48,12 @@ jobs:
       - name: Build frontend
         run: |
           cd frontend
-          npm install
+          npm ci
           npm run build
           cd ..
 
       - name: Upload frontend dist
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist/
@@ -75,19 +75,19 @@ jobs:
           - { platform: armv5, arch: arm, goarm: "5", bootlin: armv5-eabi, naive: false }
           - { platform: "386", arch: "386", bootlin: x86-i686, naive: true }
           - { platform: s390x, arch: s390x, bootlin: s390x-z13, naive: false }
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v7
 
       - name: Download frontend dist
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@v8
         with:
           name: frontend-dist
           path: web/html
 
       - name: Setup Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        uses: actions/setup-go@v7
         with:
           cache: false
           go-version-file: go.mod
@@ -124,7 +124,7 @@ jobs:
       - name: Cache Chromium toolchain
         if: matrix.naive
         id: cache-chromium-toolchain
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/cronet-go/naiveproxy/src/third_party/llvm-build/
@@ -216,7 +216,7 @@ jobs:
         run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@v7
         with:
           name: s-ui-linux-${{ matrix.platform }}
           path: ./s-ui-linux-${{ matrix.platform }}.tar.gz
@@ -230,21 +230,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { arch: amd64, runner: windows-latest, cgo: "1" }
-          - { arch: arm64, runner: ubuntu-latest, cgo: "0" }
+          - { arch: amd64, runner: windows-2022, cgo: "1" }
+          - { arch: arm64, runner: ubuntu-26.04, cgo: "0" }
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v7
 
       - name: Download frontend artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@v8
         with:
           name: frontend-dist
           path: web/html
 
       - name: Setup Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        uses: actions/setup-go@v7
         with:
           cache: false
           go-version-file: go.mod
@@ -294,7 +294,7 @@ jobs:
           zip -r "s-ui-windows-${{ matrix.arch }}.zip" s-ui-windows
 
       - name: Upload files to Artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@v7
         with:
           name: s-ui-windows-${{ matrix.arch }}
           path: ./s-ui-windows-${{ matrix.arch }}.zip
@@ -312,12 +312,12 @@ jobs:
       needs.build-windows.result == 'success' &&
       ((github.event_name == 'release' && github.event.action == 'published') ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@v8
         with:
           pattern: s-ui-*
           merge-multiple: true
@@ -333,7 +333,7 @@ jobs:
           cat SHA256SUMS
 
       - name: Upload to Release
-        uses: svenstaro/upload-release-action@29e53e917877a24fad85510ded594ab3c9ca12de # v2
+        uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
