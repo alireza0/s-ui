@@ -300,8 +300,16 @@ Community-made projects built around S-UI. These are not affiliated with or main
 - [itning/reset-s-ui-traffic](https://github.com/itning/reset-s-ui-traffic) — periodic traffic reset for all users
 - [zqh2333/s-ui-traffic-reset](https://github.com/zqh2333/s-ui-traffic-reset) — traffic reset tool
 - [Sownix21/SUI-Bot](https://github.com/Sownix21/SUI-Bot) - telegram bot
+- [Android App](https://github.com/Sownix21/SUI-Node) - multi panel controller
 
 > Building something on top of S-UI (a Telegram bot, monitoring, automation, ...)? Open an issue/PR to get it listed here.
 
-## Stargazers over Time
-[![Stargazers over time](https://starchart.cc/alireza0/s-ui.svg)](https://starchart.cc/alireza0/s-ui)
+## Star History
+
+<a href="https://www.star-history.com/?repos=alireza0%2Fs-ui&type=date&releases=&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=alireza0/s-ui&type=date&theme=dark&legend=bottom-right" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=alireza0/s-ui&type=date&legend=bottom-right" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=alireza0/s-ui&type=date&legend=bottom-right" />
+ </picture>
+</a>
