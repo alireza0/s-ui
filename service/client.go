@@ -626,39 +626,55 @@ func (s *ClientService) ResetClients(tx *gorm.DB, dt int64) ([]uint, error) {
 
 // ResetAllClientsTraffic zeroes up/down for every client (accumulating into the
 // total counters) and re-enables all of them, in a single bulk update. Used by
-// the global periodic traffic reset; the caller restarts the core afterwards so
-// re-enabled clients take effect.
-func (s *ClientService) ResetAllClientsTraffic() error {
+// the global periodic traffic reset. Returns the inbounds of the clients it
+// re-enabled, whose users the caller updates in the running core.
+func (s *ClientService) ResetAllClientsTraffic() ([]uint, error) {
 	db := database.GetDB()
 	dt := time.Now().Unix()
+	var inboundIds []uint
 
-	result := db.Model(model.Client{}).
-		Where("(up + down) > 0 OR enable = false").
-		UpdateColumns(map[string]interface{}{
-			"total_up":   gorm.Expr("total_up + up"),
-			"total_down": gorm.Expr("total_down + down"),
-			"up":         0,
-			"down":       0,
-			"enable":     true,
-		})
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected > 0 {
-		if err := db.Create(&model.Changes{
-			DateTime: dt,
-			Actor:    "ResetTrafficJob",
-			Key:      "clients",
-			Action:   "reset",
-			Obj:      json.RawMessage("\"all\""),
-		}).Error; err != nil {
+	err := db.Transaction(func(tx *gorm.DB) error {
+		var disabled []model.Client
+		if err := tx.Model(model.Client{}).Select("inbounds").Where("enable = false").Find(&disabled).Error; err != nil {
 			return err
 		}
-		LastUpdate = dt
-	}
+		for _, client := range disabled {
+			var userInbounds []uint
+			json.Unmarshal(client.Inbounds, &userInbounds)
+			inboundIds = common.UnionUintArray(inboundIds, userInbounds)
+		}
 
-	return nil
+		result := tx.Model(model.Client{}).
+			Where("(up + down) > 0 OR enable = false").
+			UpdateColumns(map[string]interface{}{
+				"total_up":   gorm.Expr("total_up + up"),
+				"total_down": gorm.Expr("total_down + down"),
+				"up":         0,
+				"down":       0,
+				"enable":     true,
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if result.RowsAffected > 0 {
+			if err := tx.Create(&model.Changes{
+				DateTime: dt,
+				Actor:    "ResetTrafficJob",
+				Key:      "clients",
+				Action:   "reset",
+				Obj:      json.RawMessage("\"all\""),
+			}).Error; err != nil {
+				return err
+			}
+			LastUpdate = dt
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return inboundIds, nil
 }
 
 func setConfigIdentity(client *model.Client) error {

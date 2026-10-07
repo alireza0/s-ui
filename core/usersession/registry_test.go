@@ -158,3 +158,33 @@ func TestCloseUsersMuteDoesNotLiftOnQuiet(t *testing.T) {
 		t.Fatal("expected a removed user to stay muted")
 	}
 }
+
+type missingSession struct{}
+
+func (missingSession) Close() error { return ErrNotClosed }
+
+// A closer that finds nothing (a QUIC session that has moved to another port)
+// leaves the address muted, as it would be without a closer.
+func TestCloserMissFallsBackToMute(t *testing.T) {
+	registry := NewRegistry()
+	registry.Track("10.0.0.1:1000", missingSession{})
+	registry.Bind("alice", "10.0.0.1:1000")
+	registry.CloseUsers(map[string]struct{}{})
+	if registry.Allowed("10.0.0.1:1000") {
+		t.Fatal("expected a removed user's address to be muted when its closer missed")
+	}
+
+	registry = NewRegistry()
+	registry.Track("10.0.0.1:1000", missingSession{})
+	registry.Bind("alice", "10.0.0.1:1000")
+	registry.KickUserSessions("alice")
+	if registry.Allowed("10.0.0.1:1000") {
+		t.Fatal("expected a kicked address to be muted when its closer missed")
+	}
+	registry.access.Lock()
+	registry.blocked["10.0.0.1:1000"].at = time.Now().Add(-2 * kickMuteWindow)
+	registry.access.Unlock()
+	if !registry.Allowed("10.0.0.1:1000") {
+		t.Fatal("expected the kick mute to lift after the window")
+	}
+}

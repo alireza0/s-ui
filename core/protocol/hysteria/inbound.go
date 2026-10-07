@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/alireza0/s-ui/core/quicgrace"
 	"github.com/alireza0/s-ui/core/usersession"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -33,6 +34,7 @@ type Inbound struct {
 	tlsConfig tls.ServerConfig
 	service   *hysteria.Service[string]
 	sessions  *usersession.Registry
+	quic      *quicgrace.Sessions
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.HysteriaInboundOptions) (adapter.Inbound, error) {
@@ -54,6 +56,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			Listen:  options.ListenOptions,
 		}),
 		tlsConfig: tlsConfig,
+		quic:      quicgrace.NewSessions(),
 	}
 	var sendBps, receiveBps uint64
 	if options.Up.Value() > 0 {
@@ -78,10 +81,11 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		SendBPS:       sendBps,
 		ReceiveBPS:    receiveBps,
 		XPlusPassword: options.Obfs,
-		TLSConfig:     tlsConfig,
-		QUICOptions:   buildInboundQUICOptions(options),
-		UDPTimeout:    udpTimeout,
-		Handler:       inbound,
+		// quicgrace: see hysteria2 (qtls.Listen's defaults).
+		TLSConfig:   quicgrace.Wrap(tlsConfig, quicgrace.Options{Sessions: inbound.quic}),
+		QUICOptions: buildInboundQUICOptions(options),
+		UDPTimeout:  udpTimeout,
+		Handler:     inbound,
 	})
 	if err != nil {
 		return nil, err
@@ -123,6 +127,7 @@ func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.S
 	if userName, _ := auth.UserFromContext[string](ctx); userName != "" {
 		metadata.User = userName
 		h.sessions.Bind(userName, source.String())
+		h.sessions.Track(source.String(), h.quic.Closer(source.String()))
 		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
@@ -149,6 +154,7 @@ func (h *Inbound) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, 
 	if userName, _ := auth.UserFromContext[string](ctx); userName != "" {
 		metadata.User = userName
 		h.sessions.Bind(userName, source.String())
+		h.sessions.Track(source.String(), h.quic.Closer(source.String()))
 		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
@@ -174,9 +180,11 @@ func (h *Inbound) Start(stage adapter.StartStage) error {
 }
 
 func (h *Inbound) Close() error {
+	// The service first: quicgrace sends each client a CONNECTION_CLOSE when
+	// it closes, which needs the UDP socket the listener owns still open.
 	return common.Close(
+		common.PtrOrNil(h.service),
 		h.listener,
 		h.tlsConfig,
-		common.PtrOrNil(h.service),
 	)
 }
