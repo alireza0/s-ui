@@ -12,10 +12,11 @@ import (
 	"github.com/alireza0/s-ui/database"
 	"github.com/alireza0/s-ui/middleware"
 
+	"net/http/httptest"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"net/http/httptest"
 )
 
 // loginEngine wires the same pieces web.go does: the cookie session store with
@@ -26,6 +27,14 @@ func loginEngine(t *testing.T) *gin.Engine {
 	if err := database.InitDB(filepath.Join(t.TempDir(), "test.db")); err != nil {
 		t.Fatal(err)
 	}
+
+	t.Cleanup(func() {
+		if db := database.GetDB(); db != nil {
+			if sqlDB, err := db.DB(); err == nil {
+				sqlDB.Close()
+			}
+		}
+	})
 
 	engine := gin.New()
 	store := cookie.NewStore([]byte("test-secret-not-used-anywhere-else"))
