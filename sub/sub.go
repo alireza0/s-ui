@@ -17,6 +17,8 @@ import (
 	"github.com/alireza0/s-ui/util/common"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/gin-contrib/gzip"
 )
 
 type Server struct {
@@ -46,6 +48,8 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	}
 
 	engine := gin.Default()
+
+	engine.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	subPath, err := s.SettingService.GetSubPath()
 	if err != nil {
