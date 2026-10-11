@@ -79,6 +79,52 @@ func (s *SubHandler) addHeaders(c *gin.Context, headers []string) {
 	c.Writer.Header().Set("Profile-Update-Interval", headers[1])
 	c.Writer.Header().Set("Profile-Title", headers[2])
 	c.Writer.Header().Set("Content-Disposition", contentDispositionHeader(headers[2]))
+
+	s.applyCustomHeaders(c)
+}
+
+type customHeader struct {
+	key   string
+	value string
+}
+
+func parseCustomHeaders(raw string) []customHeader {
+	if len(strings.TrimSpace(raw)) == 0 {
+		return nil
+	}
+
+	var headers []customHeader
+	lines := strings.Split(strings.ReplaceAll(raw, "\r\n", "\n"), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+			continue
+		}
+
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+
+		if key != "" && val != "" {
+			headers = append(headers, customHeader{key: key, value: val})
+		}
+	}
+	return headers
+}
+
+func (s *SubHandler) applyCustomHeaders(c *gin.Context) {
+	customHeadersStr, err := s.SettingService.GetSubCustomHeaders()
+	if err != nil {
+		return
+	}
+
+	for _, h := range parseCustomHeaders(customHeadersStr) {
+		c.Writer.Header().Set(h.key, h.value)
+	}
 }
 
 func contentDispositionHeader(name string) string {

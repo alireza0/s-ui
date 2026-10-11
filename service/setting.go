@@ -91,6 +91,7 @@ var defaultValueMap = map[string]string{
 	"subURI":             "",
 	"subJsonExt":         "",
 	"subClashExt":        "",
+	"subCustomHeaders":   defaultCustomHeaders,
 	"subClashNoDefGrp":   "false",
 	"subClashSprtAll":    "false",
 	"subClashUdp":        "false",
@@ -540,6 +541,10 @@ func (s *SettingService) GetSubClashExt() (string, error) {
 	return s.getString("subClashExt")
 }
 
+func (s *SettingService) GetSubCustomHeaders() (string, error) {
+	return s.getString("subCustomHeaders")
+}
+
 // GetSubClashNoDefGrp reports whether the default "Proxy"/"Auto" proxy-groups
 // should never be injected into a Clash subscription. When true, the config is
 // left with exactly the groups the user defined.
@@ -576,3 +581,13 @@ func (s *SettingService) fileExists(path string) error {
 	_, err := os.Stat(path)
 	return err
 }
+
+var defaultCustomHeaders = `# Custom Subscription Headers
+# Syntax:
+# Header-Name: Value
+#
+# Lines starting with # are comments and will be ignored.
+#
+# Example:
+# announce: 42!
+# announce-url: https://42.example/`
