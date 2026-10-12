@@ -79,8 +79,6 @@ func (s *SubHandler) addHeaders(c *gin.Context, headers []string) {
 	c.Writer.Header().Set("Profile-Update-Interval", headers[1])
 	c.Writer.Header().Set("Profile-Title", headers[2])
 	c.Writer.Header().Set("Content-Disposition", contentDispositionHeader(headers[2]))
-
-	s.applyCustomHeaders(c)
 }
 
 type customHeader struct {
@@ -114,17 +112,6 @@ func parseCustomHeaders(raw string) []customHeader {
 		}
 	}
 	return headers
-}
-
-func (s *SubHandler) applyCustomHeaders(c *gin.Context) {
-	customHeadersStr, err := s.SettingService.GetSubCustomHeaders()
-	if err != nil {
-		return
-	}
-
-	for _, h := range parseCustomHeaders(customHeadersStr) {
-		c.Writer.Header().Set(h.key, h.value)
-	}
 }
 
 func contentDispositionHeader(name string) string {

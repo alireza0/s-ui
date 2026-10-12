@@ -51,6 +51,16 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 
 	engine.Use(gzip.Gzip(gzip.DefaultCompression))
 
+	customHeadersStr, _ := s.SettingService.GetSubCustomHeaders()
+	if customHeaders := parseCustomHeaders(customHeadersStr); len(customHeaders) > 0 {
+		engine.Use(func(c *gin.Context) {
+			for _, h := range customHeaders {
+				c.Writer.Header().Set(h.key, h.value)
+			}
+			c.Next()
+		})
+	}
+
 	subPath, err := s.SettingService.GetSubPath()
 	if err != nil {
 		return nil, err
