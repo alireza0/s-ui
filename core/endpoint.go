@@ -18,12 +18,12 @@ func (c *Core) AddInbound(config []byte) error {
 		return err
 	}
 	var inbound_config option.Inbound
-	if err = inbound_config.UnmarshalJSONContext(box.ctx, config); err != nil {
+	if err = inbound_config.UnmarshalJSONContext(box.scope.Context(), config); err != nil {
 		return err
 	}
 
 	return box.inbound.Create(
-		box.ctx,
+		box.scope.Context(),
 		box.router,
 		box.logFactory.NewLogger("inbound/"+inbound_config.Type+"["+inbound_config.Tag+"]"),
 		inbound_config.Tag,
@@ -46,11 +46,11 @@ func (c *Core) AddOutbound(config []byte) error {
 		return err
 	}
 	var outbound_config option.Outbound
-	if err = outbound_config.UnmarshalJSONContext(box.ctx, config); err != nil {
+	if err = outbound_config.UnmarshalJSONContext(box.scope.Context(), config); err != nil {
 		return err
 	}
 
-	outboundCtx := adapter.WithContext(box.ctx, &adapter.InboundContext{
+	outboundCtx := adapter.WithContext(box.scope.Context(), &adapter.InboundContext{
 		Outbound: outbound_config.Tag,
 	})
 
@@ -78,12 +78,12 @@ func (c *Core) AddEndpoint(config []byte) error {
 		return err
 	}
 	var endpoint_config option.Endpoint
-	if err = endpoint_config.UnmarshalJSONContext(box.ctx, config); err != nil {
+	if err = endpoint_config.UnmarshalJSONContext(box.scope.Context(), config); err != nil {
 		return err
 	}
 
 	return box.endpoint.Create(
-		box.ctx,
+		box.scope.Context(),
 		box.router,
 		box.logFactory.NewLogger("endpoint/"+endpoint_config.Type+"["+endpoint_config.Tag+"]"),
 		endpoint_config.Tag,
@@ -106,12 +106,12 @@ func (c *Core) AddService(config []byte) error {
 		return err
 	}
 	var srv_config option.Service
-	if err = srv_config.UnmarshalJSONContext(box.ctx, config); err != nil {
+	if err = srv_config.UnmarshalJSONContext(box.scope.Context(), config); err != nil {
 		return err
 	}
 
 	return box.service.Create(
-		box.ctx,
+		box.scope.Context(),
 		box.logFactory.NewLogger("service/"+srv_config.Type+"["+srv_config.Tag+"]"),
 		srv_config.Tag,
 		srv_config.Type,

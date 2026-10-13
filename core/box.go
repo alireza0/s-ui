@@ -38,7 +38,6 @@ import (
 var _ adapter.SimpleLifecycle = (*Box)(nil)
 
 type Box struct {
-	ctx                 context.Context
 	createdAt           time.Time
 	debugOptions        option.DebugOptions
 	logFactory          log.Factory
@@ -468,7 +467,6 @@ func NewBox(options Options) (*Box, error) {
 	router.AppendTracker(sessionTracker)
 
 	return &Box{
-		ctx:                 ctx,
 		network:             networkManager,
 		endpoint:            endpointManager,
 		inbound:             inboundManager,
