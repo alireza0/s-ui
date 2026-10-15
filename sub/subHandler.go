@@ -81,39 +81,6 @@ func (s *SubHandler) addHeaders(c *gin.Context, headers []string) {
 	c.Writer.Header().Set("Content-Disposition", contentDispositionHeader(headers[2]))
 }
 
-type customHeader struct {
-	key   string
-	value string
-}
-
-func parseCustomHeaders(raw string) []customHeader {
-	if len(strings.TrimSpace(raw)) == 0 {
-		return nil
-	}
-
-	var headers []customHeader
-	lines := strings.Split(strings.ReplaceAll(raw, "\r\n", "\n"), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
-			continue
-		}
-
-		parts := strings.SplitN(line, ":", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		val := strings.TrimSpace(parts[1])
-
-		if key != "" && val != "" {
-			headers = append(headers, customHeader{key: key, value: val})
-		}
-	}
-	return headers
-}
-
 func contentDispositionHeader(name string) string {
 	filename := strings.TrimSpace(name)
 	if filename == "" {

@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/alireza0/s-ui/config"
@@ -16,9 +17,9 @@ import (
 	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/util/common"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/gin-contrib/gzip"
+	"github.com/gin-gonic/gin"
+	"golang.org/x/net/http/httpguts"
 )
 
 type Server struct {
@@ -48,10 +49,12 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	}
 
 	engine := gin.Default()
-
 	engine.Use(gzip.Gzip(gzip.DefaultCompression))
 
-	customHeadersStr, _ := s.SettingService.GetSubCustomHeaders()
+	customHeadersStr, err := s.SettingService.GetSubCustomHeaders()
+	if err != nil {
+		return nil, err
+	}
 	if customHeaders := parseCustomHeaders(customHeadersStr); len(customHeaders) > 0 {
 		engine.Use(func(c *gin.Context) {
 			for _, h := range customHeaders {
@@ -79,6 +82,32 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	NewSubHandler(g)
 
 	return engine, nil
+}
+
+type customHeader struct {
+	key   string
+	value string
+}
+
+func parseCustomHeaders(raw string) []customHeader {
+	var headers []customHeader
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, ":")
+		if !ok {
+			continue
+		}
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
+		if value == "" || !httpguts.ValidHeaderFieldName(key) || !httpguts.ValidHeaderFieldValue(value) {
+			continue
+		}
+		headers = append(headers, customHeader{key: key, value: value})
+	}
+	return headers
 }
 
 func (s *Server) Start() (err error) {

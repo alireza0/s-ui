@@ -91,7 +91,7 @@ var defaultValueMap = map[string]string{
 	"subURI":             "",
 	"subJsonExt":         "",
 	"subClashExt":        "",
-	"subCustomHeaders":   defaultCustomHeaders,
+	"subCustomHeaders":   "",
 	"subClashNoDefGrp":   "false",
 	"subClashSprtAll":    "false",
 	"subClashUdp":        "false",
@@ -581,13 +581,3 @@ func (s *SettingService) fileExists(path string) error {
 	_, err := os.Stat(path)
 	return err
 }
-
-var defaultCustomHeaders = `# Custom Subscription Headers
-# Syntax:
-# Header-Name: Value
-#
-# Lines starting with # are comments and will be ignored.
-#
-# Example:
-# announce: 42!
-# announce-url: https://42.example/`
