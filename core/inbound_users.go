@@ -23,7 +23,7 @@ func (c *Core) UpdateInboundUsers(config []byte) (bool, error) {
 		return false, err
 	}
 	var inboundConfig option.Inbound
-	if err = inboundConfig.UnmarshalJSONContext(box.ctx, config); err != nil {
+	if err = inboundConfig.UnmarshalJSONContext(box.scope.Context(), config); err != nil {
 		return false, err
 	}
 	inb, found := box.inbound.Get(inboundConfig.Tag)

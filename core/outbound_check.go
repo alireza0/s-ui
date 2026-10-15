@@ -33,7 +33,7 @@ func (c *Core) CheckOutbound(tag string, link string) (result CheckOutboundResul
 		return result
 	}
 
-	ctx, cancel := context.WithTimeout(box.ctx, checkTimeout)
+	ctx, cancel := context.WithTimeout(box.scope.Context(), checkTimeout)
 	defer cancel()
 
 	delay, err := urltest.URLTest(ctx, link, ob)
