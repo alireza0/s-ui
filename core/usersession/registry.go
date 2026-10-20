@@ -32,6 +32,10 @@ const (
 	// its session stays alive on keepalives and it retries on every request,
 	// so a disconnect became a lockout of up to blockTimeout (#1271).
 	kickMuteWindow = 30 * time.Second
+	// How often a new source triggers a sweep of the idle ones. The QUIC
+	// inbounds never Untrack, and every port hop or NAT rebind is a new
+	// source, so without it the map only shrinks on a user change (#1294).
+	sweepInterval = time.Minute
 )
 
 // Closer is implemented by the inbounds that own a Registry.
@@ -77,6 +81,7 @@ type Registry struct {
 	access  sync.Mutex
 	sources map[string]*entry
 	blocked map[string]*block
+	swept   time.Time
 }
 
 func NewRegistry() *Registry {
@@ -87,13 +92,33 @@ func NewRegistry() *Registry {
 }
 
 func (r *Registry) load(source string) *entry {
+	now := time.Now()
 	e, loaded := r.sources[source]
 	if !loaded {
+		if now.Sub(r.swept) >= sweepInterval {
+			r.sweep(now)
+		}
 		e = &entry{}
 		r.sources[source] = e
 	}
-	e.lastSeen = time.Now()
+	e.lastSeen = now
 	return e
+}
+
+// sweep forgets idle sources and expired blocks. A block outlives its source,
+// so a muted session that went quiet is still refused until the block expires.
+func (r *Registry) sweep(now time.Time) {
+	r.swept = now
+	for source, e := range r.sources {
+		if now.Sub(e.lastSeen) > idleTimeout {
+			delete(r.sources, source)
+		}
+	}
+	for source, b := range r.blocked {
+		if now.Sub(b.at) > blockTimeout || (b.kick && now.Sub(b.at) > kickMuteWindow) {
+			delete(r.blocked, source)
+		}
+	}
 }
 
 // Bind records which user the session at source authenticated as. Called for
