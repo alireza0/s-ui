@@ -555,6 +555,51 @@ func getTransport(tp_type string, q *url.Values) map[string]interface{} {
 	return transport
 }
 
+// GetOutboundForClash preserves XHTTP only for the Clash YAML export path.
+// Regular external links for Happ and sing-box JSON exports stay unchanged.
+func GetOutboundForClash(uri string, i int) (*map[string]interface{}, string, error) {
+	outbound, tag, err := GetOutbound(uri, i)
+	if err != nil || outbound == nil {
+		return outbound, tag, err
+	}
+	u, parseErr := url.Parse(uri)
+	if parseErr != nil || u.Scheme != "vless" {
+		return outbound, tag, err
+	}
+	q := u.Query()
+	tp := strings.ToLower(q.Get("type"))
+	if tp != "xhttp" && tp != "splithttp" {
+		return outbound, tag, err
+	}
+	transport := map[string]interface{}{"type": "xhttp"}
+	for _, key := range []string{"host", "path", "mode"} {
+		if q.Has(key) {
+			transport[key] = q.Get(key)
+		}
+	}
+	if raw := q.Get("extra"); raw != "" && raw != "null" {
+		var extra map[string]interface{}
+		decoder := json.NewDecoder(strings.NewReader(raw))
+		decoder.UseNumber()
+		if json.Valid([]byte(raw)) && decoder.Decode(&extra) == nil && len(extra) > 0 {
+			transport["extra"] = extra
+		}
+	}
+	// URI parsers use []string; the existing Clash exporter expects JSON-style
+	// []interface{}. Keep this normalization confined to the XHTTP export path.
+	if tls, ok := (*outbound)["tls"].(map[string]interface{}); ok {
+		if alpn, ok := tls["alpn"].([]string); ok {
+			values := make([]interface{}, len(alpn))
+			for index, value := range alpn {
+				values[index] = value
+			}
+			tls["alpn"] = values
+		}
+	}
+	(*outbound)["transport"] = transport
+	return outbound, tag, nil
+}
+
 func getTls(security string, q *url.Values) map[string]interface{} {
 	tls := map[string]interface{}{}
 	tls_fp := q.Get("fp")
