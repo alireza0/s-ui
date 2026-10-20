@@ -50,8 +50,9 @@ func (s *StatsService) SaveStats(enableTraffic bool, bucketSeconds int64) error 
 	drained := st.GetStats()
 
 	statsMu.Lock()
-	// Anything a previous cycle could not commit goes in ahead of this one.
-	batch := append(pendingStats, (*drained)...)
+	// Anything a previous cycle could not commit goes in ahead of this one,
+	// folded so a run of failed cycles cannot grow it without bound (#1294).
+	batch := mergeStats(append(pendingStats, (*drained)...))
 	pendingStats = nil
 	online := &onlines{}
 	statsMu.Unlock()
@@ -151,8 +152,34 @@ func (s *StatsService) SaveStats(enableTraffic bool, bucketSeconds int64) error 
 	err = tx.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "resource"}, {Name: "tag"}, {Name: "date_time"}, {Name: "direction"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{"traffic": gorm.Expr("stats.traffic + excluded.traffic")}),
-	}).Create(&batch).Error
+	}).CreateInBatches(&batch, statsInsertBatch).Error
 	return err
+}
+
+// Rows per INSERT, well under SQLite's 32766 bound variables at 5 per row, so
+// a server with thousands of active users still saves in one cycle.
+const statsInsertBatch = 1000
+
+// mergeStats folds rows of the same (resource, tag, direction) into one. Every
+// row is stamped with the current bucket before the insert, so nothing is lost.
+func mergeStats(rows []model.Stats) []model.Stats {
+	type key struct {
+		resource  string
+		tag       string
+		direction bool
+	}
+	index := make(map[key]int, len(rows))
+	merged := make([]model.Stats, 0, len(rows))
+	for _, row := range rows {
+		k := key{row.Resource, row.Tag, row.Direction}
+		if i, ok := index[k]; ok {
+			merged[i].Traffic += row.Traffic
+			continue
+		}
+		index[k] = len(merged)
+		merged = append(merged, row)
+	}
+	return merged
 }
 
 func (s *StatsService) GetStats(resource string, tag string, limit int, start int64, end int64) (any, error) {
