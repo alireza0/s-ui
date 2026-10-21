@@ -52,6 +52,14 @@ func GetExternalLink(url string) string {
 }
 
 func GetExternalSub(url string) ([]map[string]interface{}, error) {
+	return getExternalSub(url, false)
+}
+
+func GetExternalSubForClash(url string) ([]map[string]interface{}, error) {
+	return getExternalSub(url, true)
+}
+
+func getExternalSub(url string, forClash bool) ([]map[string]interface{}, error) {
 	var err error
 	var result []map[string]interface{}
 
@@ -98,10 +106,18 @@ func GetExternalSub(url string) ([]map[string]interface{}, error) {
 		return result, nil
 	} else {
 		// if data is a text
+		parseOutbound := GetOutbound
+		if forClash {
+			parseOutbound = GetOutboundForClash
+		}
 		links := strings.Split(data, "\n")
 		for _, link := range links {
-			linkToJson, _, err := GetOutbound(link, 0)
-			if err == nil {
+			link = strings.TrimSpace(link)
+			if link == "" {
+				continue
+			}
+			linkToJson, _, err := parseOutbound(link, 0)
+			if err == nil && linkToJson != nil && len(*linkToJson) > 0 {
 				result = append(result, *linkToJson)
 			}
 		}

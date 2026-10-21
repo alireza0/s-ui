@@ -42,6 +42,14 @@ func (s *LinkService) GetLinks(linkJson *json.RawMessage, types string, clientIn
 }
 
 func (s *LinkService) GetExternalOutbounds(linkJson *json.RawMessage) ([]map[string]interface{}, []string) {
+	return s.getExternalOutbounds(linkJson, false)
+}
+
+func (s *LinkService) GetExternalOutboundsForClash(linkJson *json.RawMessage) ([]map[string]interface{}, []string) {
+	return s.getExternalOutbounds(linkJson, true)
+}
+
+func (s *LinkService) getExternalOutbounds(linkJson *json.RawMessage, forClash bool) ([]map[string]interface{}, []string) {
 	links := []Link{}
 	err := json.Unmarshal(*linkJson, &links)
 	if err != nil {
@@ -50,17 +58,23 @@ func (s *LinkService) GetExternalOutbounds(linkJson *json.RawMessage) ([]map[str
 
 	var outbounds []map[string]interface{}
 	var tags []string
+	parseOutbound := util.GetOutbound
+	parseSub := util.GetExternalSub
+	if forClash {
+		parseOutbound = util.GetOutboundForClash
+		parseSub = util.GetExternalSubForClash
+	}
 
 	for _, link := range links {
 		switch link.Type {
 		case "external":
-			outbound, tag, err := util.GetOutbound(link.Uri, 0)
+			outbound, tag, err := parseOutbound(link.Uri, 0)
 			if err == nil && outbound != nil && len(tag) > 0 {
 				outbounds = append(outbounds, *outbound)
 				tags = append(tags, tag)
 			}
 		case "sub":
-			subOutbounds, err := util.GetExternalSub(link.Uri)
+			subOutbounds, err := parseSub(link.Uri)
 			if err != nil {
 				logger.Warning("sub: Error getting external sub:", err)
 				continue
