@@ -13,7 +13,7 @@ func xhttpTestURI(values url.Values) string {
 
 func TestGetOutboundForClashXHTTP(t *testing.T) {
 	for _, transportType := range []string{"xhttp", "splithttp", "XHTTP"} {
-		for _, extra := range []string{"", "null", "{}", `{"headers":null,"downloadSettings":null}`, "{invalid", "[]", `"string"`, "42", "true", "{} {}"} {
+		for _, extra := range []string{"", "null", "{}", `{"headers":null,"downloadSettings":null}`, "{invalid", "[]", `"string"`, "42", "true", "{} {}", `{"path":"/extra"} {}`, `{"path":"/extra"} trailing`} {
 			t.Run(transportType+"/"+extra, func(t *testing.T) {
 				query := url.Values{
 					"type": {transportType}, "host": {"example.com"}, "path": {"/api/v1/upload"}, "mode": {"auto"},
@@ -31,11 +31,14 @@ func TestGetOutboundForClashXHTTP(t *testing.T) {
 				if transport["type"] != "xhttp" || transport["host"] != "example.com" || transport["path"] != "/api/v1/upload" || transport["mode"] != "auto" {
 					t.Fatalf("lost transport settings: %v", transport)
 				}
+				if _, present := transport["extra"]; present != (extra == `{"headers":null,"downloadSettings":null}`) {
+					t.Fatalf("unexpected Extra parsing for %q: %v", extra, transport)
+				}
 				if tag != "2.XHTTP test" || (*outbound)["server"] != "192.0.2.1" || (*outbound)["server_port"] != 2053 {
 					t.Fatalf("lost endpoint or tag: %v", *outbound)
 				}
 				tls := (*outbound)["tls"].(map[string]interface{})
-				if tls["enabled"] != true || tls["server_name"] != "example.com" || !reflect.DeepEqual(tls["alpn"], []interface{}{"h2", "http/1.1"}) {
+				if tls["enabled"] != true || tls["server_name"] != "example.com" || !reflect.DeepEqual(tls["alpn"], []string{"h2", "http/1.1"}) {
 					t.Fatalf("lost TLS settings: %v", tls)
 				}
 				// The ordinary parser and JSON callers must still see their original
@@ -93,7 +96,7 @@ func TestGetOutboundForClashTLSVerification(t *testing.T) {
 func TestGetOutboundForClashExtraNumbersAndPresence(t *testing.T) {
 	query := url.Values{
 		"type": {"xhttp"}, "host": {""}, "mode": {"packet-up"},
-		"extra": {`{"host":"extra.example","path":"/extra","xmux":{"maxConnections":4},"scMaxEachPostBytes":1000000}`},
+		"extra": {`{"host":"extra.example","path":"/extra","xmux":{"maxConnections":4},"scMaxEachPostBytes":1000000}` + " \r\n\t"},
 	}
 	outbound, _, err := GetOutboundForClash(xhttpTestURI(query), 0)
 	if err != nil {

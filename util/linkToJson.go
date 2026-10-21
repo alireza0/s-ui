@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"strconv"
@@ -581,19 +582,11 @@ func GetOutboundForClash(uri string, i int) (*map[string]interface{}, string, er
 		var extra map[string]interface{}
 		decoder := json.NewDecoder(strings.NewReader(raw))
 		decoder.UseNumber()
-		if json.Valid([]byte(raw)) && decoder.Decode(&extra) == nil && len(extra) > 0 {
-			transport["extra"] = extra
-		}
-	}
-	// URI parsers use []string; the existing Clash exporter expects JSON-style
-	// []interface{}. Keep this normalization confined to the XHTTP export path.
-	if tls, ok := (*outbound)["tls"].(map[string]interface{}); ok {
-		if alpn, ok := tls["alpn"].([]string); ok {
-			values := make([]interface{}, len(alpn))
-			for index, value := range alpn {
-				values[index] = value
+		if decoder.Decode(&extra) == nil && len(extra) > 0 {
+			var trailing interface{}
+			if decoder.Decode(&trailing) == io.EOF {
+				transport["extra"] = extra
 			}
-			tls["alpn"] = values
 		}
 	}
 	(*outbound)["transport"] = transport

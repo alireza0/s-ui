@@ -83,7 +83,7 @@ func TestExternalXHTTPClashSubscription(t *testing.T) {
 		t.Fatal("Happ/raw subscription changed the source URI")
 	}
 	ordinaryBefore, ordinaryTags := service.LinkService.GetExternalOutbounds(&raw)
-	outbounds, tags := service.LinkService.GetExternalOutbounds(&raw, true)
+	outbounds, tags := service.LinkService.GetExternalOutboundsForClash(&raw)
 	if len(outbounds) != 4 || !reflect.DeepEqual(tags, []string{"XHTTP", "XHTTP-1", "XHTTP-2", "XHTTP-3"}) {
 		t.Fatalf("four external nodes or unique names missing: %v", tags)
 	}
@@ -332,7 +332,7 @@ func TestExternalNonXHTTPAndLocalLinksUnchanged(t *testing.T) {
 	raw := json.RawMessage(data)
 	service := &LinkService{}
 	want, wantTags := service.GetExternalOutbounds(&raw)
-	got, gotTags := service.GetExternalOutbounds(&raw, true)
+	got, gotTags := service.GetExternalOutboundsForClash(&raw)
 	if len(got) != 4 || !reflect.DeepEqual(got, want) || !reflect.DeepEqual(gotTags, wantTags) {
 		t.Fatalf("other external transports/local handling changed: %v", got)
 	}

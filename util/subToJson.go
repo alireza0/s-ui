@@ -51,10 +51,15 @@ func GetExternalLink(url string) string {
 	return data
 }
 
-// GetExternalSub keeps the original sing-box conversion by default. The Clash
-// export opts in to preserving XHTTP fields in URI-list subscriptions only;
-// subscriptions that already contain sing-box JSON are returned unchanged.
-func GetExternalSub(url string, forClash ...bool) ([]map[string]interface{}, error) {
+func GetExternalSub(url string) ([]map[string]interface{}, error) {
+	return getExternalSub(url, false)
+}
+
+func GetExternalSubForClash(url string) ([]map[string]interface{}, error) {
+	return getExternalSub(url, true)
+}
+
+func getExternalSub(url string, forClash bool) ([]map[string]interface{}, error) {
 	var err error
 	var result []map[string]interface{}
 
@@ -102,7 +107,7 @@ func GetExternalSub(url string, forClash ...bool) ([]map[string]interface{}, err
 	} else {
 		// if data is a text
 		parseOutbound := GetOutbound
-		if len(forClash) > 0 && forClash[0] {
+		if forClash {
 			parseOutbound = GetOutboundForClash
 		}
 		links := strings.Split(data, "\n")

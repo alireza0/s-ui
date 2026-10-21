@@ -59,7 +59,7 @@ func TestExternalSubsXHTTPClashPlaintextAndBase64(t *testing.T) {
 		direct = append(direct, Link{Type: "external", Uri: uri})
 	}
 	directRaw := externalSubTestLinks(t, direct)
-	wantClash, wantTags := service.GetExternalOutbounds(&directRaw, true)
+	wantClash, wantTags := service.GetExternalOutboundsForClash(&directRaw)
 	wantOrdinary, wantOrdinaryTags := service.GetExternalOutbounds(&directRaw)
 	wantProxies := externalSubTestProxies(t, service, wantClash)
 	if len(wantProxies) != 6 {
@@ -93,7 +93,7 @@ func TestExternalSubsXHTTPClashPlaintextAndBase64(t *testing.T) {
 				t.Fatal("Happ/raw export changed the fetched source text")
 			}
 
-			outbounds, tags := service.GetExternalOutbounds(&raw, true)
+			outbounds, tags := service.GetExternalOutboundsForClash(&raw)
 			if !reflect.DeepEqual(outbounds, wantClash) || !reflect.DeepEqual(tags, wantTags) {
 				t.Fatalf("External Subs differs from direct External Links: tags=%v", tags)
 			}
@@ -145,16 +145,22 @@ func TestExternalSubsSingBoxJSONUnchanged(t *testing.T) {
 			response = base64.StdEncoding.EncodeToString([]byte(body))
 		}
 		server := externalSubTestServer(t, response)
-		for _, forClash := range []bool{false, true} {
-			got, err := util.GetExternalSub(server.URL, forClash)
+		for _, mode := range []struct {
+			name  string
+			parse func(string) ([]map[string]interface{}, error)
+		}{
+			{name: "ordinary", parse: util.GetExternalSub},
+			{name: "clash", parse: util.GetExternalSubForClash},
+		} {
+			got, err := mode.parse(server.URL)
 			if err != nil || !reflect.DeepEqual(got, want) {
-				t.Fatalf("sing-box JSON changed (base64=%v, Clash=%v): got=%v err=%v", encoded, forClash, got, err)
+				t.Fatalf("sing-box JSON changed (base64=%v, export=%s): got=%v err=%v", encoded, mode.name, got, err)
 			}
 		}
 		raw := externalSubTestLinks(t, []Link{{Type: "sub", Uri: server.URL}})
 		var service LinkService
 		ordinary, ordinaryTags := service.GetExternalOutbounds(&raw)
-		clash, clashTags := service.GetExternalOutbounds(&raw, true)
+		clash, clashTags := service.GetExternalOutboundsForClash(&raw)
 		if !reflect.DeepEqual(ordinary, want) || !reflect.DeepEqual(clash, want) || !reflect.DeepEqual(ordinaryTags, []string{"node"}) || !reflect.DeepEqual(clashTags, ordinaryTags) {
 			t.Fatal("JSON input changed through LinkService")
 		}
@@ -173,8 +179,11 @@ func TestExternalSubsDuplicateNamesAcrossSources(t *testing.T) {
 		{Type: "external", Uri: uris[1]},
 	})
 	var service LinkService
-	for _, forClash := range []bool{false, true} {
-		outbounds, tags := service.GetExternalOutbounds(&raw, forClash)
+	for _, parse := range []func(*json.RawMessage) ([]map[string]interface{}, []string){
+		service.GetExternalOutbounds,
+		service.GetExternalOutboundsForClash,
+	} {
+		outbounds, tags := parse(&raw)
 		want := []string{"XHTTP", "XHTTP-1", "XHTTP-2", "XHTTP-3", "XHTTP-4", "XHTTP-5"}
 		if !reflect.DeepEqual(tags, want) || len(outbounds) != len(want) {
 			t.Fatalf("duplicate names changed: %v", tags)
@@ -190,8 +199,11 @@ func TestExternalSubsDuplicateNamesAcrossSources(t *testing.T) {
 func TestExternalSubsEmptyAndInvalidURILists(t *testing.T) {
 	for _, body := range []string{"\r\n \t\r\n", "unsupported://node\r\nvless://%zz\r\n"} {
 		server := externalSubTestServer(t, body)
-		for _, forClash := range []bool{false, true} {
-			outbounds, err := util.GetExternalSub(server.URL, forClash)
+		for _, parse := range []func(string) ([]map[string]interface{}, error){
+			util.GetExternalSub,
+			util.GetExternalSubForClash,
+		} {
+			outbounds, err := parse(server.URL)
 			if err == nil || len(outbounds) != 0 {
 				t.Fatalf("empty/invalid list should yield no result: %v, %v", outbounds, err)
 			}
