@@ -597,7 +597,7 @@ func vmessLink(
 }
 
 func populateVmessTlsParams(obj map[string]interface{}, tlsConfig interface{}) {
-	if tlsMap, ok := tlsConfig.(map[string]interface{}); ok && tlsMap["enabled"].(bool) {
+	if tlsMap, ok := tlsConfig.(map[string]interface{}); ok && boolOr(tlsMap["enabled"]) {
 		obj["tls"] = "tls"
 		var tlsParams []LinkParam
 		getTlsParams(&tlsParams, tlsMap, "vmess")
@@ -759,7 +759,7 @@ func getTransportParams(t interface{}) []LinkParam {
 }
 
 func getTlsParams(params *[]LinkParam, tls map[string]interface{}, protocol string) {
-	if reality, ok := tls["reality"].(map[string]interface{}); ok && reality["enabled"].(bool) {
+	if reality, ok := tls["reality"].(map[string]interface{}); ok && boolOr(reality["enabled"]) {
 		*params = append(*params, LinkParam{"security", "reality"})
 		if pbk, ok := reality["public_key"].(string); ok {
 			*params = append(*params, LinkParam{"pbk", pbk})
