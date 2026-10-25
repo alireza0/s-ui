@@ -28,6 +28,7 @@ type ApiService struct {
 	service.PanelService
 	service.StatsService
 	service.ServerService
+	service.UpdateService
 }
 
 func (a *ApiService) LoadData(c *gin.Context) {
@@ -278,6 +279,15 @@ func (a *ApiService) GetKeypairs(c *gin.Context) {
 	options := c.Query("o")
 	keypair := a.ServerService.GenKeypair(kType, options)
 	jsonObj(c, keypair, nil)
+}
+
+func (a *ApiService) CheckUpdate(c *gin.Context) {
+	jsonObj(c, a.UpdateService.CheckUpdate(), nil)
+}
+
+func (a *ApiService) Upgrade(c *gin.Context) {
+	err := a.UpdateService.Upgrade()
+	jsonMsg(c, "update", err)
 }
 
 func (a *ApiService) GetDb(c *gin.Context) {

@@ -64,6 +64,8 @@ func (a *APIHandler) postHandler(c *gin.Context) {
 		a.apiv2.ReloadTokens()
 	case "closeSessions":
 		a.ApiService.CloseSessions(c)
+	case "update":
+		a.ApiService.Upgrade(c)
 	case "getCertPing":
 		a.ApiService.GetCertPing(c)
 	default:
@@ -103,6 +105,8 @@ func (a *APIHandler) getHandler(c *gin.Context) {
 		a.ApiService.CheckChanges(c)
 	case "keypairs":
 		a.ApiService.GetKeypairs(c)
+	case "checkUpdate":
+		a.ApiService.CheckUpdate(c)
 	case "getdb":
 		a.ApiService.GetDb(c)
 	case "tokens":
