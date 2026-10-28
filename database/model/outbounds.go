@@ -23,7 +23,7 @@ func (o *Outbound) UnmarshalJSON(data []byte) error {
 	delete(raw, "id")
 	o.Type, _ = raw["type"].(string)
 	delete(raw, "type")
-	o.Tag = raw["tag"].(string)
+	o.Tag, _ = raw["tag"].(string)
 	delete(raw, "tag")
 
 	// Remaining fields

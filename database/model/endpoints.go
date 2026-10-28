@@ -34,7 +34,7 @@ func (o *Endpoint) UnmarshalJSON(data []byte) error {
 	delete(raw, "id")
 	o.Type, _ = raw["type"].(string)
 	delete(raw, "type")
-	o.Tag = raw["tag"].(string)
+	o.Tag, _ = raw["tag"].(string)
 	delete(raw, "tag")
 	// Dropped rather than stored: an older panel sent tls_id alongside the
 	// endpoint, and sing-box rejects the unknown key. `tls` is kept, since it
