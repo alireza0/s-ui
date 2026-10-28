@@ -165,6 +165,13 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	return engine, nil
 }
 
+// exposedListen reports whether a listen address binds every interface
+// on the machine, so the panel is reachable from any network the host
+// sits on -- the default posture, and the one scanners find.
+func exposedListen(listen string) bool {
+	return listen == "" || listen == "0.0.0.0" || listen == "::"
+}
+
 func (s *Server) Start() (err error) {
 	//This is an anonymous function, no function name
 	defer func() {
@@ -198,6 +205,15 @@ func (s *Server) Start() (err error) {
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		return err
+	}
+	if exposedListen(listen) {
+		// The panel is the keys to everything on the host, and the
+		// default bind exposes it to every network the host sits on.
+		// Nothing here changes that default -- deployments bind all
+		// interfaces on purpose -- but it should never be silent.
+		logger.Warning("web panel is listening on all interfaces (", listenAddr,
+			"); anyone who can reach this port can attempt to log in. "+
+				"Restrict it with the webListen setting (for example 127.0.0.1 with a tunnel or a firewall whitelist in front) if this host does not need it exposed.")
 	}
 	// Both or neither. This was an OR, so setting only one of the two put the
 	// server into TLS mode with half a configuration and failed to start with
