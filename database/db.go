@@ -1,6 +1,8 @@
 package database
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"os"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/alireza0/s-ui/config"
 	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/util"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -18,6 +21,16 @@ import (
 
 var db *gorm.DB
 
+// initialPassword returns a random password for the first admin account:
+// 18 bytes from crypto/rand, base64url-encoded to 24 characters.
+func initialPassword() (string, error) {
+	b := make([]byte, 18)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
 func initUser() error {
 	var count int64
 	err := db.Model(&model.User{}).Count(&count).Error
@@ -25,11 +38,29 @@ func initUser() error {
 		return err
 	}
 	if count == 0 {
+		// The first account used to be admin/admin. Anyone who reaches a
+		// fresh panel before its owner does -- a Docker container whose
+		// port was published, a binary started by hand -- owns it, so the
+		// password is random now, stored hashed like every other
+		// password, and printed to the log exactly once. The install
+		// script sets operator-chosen credentials right after this, so
+		// this mainly covers the paths that never run it.
+		password, err := initialPassword()
+		if err != nil {
+			return err
+		}
+		hashed, err := util.HashPassword(password)
+		if err != nil {
+			return err
+		}
 		user := &model.User{
 			Username: "admin",
-			Password: "admin",
+			Password: hashed,
 		}
-		return db.Create(user).Error
+		if err := db.Create(user).Error; err != nil {
+			return err
+		}
+		log.Printf("Initial admin account created. Username: admin, Password: %s -- log in and change it; it will not be shown again.", password)
 	}
 	return nil
 }
