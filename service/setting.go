@@ -96,6 +96,7 @@ var defaultValueMap = map[string]string{
 	"subClashSprtAll":    "false",
 	"subClashUdp":        "false",
 	"maintenance":        "false",
+	"endpointHealth":     "false",
 	"globalReset":        "",
 	"globalResetLast":    "0",
 	"config":             defaultConfig,
@@ -575,6 +576,13 @@ func (s *SettingService) GetMaintenance() (bool, error) {
 
 func (s *SettingService) SetMaintenance(enabled bool) error {
 	return s.setString("maintenance", strconv.FormatBool(enabled))
+}
+
+// GetEndpointHealth reports whether stuck WARP endpoints are probed and
+// rebuilt automatically. Off by default: a rebuild drops the connections that
+// were using the endpoint, which an operator should opt into.
+func (s *SettingService) GetEndpointHealth() (bool, error) {
+	return s.getBool("endpointHealth")
 }
 
 func (s *SettingService) fileExists(path string) error {

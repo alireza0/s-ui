@@ -52,6 +52,9 @@ func (c *CronJob) Start(loc *time.Location, trafficAge int, statsBucketSeconds i
 	}
 	// Start core if it is not running
 	addJob("@every 5s", NewCheckCoreJob(), "core watchdog")
+	// Rebuild WARP endpoints that are running but no longer pass traffic.
+	// Polls the setting itself, so turning it on needs no panel restart.
+	addJob("@every 2m", NewEndpointHealthJob(), "endpoint health check")
 	// database WAL checkpoint
 	addJob("@every 10m", NewWALCheckpointJob(), "WAL checkpoint")
 
