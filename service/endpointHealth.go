@@ -136,6 +136,17 @@ func (s *EndpointHealthService) Run() {
 		logger.Warning("endpoint health: unable to list warp endpoints: ", err)
 		return
 	}
+	// Forget endpoints that were deleted, so a new one reusing the tag starts
+	// clean. Done first: with no endpoints left, the round stops here.
+	seen := make(map[string]bool, len(tags))
+	for _, tag := range tags {
+		seen[tag] = true
+	}
+	for tag := range s.states {
+		if !seen[tag] {
+			delete(s.states, tag)
+		}
+	}
 	if len(tags) == 0 {
 		return
 	}
@@ -160,16 +171,8 @@ func (s *EndpointHealthService) Run() {
 	}
 	wg.Wait()
 
-	seen := make(map[string]bool, len(tags))
 	for i, tag := range tags {
-		seen[tag] = true
 		s.check(c, tag, results[i])
-	}
-	// Forget endpoints that were deleted, so a new one reusing the tag starts clean.
-	for tag := range s.states {
-		if !seen[tag] {
-			delete(s.states, tag)
-		}
 	}
 }
 
