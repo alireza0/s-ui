@@ -82,9 +82,44 @@ before_show_menu() {
     show_menu
 }
 
+# latest_tag prints the newest published release tag, resolved the same
+# way install.sh resolves it.
+latest_tag() {
+    curl -Ls "https://api.github.com/repos/alireza0/s-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
+}
+
+# run_installer runs install.sh taken from a release tag, never from the
+# floating main branch. install.sh verifies the archive it downloads
+# against that release's SHA256SUMS; fetching the installer itself from
+# main would skip the whole chain -- whatever lands on main, reviewed or
+# not, would run as root on every machine that picks Install or Update,
+# with no release in between. With no argument the latest tag is used;
+# an explicit tag installs that release. The script is staged in a temp
+# file and syntax-checked first, so a failed or truncated download is
+# never executed.
+run_installer() {
+    local tag="$1" installer rc
+    if [[ -z "$tag" ]]; then
+        tag=$(latest_tag)
+    fi
+    if [[ -z "$tag" ]]; then
+        LOGE "Failed to get the release version, Please check whether the machine can connect Github"
+        return 1
+    fi
+    installer=$(mktemp)
+    if ! curl -fLs -o "$installer" "https://raw.githubusercontent.com/alireza0/s-ui/${tag}/install.sh" || [[ ! -s "$installer" ]] || ! bash -n "$installer"; then
+        rm -f "$installer"
+        LOGE "Failed to download the installer for ${tag}, Please check whether the machine can connect Github"
+        return 1
+    fi
+    bash "$installer" "$tag"
+    rc=$?
+    rm -f "$installer"
+    return $rc
+}
+
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/main/install.sh)
-    if [[ $? == 0 ]]; then
+    if run_installer; then
         if [[ $# == 0 ]]; then
             start
         else
@@ -102,15 +137,14 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/main/install.sh)
-    if [[ $? == 0 ]]; then
+    if run_installer; then
         LOGI "Update is complete, Panel has automatically restarted "
         exit 0
     fi
 }
 
 custom_version() {
-    echo "Enter the panel version (like 0.0.1):"
+    echo "Enter the panel version (like v1.6.6):"
     read panel_version
 
     if [ -z "$panel_version" ]; then
@@ -118,12 +152,8 @@ custom_version() {
     exit 1
     fi
 
-    download_link="https://raw.githubusercontent.com/alireza0/s-ui/main/install.sh"
-
-    install_command="bash <(curl -Ls $download_link) $panel_version"
-
     echo "Downloading and installing panel version $panel_version..."
-    eval $install_command
+    run_installer "$panel_version"
 }
 
 uninstall() {
@@ -323,13 +353,26 @@ show_log() {
 update_shell() {
     # Certificate verification stays on: this file is about to be installed as
     # /usr/bin/s-ui and run as root.
-    wget -O /usr/bin/s-ui -N https://github.com/alireza0/s-ui/raw/main/s-ui.sh
-    if [[ $? != 0 ]]; then
+    # The file comes from the latest release tag, not the floating main
+    # branch, and it is staged in a temp file first: wget straight onto
+    # /usr/bin/s-ui leaves a truncated root script behind when a transfer
+    # dies halfway, and the rename is what makes the swap atomic.
+    local tag tmp
+    tag=$(latest_tag)
+    if [[ -z "$tag" ]]; then
+        echo ""
+        LOGE "Failed to get the release version, Please check whether the machine can connect Github"
+        before_show_menu
+        return 0
+    fi
+    tmp=$(mktemp /usr/bin/.s-ui.XXXXXX)
+    if ! wget -q -O "$tmp" "https://github.com/alireza0/s-ui/raw/${tag}/s-ui.sh" || ! bash -n "$tmp"; then
+        rm -f "$tmp"
         echo ""
         LOGE "Failed to download script, Please check whether the machine can connect Github"
         before_show_menu
     else
-        chmod +x /usr/bin/s-ui
+        chmod 755 "$tmp" && mv "$tmp" /usr/bin/s-ui
         LOGI "Upgrade script succeeded, Please rerun the script" && exit 0
     fi
 }
