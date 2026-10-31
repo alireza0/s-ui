@@ -104,6 +104,12 @@ func fetchLatestRelease() (string, string, error) {
 	if release.TagName == "" {
 		return "", "", common.NewError("release check: no tag in the answer")
 	}
+	// The panel renders this URL as a link the operator is invited to
+	// click while logged in, and Vue's href binding does not filter
+	// schemes, so only the expected GitHub URL is handed on.
+	if !strings.HasPrefix(release.HtmlURL, "https://github.com/") {
+		return "", "", common.NewError("release check: unexpected URL in the answer")
+	}
 	return release.TagName, release.HtmlURL, nil
 }
 

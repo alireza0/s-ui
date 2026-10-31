@@ -116,6 +116,23 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	store.Options(api.BaseSessionOptions(sessionMaxAge))
 	engine.Use(sessions.Sessions("s-ui", store))
 
+	// The panel is an admin surface: nothing may frame it, guess its
+	// content types, or learn panel URLs from a Referer. A page the
+	// operator visits while logged in could otherwise embed the panel
+	// and clickjack it -- the SameOrigin middleware does not stop that,
+	// because a click inside a frame posts with the panel's own Origin.
+	// The CSP is only frame-ancestors on purpose: a fuller policy has to
+	// be fitted to the built frontend (its inline BASE_URL script,
+	// Vuetify's inline styles) without breaking it, which is a frontend
+	// change, not a header change.
+	engine.Use(func(c *gin.Context) {
+		c.Header("Content-Security-Policy", "frame-ancestors 'none'")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("Referrer-Policy", "same-origin")
+		c.Next()
+	})
+
 	engine.Use(func(c *gin.Context) {
 		uri := c.Request.RequestURI
 		if strings.HasPrefix(uri, assetsBasePath) {
