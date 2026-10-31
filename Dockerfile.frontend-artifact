@@ -20,15 +20,17 @@ RUN apk upgrade --no-cache --scripts=no apk-tools && \
 
 ENV CC=gcc
 
-RUN CRONET_ARCH="$TARGETARCH" && \
-    CRONET_URL="https://github.com/SagerNet/cronet-go/releases/latest/download/libcronet-linux-${CRONET_ARCH}.so"; \
-    echo "Downloading $CRONET_URL" && \
-    wget -q -O ./libcronet.so "$CRONET_URL" && \
-    chmod 755 ./libcronet.so
-
 # Modules in their own layer, so a source-only change keeps them cached.
 COPY go.mod go.sum ./
 RUN go mod download
+
+# libcronet ships inside the cronet-go lib module pinned in go.mod, so
+# copy it out of the module cache: the library is exactly the go.mod
+# version and go.sum has already verified it. (It used to be fetched
+# from releases/latest with no verification at all.)
+RUN CRONET_DIR=$(go list -m -f '{{.Dir}}' github.com/sagernet/cronet-go/lib/linux_${TARGETARCH}) && \
+    cp "$CRONET_DIR/libcronet.so" ./libcronet.so && \
+    chmod 755 ./libcronet.so
 
 COPY . .
 COPY frontend_dist/ /app/web/html/
