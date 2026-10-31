@@ -86,9 +86,19 @@ func (s *WarpService) RegisterWarp(ep *model.Endpoint) error {
 		return err
 	}
 
-	deviceId := rspData["id"].(string)
-	token := rspData["token"].(string)
-	license, ok := rspData["account"].(map[string]interface{})["license"].(string)
+	deviceId, ok := rspData["id"].(string)
+	if !ok {
+		return common.NewError("warp: error accessing device id value")
+	}
+	token, ok := rspData["token"].(string)
+	if !ok {
+		return common.NewError("warp: error accessing token value")
+	}
+	account, ok := rspData["account"].(map[string]interface{})
+	if !ok {
+		return common.NewError("warp: error accessing account value")
+	}
+	license, ok := account["license"].(string)
 	if !ok {
 		return common.NewError("warp: error accessing license value")
 	}
@@ -111,7 +121,11 @@ func (s *WarpService) RegisterWarp(ep *model.Endpoint) error {
 	addresses, _ := interfaceConfig["addresses"].(map[string]interface{})
 	v4, _ := addresses["v4"].(string)
 	v6, _ := addresses["v6"].(string)
-	peer, _ := warpConfig["peers"].([]interface{})[0].(map[string]interface{})
+	peerList, _ := warpConfig["peers"].([]interface{})
+	if len(peerList) == 0 {
+		return common.NewError("warp: error accessing peers value")
+	}
+	peer, _ := peerList[0].(map[string]interface{})
 	peerEndpoint, _ := peer["endpoint"].(map[string]interface{})["host"].(string)
 	peerEpAddress, peerEpPort, err := net.SplitHostPort(peerEndpoint)
 	if err != nil {
@@ -220,8 +234,12 @@ func (s *WarpService) SetWarpLicense(old_license string, ep *model.Endpoint) err
 
 	if success, ok := response["success"].(bool); ok && success == false {
 		errorArr, _ := response["errors"].([]interface{})
-		errorObj := errorArr[0].(map[string]interface{})
-		return common.NewError(errorObj["code"], errorObj["message"])
+		if len(errorArr) > 0 {
+			if errorObj, ok := errorArr[0].(map[string]interface{}); ok {
+				return common.NewError(errorObj["code"], errorObj["message"])
+			}
+		}
+		return common.NewError("warp: request failed without an error detail")
 	}
 
 	return nil
