@@ -190,7 +190,10 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 			return nil, nil, err
 		}
 		tag, _ := outbound["tag"].(string)
-		if len(addrs) == 0 {
+		// A realm client finds the server through the realm, so the inbound's
+		// addresses have nothing to override.
+		_, viaRealm := outbound["realm"]
+		if len(addrs) == 0 || viaRealm {
 			tag = util.JoinRemark(clientRemark, tag)
 			takenTags[tag] = true
 			outbound["tag"] = tag

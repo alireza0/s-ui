@@ -158,6 +158,7 @@ func ServiceRegistry() *service.Registry {
 	api.RegisterService(registry)
 	resolved.RegisterService(registry)
 	ssmapi.RegisterService(registry)
+	hysteria2.RegisterRealmService(registry)
 
 	registerDERPService(registry)
 	ccm.RegisterService(registry)

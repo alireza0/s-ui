@@ -3,6 +3,8 @@ package sub
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/alireza0/s-ui/database/model"
 )
 
 func runAddHTTPClients(t *testing.T, template string) (map[string]interface{}, map[string]interface{}) {
@@ -154,5 +156,30 @@ func TestDefaultDomainResolverFromTemplate(t *testing.T) {
 	}`)
 	if route["default_domain_resolver"] != "direct-dns" {
 		t.Errorf("the template's choice must win, got %v", route["default_domain_resolver"])
+	}
+}
+
+func TestGetOutboundsRealmIgnoresAddrs(t *testing.T) {
+	inbound := &model.Inbound{
+		Type:    "hysteria2",
+		Tag:     "hy2",
+		OutJson: json.RawMessage(`{"type": "hysteria2", "tag": "hy2", "realm": {"server_url": "https://realm.example.com", "realm_id": "home"}}`),
+		Addrs:   json.RawMessage(`[{"server": "a.example.com", "server_port": 443}, {"server": "b.example.com", "server_port": 443}]`),
+	}
+	clientConfig := json.RawMessage(`{"hysteria2": {"name": "user", "password": "secret"}}`)
+
+	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(*outbounds) != 1 {
+		t.Fatalf("got %d outbounds, want one realm outbound", len(*outbounds))
+	}
+	out := (*outbounds)[0]
+	if _, ok := out["server"]; ok {
+		t.Errorf("server conflicts with realm, got %v", out["server"])
+	}
+	if out["password"] != "secret" {
+		t.Errorf("password = %v, want the client's", out["password"])
 	}
 }
