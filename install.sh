@@ -450,7 +450,7 @@ config_after_install() {
         echo -e "${red}$(t cancelled)${plain}"
         if [[ ! -f "/usr/local/s-ui/db/s-ui.db" ]]; then
             local usernameTemp=$(head -c 6 /dev/urandom | base64)
-            local passwordTemp=$(head -c 6 /dev/urandom | base64)
+            local passwordTemp=$(head -c 18 /dev/urandom | base64)
             echo -e "$(t fresh_random)"
             echo -e "###############################################"
             echo -e "${green}username:${usernameTemp}${plain}"

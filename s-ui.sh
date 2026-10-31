@@ -167,10 +167,14 @@ reset_admin() {
 }
 
 set_admin() {
-    echo "It is not recommended to set admin's credentials to a complex text."
-    read -p "Please set up your username:" config_account
-    read -p "Please set up your password:" config_password
-    /usr/local/s-ui/sui admin -username ${config_account} -password ${config_password}
+    read -r -p "Please set up your username:" config_account
+    read -r -s -p "Please set up your password:" config_password
+    echo
+    if [[ -z "$config_account" || -z "$config_password" ]]; then
+        LOGE "Username and password can not be empty."
+    else
+        /usr/local/s-ui/sui admin -username "${config_account}" -password "${config_password}"
+    fi
     before_show_menu
 }
 
