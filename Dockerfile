@@ -25,36 +25,17 @@ RUN apk upgrade --no-cache --scripts=no apk-tools && \
 
 ENV CC=gcc
 
-# libcronet is pinned to an explicit cronet-go release and verified against
-# a SHA-256 recorded here. It used to be fetched from releases/latest with
-# no verification at all: whatever that URL served on build day was copied
-# into the published image and loaded by a root daemon, and its version
-# could drift ahead of the cronet-go module in go.mod. CRONET_VERSION
-# matches the Chromium version of the cronet-go module go.mod currently
-# builds against (150.x) -- bump the two together.
-ARG CRONET_VERSION=v150.0.7871.63-2
-ARG CRONET_SHA256_AMD64=c3949c6ad64e1d8fcd1e3b1fae4e302b2e553d769665a4bd7576483564c3f026
-ARG CRONET_SHA256_386=46becdd1b89a2d73a003907f581278f4b29ae16f35161013dcbf2188bc22aaf4
-ARG CRONET_SHA256_ARM64=8f13a6186aca498d37ee5e1f410282f587d663995aca60d6bf29a2d4f5536f2b
-ARG CRONET_SHA256_ARM=566c9ec0a18a83e3f08d99b77e3437d6cf21e58a4ec3fed60b11975b3ee8ea97
-
-RUN CRONET_ARCH="$TARGETARCH" && \
-    case "$TARGETARCH" in \
-      amd64) CRONET_SHA256="$CRONET_SHA256_AMD64" ;; \
-      386) CRONET_SHA256="$CRONET_SHA256_386" ;; \
-      arm64) CRONET_SHA256="$CRONET_SHA256_ARM64" ;; \
-      arm) CRONET_SHA256="$CRONET_SHA256_ARM" ;; \
-      *) echo "no pinned libcronet checksum for TARGETARCH=$TARGETARCH" >&2; exit 1 ;; \
-    esac && \
-    CRONET_URL="https://github.com/SagerNet/cronet-go/releases/download/${CRONET_VERSION}/libcronet-linux-${CRONET_ARCH}.so" && \
-    echo "Downloading $CRONET_URL" && \
-    wget -q -O ./libcronet.so "$CRONET_URL" && \
-    echo "$CRONET_SHA256  ./libcronet.so" | sha256sum -c - && \
-    chmod 755 ./libcronet.so
-
 # Modules in their own layer, so a source-only change keeps them cached.
 COPY go.mod go.sum ./
 RUN go mod download
+
+# libcronet ships inside the cronet-go lib module pinned in go.mod, so
+# copy it out of the module cache: the library is exactly the go.mod
+# version and go.sum has already verified it. (It used to be fetched
+# from releases/latest with no verification at all.)
+RUN CRONET_DIR=$(go list -m -f '{{.Dir}}' github.com/sagernet/cronet-go/lib/linux_${TARGETARCH}) && \
+    cp "$CRONET_DIR/libcronet.so" ./libcronet.so && \
+    chmod 755 ./libcronet.so
 
 COPY . .
 COPY --from=front-builder /app/dist/ /app/web/html/
