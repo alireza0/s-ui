@@ -56,7 +56,7 @@ func (j *JsonService) GetJson(subId string, format string) (*string, []string, e
 		return nil, nil, err
 	}
 
-	outbounds, outTags, err := j.getOutbounds(client.Config, inDatas, client.Remark)
+	outbounds, outTags, err := j.getOutbounds(client.Config, inDatas, nodeRemark(&j.SettingService, client))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -99,6 +99,15 @@ func uniqueOutboundTag(tag string, taken map[string]bool) string {
 			return candidate
 		}
 	}
+}
+
+// nodeRemark is the remark node names are prefixed with: the client's own, or
+// none when the subRemarkPrefix setting turns the prefix off.
+func nodeRemark(settings *service.SettingService, client *model.Client) string {
+	if !settings.SubRemarkPrefix(database.GetDB()) {
+		return ""
+	}
+	return client.Remark
 }
 
 func (j *JsonService) getData(subId string) (*model.Client, []*model.Inbound, error) {

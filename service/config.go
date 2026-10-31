@@ -446,7 +446,18 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 		copy(configData, data)
 		restartWith = configData
 	case "settings":
+		remarkPrefix := s.SettingService.SubRemarkPrefix(tx)
 		err = s.SettingService.Save(tx, data)
+		// Stored client links carry the remark prefix, so flipping it has to
+		// rebuild them, the way a TLS edit does.
+		if err == nil && s.SettingService.SubRemarkPrefix(tx) != remarkPrefix {
+			var inbounds []model.Inbound
+			err = tx.Model(model.Inbound{}).Preload("Tls").Find(&inbounds).Error
+			if err == nil {
+				err = s.ClientService.UpdateLinksByInboundChange(tx, &inbounds, hostname, "")
+				objs = append(objs, "clients")
+			}
+		}
 	default:
 		return nil, common.NewError("unknown object: ", obj)
 	}

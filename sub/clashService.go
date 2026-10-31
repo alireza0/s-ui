@@ -78,7 +78,7 @@ func (s *ClashService) GetClash(subId string) (*string, []string, error) {
 		return nil, nil, err
 	}
 
-	outbounds, outTags, err := s.getOutbounds(client.Config, inDatas, client.Remark)
+	outbounds, outTags, err := s.getOutbounds(client.Config, inDatas, nodeRemark(&s.SettingService, client))
 	if err != nil {
 		return nil, nil, err
 	}

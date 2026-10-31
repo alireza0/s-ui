@@ -88,6 +88,7 @@ var defaultValueMap = map[string]string{
 	"subUpdates":         "12",
 	"subEncode":          "true",
 	"subShowInfo":        "false",
+	"subRemarkPrefix":    "true",
 	"subURI":             "",
 	"subJsonExt":         "",
 	"subClashExt":        "",
@@ -373,6 +374,16 @@ func (s *SettingService) GetSubUpdates() (int, error) {
 
 func (s *SettingService) GetSubEncode() (bool, error) {
 	return s.getBool("subEncode")
+}
+
+func (s *SettingService) SubRemarkPrefix(db *gorm.DB) bool {
+	setting := &model.Setting{}
+	value := defaultValueMap["subRemarkPrefix"]
+	if err := db.Model(model.Setting{}).Where("key = ?", "subRemarkPrefix").First(setting).Error; err == nil {
+		value = setting.Value
+	}
+	enabled, err := strconv.ParseBool(value)
+	return err != nil || enabled
 }
 
 func (s *SettingService) GetSubShowInfo() (bool, error) {
