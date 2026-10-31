@@ -64,6 +64,8 @@ d en set_pass "Please set up your password: "
 d en checksum_ok "Checksum verified."
 d en checksum_fail "Checksum does NOT match. The download may be corrupt or tampered with. Aborting."
 d en no_checksums "No SHA256SUMS published for this release; skipping checksum verification."
+d en checksum_unusable "SHA256SUMS could not be used to verify the download (missing entry, empty file or no sha256sum). Aborting."
+d en sums_fetch_fail "Failed to download SHA256SUMS for this release. Aborting."
 d en creds_empty "Username and password can not be empty."
 d en creds_failed "Failed to set the admin credentials."
 d en current_creds "Your current admin credentials:"
@@ -103,6 +105,8 @@ d fa set_pass "رمز عبور خود را وارد کنید: "
 d fa checksum_ok "صحت فایل تایید شد."
 d fa checksum_fail "مقدار checksum مطابقت ندارد. فایل دانلودشده خراب یا دستکاری شده است. عملیات متوقف شد."
 d fa no_checksums "برای این نسخه فایل SHA256SUMS منتشر نشده؛ بررسی checksum انجام نشد."
+d fa checksum_unusable "امکان بررسی فایل دانلودشده با SHA256SUMS نبود (ورودی ناموجود، فایل خالی یا نبودن sha256sum). عملیات متوقف شد."
+d fa sums_fetch_fail "دانلود فایل SHA256SUMS این نسخه ناموفق بود. عملیات متوقف شد."
 d fa creds_empty "نام کاربری و رمز عبور نمی‌توانند خالی باشند."
 d fa creds_failed "تنظیم نام کاربری و رمز ادمین ناموفق بود."
 d fa current_creds "اطلاعات ورود ادمین فعلی شما:"
@@ -142,6 +146,8 @@ d ru set_pass "Задайте пароль: "
 d ru checksum_ok "Контрольная сумма проверена."
 d ru checksum_fail "Контрольная сумма не совпадает. Файл повреждён или подменён. Прерывание."
 d ru no_checksums "Для этого релиза нет SHA256SUMS; проверка контрольной суммы пропущена."
+d ru checksum_unusable "Не удалось проверить загрузку по SHA256SUMS (нет записи, пустой файл или нет sha256sum). Прерывание."
+d ru sums_fetch_fail "Не удалось загрузить SHA256SUMS для этого релиза. Прерывание."
 d ru creds_empty "Имя пользователя и пароль не могут быть пустыми."
 d ru creds_failed "Не удалось задать учётные данные администратора."
 d ru current_creds "Ваши текущие учётные данные администратора:"
@@ -181,6 +187,8 @@ d vi set_pass "Vui lòng đặt mật khẩu: "
 d vi checksum_ok "Đã xác minh checksum."
 d vi checksum_fail "Checksum KHÔNG khớp. Tệp tải về có thể bị hỏng hoặc bị can thiệp. Đang hủy."
 d vi no_checksums "Bản phát hành này không có SHA256SUMS; bỏ qua xác minh checksum."
+d vi checksum_unusable "Không thể dùng SHA256SUMS để xác minh tệp tải về (thiếu mục, tệp rỗng hoặc không có sha256sum). Đang hủy."
+d vi sums_fetch_fail "Không tải được SHA256SUMS của bản phát hành này. Đang hủy."
 d vi creds_empty "Tên đăng nhập và mật khẩu không được để trống."
 d vi creds_failed "Không thể đặt thông tin đăng nhập quản trị."
 d vi current_creds "Thông tin đăng nhập quản trị hiện tại của bạn:"
@@ -220,6 +228,8 @@ d zhcn set_pass "请设置您的密码： "
 d zhcn checksum_ok "校验和已验证。"
 d zhcn checksum_fail "校验和不匹配，下载文件可能已损坏或被篡改。已中止。"
 d zhcn no_checksums "此版本未发布 SHA256SUMS，已跳过校验和验证。"
+d zhcn checksum_unusable "无法使用 SHA256SUMS 验证下载文件（缺少条目、文件为空或缺少 sha256sum）。已中止。"
+d zhcn sums_fetch_fail "下载此版本的 SHA256SUMS 失败。已中止。"
 d zhcn creds_empty "用户名和密码不能为空。"
 d zhcn creds_failed "设置管理员账号密码失败。"
 d zhcn current_creds "您当前的管理员登录信息："
@@ -259,6 +269,8 @@ d zhtw set_pass "請設定您的密碼： "
 d zhtw checksum_ok "校驗和已驗證。"
 d zhtw checksum_fail "校驗和不相符，下載檔案可能已損毀或被竄改。已中止。"
 d zhtw no_checksums "此版本未發布 SHA256SUMS，已略過校驗和驗證。"
+d zhtw checksum_unusable "無法使用 SHA256SUMS 驗證下載檔案（缺少項目、檔案為空或缺少 sha256sum）。已中止。"
+d zhtw sums_fetch_fail "下載此版本的 SHA256SUMS 失敗。已中止。"
 d zhtw creds_empty "使用者名稱與密碼不能為空。"
 d zhtw creds_failed "設定管理員帳號密碼失敗。"
 d zhtw current_creds "您目前的管理員登入資訊："
@@ -483,17 +495,31 @@ fetch() {
     curl -fL --progress-bar -o "$2" "$1"
 }
 
+# fetch_sums downloads the release's SHA256SUMS to $2. It returns 0 when the
+# file was served, 2 when the release has none (a 404: anything built before
+# the file was published) and 1 for any other failure. Only the 404 may skip
+# verification; a network error or a stripped download must not quietly
+# install an unverified archive.
+fetch_sums() {
+    local code
+    code=$(curl -sL -o "$2" -w '%{http_code}' "$1") || code=""
+    case "$code" in
+    200) return 0 ;;
+    404) return 2 ;;
+    *) return 1 ;;
+    esac
+}
+
 # verify_checksum checks the downloaded archive against the SHA256SUMS file the
-# release publishes. A release without one (anything built before this was
-# added) is installed with a warning rather than refused, so an older version
-# can still be rolled back to.
+# release publishes. Every way of not being able to check -- an empty file, no
+# entry for the archive, no sha256sum -- aborts like a mismatch does.
 verify_checksum() {
     local archive="$1" sums="$2" name expected actual
     name=$(basename "$archive")
 
     if [[ ! -s "$sums" ]] || ! command -v sha256sum >/dev/null 2>&1; then
-        echo -e "${yellow}$(t no_checksums)${plain}"
-        return 0
+        echo -e "${red}$(t checksum_unusable)${plain}"
+        return 1
     fi
 
     # Matched by filename, and the leading * that sha256sum writes for a binary
@@ -502,8 +528,8 @@ verify_checksum() {
     # paths in a SHA256SUMS file are relative to.
     expected=$(awk -v f="$name" '$2 == f || $2 == "*" f { print $1; exit }' "$sums")
     if [[ -z "$expected" ]]; then
-        echo -e "${yellow}$(t no_checksums)${plain}"
-        return 0
+        echo -e "${red}$(t checksum_unusable)${plain}"
+        return 1
     fi
 
     actual=$(sha256sum "$archive" | awk '{ print $1 }')
@@ -549,8 +575,15 @@ install_s-ui() {
         fi
         exit 1
     fi
-    wget -q -O "$sums" "${base}/SHA256SUMS" 2>/dev/null || : # older releases have none
-    verify_checksum "$archive" "$sums" || exit 1
+    fetch_sums "${base}/SHA256SUMS" "$sums"
+    case $? in
+    0) verify_checksum "$archive" "$sums" || exit 1 ;;
+    2) echo -e "${yellow}$(t no_checksums)${plain}" ;; # older releases have none
+    *)
+        echo -e "${red}$(t sums_fetch_fail)${plain}"
+        exit 1
+        ;;
+    esac
 
     if [[ -e /usr/local/s-ui/ ]]; then
         if [[ "${init_system}" == "systemd" ]]; then
