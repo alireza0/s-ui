@@ -107,7 +107,7 @@ run_installer() {
         return 1
     fi
     installer=$(mktemp)
-    if ! curl -Ls -o "$installer" "https://raw.githubusercontent.com/alireza0/s-ui/${tag}/install.sh" || [[ ! -s "$installer" ]] || ! bash -n "$installer"; then
+    if ! curl -fLs -o "$installer" "https://raw.githubusercontent.com/alireza0/s-ui/${tag}/install.sh" || [[ ! -s "$installer" ]] || ! bash -n "$installer"; then
         rm -f "$installer"
         LOGE "Failed to download the installer for ${tag}, Please check whether the machine can connect Github"
         return 1
@@ -365,14 +365,14 @@ update_shell() {
         before_show_menu
         return 0
     fi
-    tmp=$(mktemp)
+    tmp=$(mktemp /usr/bin/.s-ui.XXXXXX)
     if ! wget -q -O "$tmp" "https://github.com/alireza0/s-ui/raw/${tag}/s-ui.sh" || ! bash -n "$tmp"; then
         rm -f "$tmp"
         echo ""
         LOGE "Failed to download script, Please check whether the machine can connect Github"
         before_show_menu
     else
-        chmod +x "$tmp" && mv "$tmp" /usr/bin/s-ui
+        chmod 755 "$tmp" && mv "$tmp" /usr/bin/s-ui
         LOGI "Upgrade script succeeded, Please rerun the script" && exit 0
     fi
 }
