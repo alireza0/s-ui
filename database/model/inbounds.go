@@ -5,9 +5,10 @@ import (
 )
 
 type Inbound struct {
-	Id   uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
-	Type string `json:"type" form:"type"`
-	Tag  string `json:"tag" form:"tag" gorm:"unique"`
+	Id     uint   `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
+	Type   string `json:"type" form:"type"`
+	Tag    string `json:"tag" form:"tag" gorm:"unique"`
+	Enable bool   `json:"enable" form:"enable" gorm:"default:true"`
 
 	// Foreign key to tls table
 	TlsId uint `json:"tls_id" form:"tls_id"`
@@ -34,6 +35,12 @@ func (i *Inbound) UnmarshalJSON(data []byte) error {
 	delete(raw, "type")
 	i.Tag, _ = raw["tag"].(string)
 	delete(raw, "tag")
+	// Absent means enabled, so callers that predate the switch keep working
+	i.Enable = true
+	if val, exists := raw["enable"].(bool); exists {
+		i.Enable = val
+	}
+	delete(raw, "enable")
 
 	// TlsId
 	if val, exists := raw["tls_id"].(float64); exists {
@@ -85,6 +92,7 @@ func (i Inbound) MarshalFull() (*map[string]interface{}, error) {
 	combined["id"] = i.Id
 	combined["type"] = i.Type
 	combined["tag"] = i.Tag
+	combined["enable"] = i.Enable
 	combined["tls_id"] = i.TlsId
 	combined["addrs"] = i.Addrs
 	combined["out_json"] = i.OutJson

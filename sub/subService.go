@@ -2,7 +2,9 @@ package sub
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -31,7 +33,11 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 		clientInfo = s.getClientInfo(client)
 	}
 
-	linksArray := s.LinkService.GetLinks(&client.Links, "all", clientInfo)
+	links, err := dropDisabledLinks(client.Links)
+	if err != nil {
+		return nil, nil, err
+	}
+	linksArray := s.LinkService.GetLinks(&links, "all", clientInfo)
 	result := strings.Join(linksArray, "\n")
 
 	headers := s.getClientHeaders(client)
@@ -42,6 +48,27 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 	}
 
 	return &result, headers, nil
+}
+
+// dropDisabledLinks removes the local links of disabled inbounds. They stay
+// stored on the client so that enabling the inbound again brings them back.
+func dropDisabledLinks(raw json.RawMessage) (json.RawMessage, error) {
+	var disabled []string
+	err := database.GetDB().Model(model.Inbound{}).Where("enable = ?", false).Pluck("tag", &disabled).Error
+	if err != nil || len(disabled) == 0 {
+		return raw, err
+	}
+	var links []Link
+	if json.Unmarshal(raw, &links) != nil {
+		return raw, nil
+	}
+	kept := links[:0]
+	for _, link := range links {
+		if link.Type != "local" || !slices.Contains(disabled, link.Remark) {
+			kept = append(kept, link)
+		}
+	}
+	return json.Marshal(kept)
 }
 
 func (j *SubService) getClientBySubId(subId string) (*model.Client, error) {

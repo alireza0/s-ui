@@ -60,6 +60,7 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 			"id":     inbound.Id,
 			"type":   inbound.Type,
 			"tag":    inbound.Tag,
+			"enable": inbound.Enable,
 			"tls_id": inbound.TlsId,
 		}
 		if inbound.Options != nil {
@@ -132,25 +133,31 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 				if err != nil && err != os.ErrInvalid {
 					return err
 				}
+				// Removing the listener leaves accepted connections open
+				if box := corePtr.GetInstance(); box != nil && !inbound.Enable {
+					box.SessionTracker().CloseByInbound(oldTag)
+				}
 			}
 
-			inboundConfig, err := inbound.MarshalJSON()
-			if err != nil {
-				return err
-			}
+			if inbound.Enable {
+				inboundConfig, err := inbound.MarshalJSON()
+				if err != nil {
+					return err
+				}
 
-			if act == "edit" {
-				inboundConfig, err = s.addUsers(tx, inboundConfig, inbound.Id, inbound.Type)
-			} else {
-				inboundConfig, err = s.initUsers(tx, inboundConfig, initUserIds, inbound.Type)
-			}
-			if err != nil {
-				return err
-			}
+				if act == "edit" {
+					inboundConfig, err = s.addUsers(tx, inboundConfig, inbound.Id, inbound.Type)
+				} else {
+					inboundConfig, err = s.initUsers(tx, inboundConfig, initUserIds, inbound.Type)
+				}
+				if err != nil {
+					return err
+				}
 
-			err = corePtr.AddInbound(inboundConfig)
-			if err != nil {
-				return err
+				err = corePtr.AddInbound(inboundConfig)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -159,9 +166,19 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 			return err
 		}
 
+		// Create skips a false bool for the column default and reads the
+		// default back into the struct, so the flag is kept and set after it
+		enable := inbound.Enable
 		err = tx.Save(&inbound).Error
 		if err != nil {
 			return err
+		}
+		if act == "new" && !enable {
+			inbound.Enable = false
+			err = tx.Model(model.Inbound{}).Where("id = ?", inbound.Id).Update("enable", false).Error
+			if err != nil {
+				return err
+			}
 		}
 		switch act {
 		case "new":
@@ -226,7 +243,7 @@ func (s *InboundService) UpdateOutJsons(tx *gorm.DB, inboundIds []uint, hostname
 func (s *InboundService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 	var inboundsJson []json.RawMessage
 	var inbounds []*model.Inbound
-	err := db.Model(model.Inbound{}).Preload("Tls").Find(&inbounds).Error
+	err := db.Model(model.Inbound{}).Preload("Tls").Where("enable = ?", true).Find(&inbounds).Error
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +395,8 @@ func (s *InboundService) UpdateInboundsUsers(tx *gorm.DB, ids []uint) error {
 		return nil
 	}
 	var inbounds []*model.Inbound
-	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ?", ids).Find(&inbounds).Error
+	// A disabled inbound is not in the core, and re-adding it here would turn it back on
+	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? AND enable = ?", ids, true).Find(&inbounds).Error
 	if err != nil {
 		return err
 	}
@@ -428,7 +446,7 @@ func (s *InboundService) RestartInbounds(tx *gorm.DB, ids []uint) error {
 		return nil
 	}
 	var inbounds []*model.Inbound
-	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ?", ids).Find(&inbounds).Error
+	err := tx.Model(model.Inbound{}).Preload("Tls").Where("id in ? AND enable = ?", ids, true).Find(&inbounds).Error
 	if err != nil {
 		return err
 	}
