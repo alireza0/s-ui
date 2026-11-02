@@ -80,7 +80,7 @@ func (s *InboundService) GetAll() (*[]map[string]interface{}, error) {
 			!(inbound.Type == "shadowtls" && shadowtls_version < 3) &&
 			!(inbound.Type == "shadowsocks" && ss_managed) {
 			users := []string{}
-			err = db.Raw("SELECT clients.name FROM clients, json_each(clients.inbounds) as je WHERE je.value = ?", inbound.Id).Scan(&users).Error
+			err = db.Raw("SELECT clients.name FROM clients, json_each(CAST(clients.inbounds AS TEXT)) as je WHERE je.value = ?", inbound.Id).Scan(&users).Error
 			if err != nil {
 				return nil, err
 			}
@@ -267,7 +267,7 @@ func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition s
 	var users []string
 
 	err := db.Raw(
-		fmt.Sprintf(`SELECT json_extract(clients.config, "$.%s")
+		fmt.Sprintf(`SELECT json_extract(CAST(clients.config AS TEXT), "$.%s")
 		FROM clients WHERE enable = true AND %s`,
 			inboundType, condition), args...).Scan(&users).Error
 	if err != nil {
@@ -303,7 +303,7 @@ func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uin
 		return nil, err
 	}
 
-	condition := fmt.Sprintf("%d IN (SELECT json_each.value FROM json_each(clients.inbounds))", inboundId)
+	condition := fmt.Sprintf("%d IN (SELECT json_each.value FROM json_each(CAST(clients.inbounds AS TEXT)))", inboundId)
 	inbound["users"], err = s.fetchUsers(db, inboundType, condition, nil, inbound)
 	if err != nil {
 		return nil, err
@@ -357,7 +357,7 @@ func (s *InboundService) initUsers(db *gorm.DB, inboundJson []byte, clientIds st
 func (s *InboundService) enabledClientNames(tx *gorm.DB, inboundId uint) (map[string]struct{}, error) {
 	var names []string
 	err := tx.Raw(
-		"SELECT clients.name FROM clients, json_each(clients.inbounds) AS je WHERE je.value = ? AND clients.enable = true",
+		"SELECT clients.name FROM clients, json_each(CAST(clients.inbounds AS TEXT)) AS je WHERE je.value = ? AND clients.enable = true",
 		inboundId).Scan(&names).Error
 	if err != nil {
 		return nil, err

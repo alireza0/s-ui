@@ -100,7 +100,7 @@ func remove_outbound_strategy(db *gorm.DB) error {
 	// Where before Find. Chained the other way round the filter never applied,
 	// so this loaded every outbound and rewrote each one -- reindenting rows
 	// that had nothing to migrate.
-	err := db.Where("json_extract(options, '$.domain_strategy') IS NOT NULL").Find(&outbounds).Error
+	err := db.Where("json_extract(CAST(options AS TEXT), '$.domain_strategy') IS NOT NULL").Find(&outbounds).Error
 	if err != nil {
 		return err
 	}
