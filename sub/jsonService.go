@@ -228,9 +228,13 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 
 				// Override TLS
 				if addrTls, ok := addr["tls"].(map[string]interface{}); ok {
-					outTls, _ := newOut["tls"].(map[string]interface{})
-					if outTls == nil {
-						outTls = make(map[string]interface{})
+					// Copy the inbound's TLS too: every address shares that map,
+					// so writing into it would give all of them the last
+					// address's server_name.
+					inTls, _ := newOut["tls"].(map[string]interface{})
+					outTls := make(map[string]interface{}, len(inTls)+len(addrTls))
+					for key, value := range inTls {
+						outTls[key] = value
 					}
 					for key, value := range addrTls {
 						outTls[key] = value
