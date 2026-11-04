@@ -90,6 +90,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/wuquanlin/s-ui/dev/deploy.sh
 
 The custom installer supports Linux hosts using systemd, including Debian/Ubuntu and RHEL-family distributions. Its interactive prompts are currently in Simplified Chinese.
 
+It checks the required packages first and installs only those that are missing. Already installed prerequisites are retained; deployment does not trigger an upgrade of `ca-certificates` or the other prerequisites. If a missing package cannot be installed, deployment stops.
+
 During installation or upgrade, it:
 
 1. Downloads the latest **stable official S-UI release** from `alireza0/s-ui` and verifies its published SHA256 checksum. It stops if downloading or verification fails.

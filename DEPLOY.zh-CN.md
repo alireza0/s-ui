@@ -12,6 +12,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/wuquanlin/s-ui/dev/deploy.sh
 
 按提示选择域名或 IP，并配置证书即可。
 
+脚本会先检查依赖，只安装缺少的包；已安装的 `ca-certificates` 等依赖会保留，不因部署而触发升级。若缺少的依赖无法安装，部署会停止。
+
 也可以先下载脚本，再以 root 权限运行：
 
 ```bash
