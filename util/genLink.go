@@ -773,8 +773,12 @@ func getTransportParams(t interface{}) []LinkParam {
 // send when it names none, which is the TLS server_name. Left empty, sing-box
 // sends the server address, and a CDN reached through a clean IP domain answers
 // that with 403 because the Host belongs to no site on its side. It returns ""
-// when the transport already has a Host or there is no server_name to use.
+// when the transport already has a Host, TLS is off, or there is no server_name
+// to use.
 func DefaultTransportHost(transport interface{}, tls map[string]interface{}) string {
+	if !boolOr(tls["enabled"]) {
+		return ""
+	}
 	t, _ := transport.(map[string]interface{})
 	transportType, _ := t["type"].(string)
 	if transportType != "ws" && transportType != "httpupgrade" {

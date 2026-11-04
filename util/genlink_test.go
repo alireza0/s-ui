@@ -309,3 +309,49 @@ func linkHost(t *testing.T, link string) string {
 	}
 	return parsed.Query().Get("host")
 }
+
+func TestDefaultTransportHost(t *testing.T) {
+	tls := map[string]interface{}{"enabled": true, "server_name": "sni.example.com"}
+	tests := []struct {
+		name      string
+		transport map[string]interface{}
+		tls       map[string]interface{}
+		want      string
+	}{
+		{"ws", map[string]interface{}{"type": "ws"}, tls, "sni.example.com"},
+		{"httpupgrade", map[string]interface{}{"type": "httpupgrade"}, tls, "sni.example.com"},
+		{"ws with Host", map[string]interface{}{"type": "ws", "headers": map[string]interface{}{"Host": "set.example.com"}}, tls, ""},
+		{"ws with Host list", map[string]interface{}{"type": "ws", "headers": map[string]interface{}{"Host": []interface{}{"set.example.com"}}}, tls, ""},
+		{"httpupgrade with host", map[string]interface{}{"type": "httpupgrade", "host": "set.example.com"}, tls, ""},
+		{"grpc", map[string]interface{}{"type": "grpc"}, tls, ""},
+		{"tls off", map[string]interface{}{"type": "ws"}, map[string]interface{}{"enabled": false, "server_name": "sni.example.com"}, ""},
+		{"no server_name", map[string]interface{}{"type": "ws"}, map[string]interface{}{"enabled": true}, ""},
+		{"no tls", map[string]interface{}{"type": "ws"}, nil, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := DefaultTransportHost(tt.transport, tt.tls); got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSetTransportHostCopies(t *testing.T) {
+	ws := map[string]interface{}{"type": "ws", "headers": map[string]interface{}{"User-Agent": "test"}}
+	headers, _ := SetTransportHost(ws, "host.example.com")["headers"].(map[string]interface{})
+	if headers["Host"] != "host.example.com" || headers["User-Agent"] != "test" {
+		t.Errorf("headers = %v", headers)
+	}
+	if _, changed := ws["headers"].(map[string]interface{})["Host"]; changed {
+		t.Error("the shared transport was changed")
+	}
+
+	upgrade := map[string]interface{}{"type": "httpupgrade"}
+	if got := SetTransportHost(upgrade, "host.example.com")["host"]; got != "host.example.com" {
+		t.Errorf("httpupgrade host = %v", got)
+	}
+	if _, changed := upgrade["host"]; changed {
+		t.Error("the shared transport was changed")
+	}
+}
