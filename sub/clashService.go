@@ -352,15 +352,8 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 					wsOpts["early-data-header-name"] = ed
 				}
 				// Without max-early-data the client ignores the header name.
-				switch maxED := transport["max_early_data"].(type) {
-				case float64:
-					if maxED > 0 {
-						wsOpts["max-early-data"] = int(maxED)
-					}
-				case int:
-					if maxED > 0 {
-						wsOpts["max-early-data"] = maxED
-					}
+				if maxED, ok := transport["max_early_data"].(float64); ok && maxED > 0 {
+					wsOpts["max-early-data"] = int(maxED)
 				}
 				if tt == "httpupgrade" {
 					wsOpts["v2ray-http-upgrade"] = true
