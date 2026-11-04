@@ -184,6 +184,12 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 				if obfs, ok := obMap["obfs"].(map[string]interface{}); ok {
 					proxy["obfs"] = obfs["type"]
 					proxy["obfs-password"] = obfs["password"]
+					if size, ok := obfs["min_packet_size"].(float64); ok && size > 0 {
+						proxy["obfs-min-packet-size"] = int(size)
+					}
+					if size, ok := obfs["max_packet_size"].(float64); ok && size > 0 {
+						proxy["obfs-max-packet-size"] = int(size)
+					}
 				}
 			}
 
