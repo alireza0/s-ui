@@ -1,6 +1,6 @@
 # S-UI
 
-**本 Fork 的 dev 分支自定义部署：** [中文安装说明](DEPLOY.zh-CN.md)（首次账号、证书识别、域名/IP、最新官方面板与配套内核）。使用 `deploy.sh` 进入自定义流程。
+**Custom deployment (`dev`):** This branch provides the custom installer described below. `main` follows upstream. [中文安装说明](DEPLOY.zh-CN.md).
 
 **An Advanced Web Panel • Built on SagerNet/Sing-Box**
 
@@ -35,6 +35,9 @@
 | API Interface                          | :heavy_check_mark: |
 
 ## Supported Platforms
+
+The table below describes upstream S-UI support. This fork's custom installer requires **Linux with systemd**.
+
 | Platform | Architecture | Status |
 |----------|--------------|---------|
 | Linux    | amd64, arm64, armv7, armv6, armv5, 386, s390x | ✅ Supported |
@@ -61,44 +64,65 @@ Full documentation lives in the [Wiki](https://github.com/alireza0/s-ui/wiki):
 | [Settings Reference](https://github.com/alireza0/s-ui/wiki/Settings-Reference) | Every panel setting and its default |
 
 ## Default Installation Information
-- Panel Port: 2095
-- Panel Path: /app/
-- Subscription Port: 2096
-- Subscription Path: /sub/
-- User/Password: admin
+
+For a **fresh installation with this fork's `deploy.sh`**:
+
+| Setting | Default |
+|---------|---------|
+| Panel port | `2095` |
+| Panel path | `/app/` |
+| Subscription port | `2096` |
+| Subscription path | `/sub/` |
+| Username | `master` |
+| Password | `Change@me2025` |
+
+Change the public default password after your first login. Upgrades keep your existing account, password, ports, paths, users, and nodes.
 
 ## Install & Upgrade to Latest Version
 
-### Linux/macOS
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh)
+### Linux with systemd — custom installer
+
+Run this one-line command in a **root Bash terminal**:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/wuquanlin/s-ui/dev/deploy.sh)
 ```
 
-#### Installer language
+The custom installer supports Linux hosts using systemd, including Debian/Ubuntu and RHEL-family distributions. Its interactive prompts are currently in Simplified Chinese.
 
-The installer is available in the same six languages as the panel: `en` (default), `fa`, `ru`, `vi`, `zhcn`, `zhtw`. Choose one with the `SUI_LANG` environment variable (when unset, your system `$LANG` is used as a hint):
+During installation or upgrade, it:
 
-```sh
-SUI_LANG=fa bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh)
+1. Downloads the latest **stable official S-UI release** from `alireza0/s-ui` and verifies its published SHA256 checksum. It stops if downloading or verification fails.
+2. Uses the sing-box core embedded in that official S-UI release for compatibility. It displays both the embedded version and the latest upstream stable sing-box version.
+3. Lets you choose a domain name, public IPv4 address, or public IPv6 address.
+4. Searches for matching PEM certificates and unencrypted private keys in the top level of `/`, under `/root` and `/home`, and in common certificate directories. It checks the key pair, validity dates, and the chosen domain or IP.
+5. Automatically uses a single matching certificate pair, or lets you choose when several match. You can also enter certificate/key paths, paste their PEM contents, or explicitly confirm plain HTTP.
+6. Applies the certificate pair and public address to **both the panel and subscription service**.
+7. Backs up the installation, database, service file, and menu script before changing them. It restores them if deployment or the startup HTTP/TLS checks fail.
+
+For HTTPS access by IP, the certificate must include that IP in its Subject Alternative Name. Certificate discovery does not issue new certificates or create renewal jobs. Existing certificate paths and renewal symlinks are preserved; pasted certificates are stored under `/usr/local/s-ui/cert/` with the private key restricted to root. Browser trust also requires an appropriate full certificate chain.
+
+Backups are kept under `/var/backups/s-ui/`. The installer does not create DNS records, open firewall ports, or configure port forwarding. Existing S-UI service is briefly stopped during an upgrade.
+
+To run the checked-out installer instead:
+
+```bash
+git clone --branch dev https://github.com/wuquanlin/s-ui.git
+cd s-ui
+bash deploy.sh --local
 ```
 
-### Alpine Linux
-Alpine uses `apk` and OpenRC instead of `apt`/systemd. The install script detects Alpine automatically and sets up an OpenRC service. Since Alpine has no `bash` by default, install it first:
+The subscription address printed at the end is a prefix; copy each user's complete subscription URL from the panel. See the [Chinese deployment guide](DEPLOY.zh-CN.md) for directory search limits, certificate input, backups, and verification details.
 
-```sh
-apk add bash
-bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/master/install.sh)
-```
+### Other platforms and upstream installation methods
 
-Manage the service with OpenRC: `rc-service s-ui start|stop|restart` and `rc-update add s-ui default`.
+For macOS, Alpine/OpenRC, Windows, and the upstream installer language selector, use the [original project's installation instructions](https://github.com/alireza0/s-ui#install--upgrade-to-latest-version). Those methods use their own setup flows and defaults. This fork's account and certificate configuration is applied by `deploy.sh`.
 
-### Windows
-1. Download the latest Windows release from [GitHub Releases](https://github.com/alireza0/s-ui/releases/latest)
-2. Extract the ZIP file
-3. Run `install-windows.bat` as Administrator
-4. Follow the installation wizard
+## Keeping dev up to date
 
-## Install legacy Version
+Keep custom deployment changes on `dev` and merge upstream updates into it. `main` is used for upstream synchronization. Force-resetting `dev` to upstream removes the custom files and breaks their installation and documentation URLs.
+
+## Install legacy Version (upstream)
 
 **Step 1:** To install your desired legacy version, add the version to the end of the installation command. e.g., ver `v1.5.0`:
 
@@ -106,7 +130,9 @@ Manage the service with OpenRC: `rc-service s-ui start|stop|restart` and `rc-upd
 VERSION=v1.5.0 && bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-ui/$VERSION/install.sh) $VERSION
 ```
 
-## Manual installation
+## Manual installation (upstream)
+
+The steps below install official release files directly. Use the custom installer above to apply this fork's account, certificate, and address setup.
 
 ### Linux/macOS
 1. Get the latest version of S-UI based on your OS/Architecture from GitHub: [https://github.com/alireza0/s-ui/releases/latest](https://github.com/alireza0/s-ui/releases/latest)
@@ -115,7 +141,6 @@ VERSION=v1.5.0 && bash <(curl -Ls https://raw.githubusercontent.com/alireza0/s-u
 4. Extract s-ui tar.gz file to a directory of your choice and navigate to the directory where you extracted the tar.gz file.
 5. Copy *.service files to /etc/systemd/system/ and run `systemctl daemon-reload`.
 6. Enable autostart and start S-UI service using `systemctl enable s-ui --now`
-7. Start sing-box service using `systemctl enable sing-box --now`
 
 ### Windows
 1. Get the latest Windows version from GitHub: [https://github.com/alireza0/s-ui/releases/latest](https://github.com/alireza0/s-ui/releases/latest)
@@ -150,7 +175,9 @@ rm -fr /usr/local/s-ui
 rm /usr/bin/s-ui
 ```
 
-## Install using Docker
+## Install using Docker (upstream)
+
+The Docker instructions use the upstream image and its defaults. The custom `deploy.sh` flow runs on systemd hosts.
 
 <details>
    <summary>Click for details</summary>
@@ -280,6 +307,8 @@ To run backend (from root folder of repository):
 </details>
 
 ## SSL Certificate
+
+The custom installer can discover an existing certificate pair, accept file paths, or accept pasted PEM contents, and configure both the panel and subscription service. The optional Certbot example below is an upstream certificate issuance method.
 
 <details>
   <summary>Click for details</summary>
