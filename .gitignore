@@ -19,6 +19,8 @@ frontend/
 # Log files
 *.log*
 .cache
+__pycache__/
+*.pyc
 
 # Windows build artifacts
 *.exe

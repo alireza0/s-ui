@@ -1,4 +1,7 @@
 # S-UI
+
+**本 Fork 的 dev 分支自定义部署：** [中文安装说明](DEPLOY.zh-CN.md)（首次账号、证书识别、域名/IP、最新官方面板与配套内核）。使用 `deploy.sh` 进入自定义流程。
+
 **An Advanced Web Panel • Built on SagerNet/Sing-Box**
 
 ![](https://img.shields.io/github/v/release/alireza0/s-ui.svg)
