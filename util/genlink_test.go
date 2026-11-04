@@ -236,3 +236,76 @@ func TestVmessGrpcCarriesTheServiceName(t *testing.T) {
 		t.Errorf("path = %v, want MyService -- the grpc service name was dropped", obj["path"])
 	}
 }
+
+func TestWsLinksFallBackToTheSniForHost(t *testing.T) {
+	addrs := json.RawMessage(`[
+		{"server": "a.example.com", "server_port": 443, "tls": {"server_name": "one.example.com"}},
+		{"server": "b.example.com", "server_port": 443, "tls": {"server_name": "two.example.com"}}
+	]`)
+	transport := map[string]interface{}{"type": "ws", "path": "/ws"}
+	uid := map[string]interface{}{"uuid": "11111111-1111-1111-1111-111111111111"}
+	for _, proto := range []string{"vless", "trojan", "vmess"} {
+		t.Run(proto, func(t *testing.T) {
+			inbound := inboundFor(t, proto, map[string]interface{}{"transport": transport})
+			inbound.Addrs = addrs
+			inbound.TlsId = 1
+			inbound.Tls = &model.Tls{
+				Server: json.RawMessage(`{"enabled": true, "server_name": "origin.example.com"}`),
+				Client: json.RawMessage(`{}`),
+			}
+			fields := uid
+			if proto == "trojan" {
+				fields = map[string]interface{}{"password": "secret"}
+			}
+			links := LinkGenerator(clientConfigFor(t, proto, fields), inbound, "example.test", "")
+			if len(links) != 2 {
+				t.Fatalf("got %d links, want 2", len(links))
+			}
+			for i, want := range []string{"one.example.com", "two.example.com"} {
+				if got := linkHost(t, links[i]); got != want {
+					t.Errorf("link %d host = %q, want %q", i, got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestWsLinksKeepAnExplicitHost(t *testing.T) {
+	inbound := inboundFor(t, "vless", map[string]interface{}{"transport": map[string]interface{}{
+		"type": "ws", "path": "/ws", "headers": map[string]interface{}{"Host": "set.example.com"},
+	}})
+	inbound.TlsId = 1
+	inbound.Tls = &model.Tls{
+		Server: json.RawMessage(`{"enabled": true, "server_name": "sni.example.com"}`),
+		Client: json.RawMessage(`{}`),
+	}
+	links := LinkGenerator(clientConfigFor(t, "vless",
+		map[string]interface{}{"uuid": "11111111-1111-1111-1111-111111111111"}), inbound, "example.test", "")
+	if len(links) != 1 {
+		t.Fatalf("got %d links, want 1", len(links))
+	}
+	if got := linkHost(t, links[0]); got != "set.example.com" {
+		t.Errorf("host = %q, want the one set on the transport", got)
+	}
+}
+
+func linkHost(t *testing.T, link string) string {
+	t.Helper()
+	if strings.HasPrefix(link, "vmess://") {
+		raw, err := B64StrToByte(strings.TrimPrefix(link, "vmess://"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var obj map[string]interface{}
+		if err := json.Unmarshal(raw, &obj); err != nil {
+			t.Fatal(err)
+		}
+		host, _ := obj["host"].(string)
+		return host
+	}
+	parsed, err := url.Parse(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return parsed.Query().Get("host")
+}
