@@ -183,3 +183,31 @@ func TestGetOutboundsRealmIgnoresAddrs(t *testing.T) {
 		t.Errorf("password = %v, want the client's", out["password"])
 	}
 }
+
+func TestGetOutboundsKeepsPerAddressTLS(t *testing.T) {
+	inbound := &model.Inbound{
+		Type:    "vless",
+		Tag:     "vless",
+		OutJson: json.RawMessage(`{"type": "vless", "tag": "vless", "tls": {"enabled": true, "server_name": "origin.example.com"}}`),
+		Addrs:   json.RawMessage(`[{"server": "a.example.com", "server_port": 443, "tls": {"server_name": "one.example.com"}}, {"server": "b.example.com", "server_port": 443, "tls": {"server_name": "two.example.com"}}, {"server": "c.example.com", "server_port": 443}]`),
+	}
+	clientConfig := json.RawMessage(`{"vless": {"name": "user", "uuid": "00000000-0000-0000-0000-000000000000"}}`)
+
+	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"one.example.com", "two.example.com", "origin.example.com"}
+	if len(*outbounds) != len(want) {
+		t.Fatalf("got %d outbounds, want %d", len(*outbounds), len(want))
+	}
+	for i, out := range *outbounds {
+		tls, _ := out["tls"].(map[string]interface{})
+		if tls["server_name"] != want[i] {
+			t.Errorf("outbound %d server_name = %v, want %s", i, tls["server_name"], want[i])
+		}
+		if tls["enabled"] != true {
+			t.Errorf("outbound %d lost the inbound's tls.enabled", i)
+		}
+	}
+}
