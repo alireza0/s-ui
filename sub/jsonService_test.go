@@ -211,3 +211,28 @@ func TestGetOutboundsKeepsPerAddressTLS(t *testing.T) {
 		}
 	}
 }
+
+func TestGetOutboundsFallsBackToSniForWsHost(t *testing.T) {
+	inbound := &model.Inbound{
+		Type:    "vless",
+		Tag:     "vless",
+		OutJson: json.RawMessage(`{"type": "vless", "tag": "vless", "tls": {"enabled": true, "server_name": "origin.example.com"}, "transport": {"type": "ws", "path": "/ws"}}`),
+		Addrs:   json.RawMessage(`[{"server": "a.example.com", "server_port": 443, "tls": {"server_name": "one.example.com"}}, {"server": "b.example.com", "server_port": 443, "tls": {"server_name": "two.example.com"}}]`),
+	}
+	clientConfig := json.RawMessage(`{"vless": {"name": "user", "uuid": "00000000-0000-0000-0000-000000000000"}}`)
+
+	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(*outbounds) != 2 {
+		t.Fatalf("got %d outbounds, want 2", len(*outbounds))
+	}
+	for i, want := range []string{"one.example.com", "two.example.com"} {
+		transport, _ := (*outbounds)[i]["transport"].(map[string]interface{})
+		headers, _ := transport["headers"].(map[string]interface{})
+		if headers["Host"] != want {
+			t.Errorf("outbound %d Host = %v, want %s", i, headers["Host"], want)
+		}
+	}
+}
