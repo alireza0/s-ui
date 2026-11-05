@@ -750,7 +750,7 @@ func getTransportParams(t interface{}) []LinkParam {
 			params = append(params, LinkParam{"path", path})
 		}
 		if headers, ok := trasport["headers"].(map[string]interface{}); ok {
-			if host, ok := headers["Host"].(string); ok {
+			if host, ok := headers["Host"].(string); ok && host != "" {
 				params = append(params, LinkParam{"host", host})
 			}
 		}
@@ -759,7 +759,7 @@ func getTransportParams(t interface{}) []LinkParam {
 			params = append(params, LinkParam{"serviceName", serviceName})
 		}
 	case "httpupgrade":
-		if host, ok := trasport["host"].(string); ok {
+		if host, ok := trasport["host"].(string); ok && host != "" {
 			params = append(params, LinkParam{"host", host})
 		}
 		if path, ok := trasport["path"].(string); ok {

@@ -289,6 +289,41 @@ func TestWsLinksKeepAnExplicitHost(t *testing.T) {
 	}
 }
 
+func TestWsLinksHaveOneHostWhenStoredEmpty(t *testing.T) {
+	transports := map[string]map[string]interface{}{
+		"ws":          {"type": "ws", "path": "/ws", "headers": map[string]interface{}{"Host": ""}},
+		"httpupgrade": {"type": "httpupgrade", "path": "/u", "host": ""},
+	}
+	clients := map[string]map[string]interface{}{
+		"vless":  {"uuid": "11111111-1111-1111-1111-111111111111"},
+		"trojan": {"password": "secret"},
+	}
+	for name, transport := range transports {
+		for proto, fields := range clients {
+			t.Run(proto+"/"+name, func(t *testing.T) {
+				inbound := inboundFor(t, proto, map[string]interface{}{"transport": transport})
+				inbound.TlsId = 1
+				inbound.Tls = &model.Tls{
+					Server: json.RawMessage(`{"enabled": true, "server_name": "sni.example.com"}`),
+					Client: json.RawMessage(`{}`),
+				}
+				links := LinkGenerator(clientConfigFor(t, proto, fields), inbound, "example.test", "")
+				if len(links) != 1 {
+					t.Fatalf("got %d links, want 1", len(links))
+				}
+				parsed, err := url.Parse(links[0])
+				if err != nil {
+					t.Fatal(err)
+				}
+				hosts := parsed.Query()["host"]
+				if len(hosts) != 1 || hosts[0] != "sni.example.com" {
+					t.Errorf("host params = %q, want only the SNI", hosts)
+				}
+			})
+		}
+	}
+}
+
 func linkHost(t *testing.T, link string) string {
 	t.Helper()
 	if strings.HasPrefix(link, "vmess://") {
@@ -323,6 +358,8 @@ func TestDefaultTransportHost(t *testing.T) {
 		{"ws with Host", map[string]interface{}{"type": "ws", "headers": map[string]interface{}{"Host": "set.example.com"}}, tls, ""},
 		{"ws with Host list", map[string]interface{}{"type": "ws", "headers": map[string]interface{}{"Host": []interface{}{"set.example.com"}}}, tls, ""},
 		{"httpupgrade with host", map[string]interface{}{"type": "httpupgrade", "host": "set.example.com"}, tls, ""},
+		{"ws with empty Host", map[string]interface{}{"type": "ws", "headers": map[string]interface{}{"Host": ""}}, tls, "sni.example.com"},
+		{"httpupgrade with empty host", map[string]interface{}{"type": "httpupgrade", "host": ""}, tls, "sni.example.com"},
 		{"grpc", map[string]interface{}{"type": "grpc"}, tls, ""},
 		{"tls off", map[string]interface{}{"type": "ws"}, map[string]interface{}{"enabled": false, "server_name": "sni.example.com"}, ""},
 		{"no server_name", map[string]interface{}{"type": "ws"}, map[string]interface{}{"enabled": true}, ""},
