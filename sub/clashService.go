@@ -152,6 +152,9 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 				if flow, ok := obMap["flow"].(string); ok {
 					proxy["flow"] = flow
 				}
+				if encryption, ok := obMap["encryption"].(string); ok && encryption != "" {
+					proxy["encryption"] = encryption
+				}
 			}
 			if t == "tuic" {
 				proxy["password"] = obMap["password"]
