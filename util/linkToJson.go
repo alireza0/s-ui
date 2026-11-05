@@ -556,7 +556,7 @@ func getTransport(tp_type string, q *url.Values) map[string]interface{} {
 	return transport
 }
 
-// GetOutboundForClash preserves XHTTP only for the Clash YAML export path.
+// GetOutboundForClash preserves VLESS encryption and XHTTP for Clash YAML exports.
 // Regular external links for Happ and sing-box JSON exports stay unchanged.
 func GetOutboundForClash(uri string, i int) (*map[string]interface{}, string, error) {
 	outbound, tag, err := GetOutbound(uri, i)
@@ -568,6 +568,9 @@ func GetOutboundForClash(uri string, i int) (*map[string]interface{}, string, er
 		return outbound, tag, err
 	}
 	q := u.Query()
+	if encryption := q.Get("encryption"); encryption != "" {
+		(*outbound)["encryption"] = encryption
+	}
 	tp := strings.ToLower(q.Get("type"))
 	if tp != "xhttp" && tp != "splithttp" {
 		return outbound, tag, err
