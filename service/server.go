@@ -11,6 +11,7 @@ import (
 	"math/big"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,25 @@ import (
 )
 
 type ServerService struct{}
+
+// singboxVersion is the sing-box module this binary was built with. The core is
+// linked in rather than run as a separate binary, so it is fixed for the life
+// of the process and read once here instead of on every status request.
+var singboxVersion = func() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	for _, dep := range info.Deps {
+		if dep.Path == "github.com/sagernet/sing-box" {
+			if dep.Replace != nil {
+				dep = dep.Replace
+			}
+			return strings.TrimPrefix(dep.Version, "v")
+		}
+	}
+	return ""
+}()
 
 func (s *ServerService) GetStatus(request string) *map[string]interface{} {
 	status := make(map[string]interface{}, 0)
@@ -177,6 +197,7 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 	info["cpuCount"] = runtime.NumCPU()
 	info["hostName"], _ = os.Hostname()
 	info["appVersion"] = config.GetVersion()
+	info["coreVersion"] = singboxVersion
 	ipv4 := make([]string, 0)
 	ipv6 := make([]string, 0)
 	// get ip address
