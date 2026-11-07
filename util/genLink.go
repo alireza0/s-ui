@@ -145,6 +145,13 @@ func prepareTls(t *model.Tls) map[string]interface{} {
 				clientReality["short_id"] = shortIDs[common.RandomInt(len(shortIDs))]
 			}
 			oTls["reality"] = clientReality
+		case "ech":
+			// The client half has no enabled flag of its own
+			if ech, ok := v.(map[string]interface{}); ok && boolOr(ech["enabled"]) {
+				if clientEch, ok := oTls["ech"].(map[string]interface{}); ok {
+					clientEch["enabled"] = true
+				}
+			}
 		}
 	}
 	return oTls
@@ -624,6 +631,8 @@ func populateVmessTlsParams(obj map[string]interface{}, tlsConfig interface{}) {
 				obj["fp"] = p.Value
 			case "alpn":
 				obj["alpn"] = p.Value
+			case "ech":
+				obj["ech"] = p.Value
 			}
 		}
 	} else {
@@ -827,6 +836,22 @@ func SetTransportHost(transport map[string]interface{}, host string) map[string]
 	return out
 }
 
+// ECHConfigBase64 returns the ECHConfigList a client config stores as PEM
+// lines, as the bare base64 that share links and Clash carry.
+func ECHConfigBase64(config interface{}) string {
+	lines, _ := config.([]interface{})
+	var b strings.Builder
+	for _, line := range lines {
+		s, _ := line.(string)
+		s = strings.TrimSpace(s)
+		if strings.HasPrefix(s, "-----") {
+			continue
+		}
+		b.WriteString(s)
+	}
+	return b.String()
+}
+
 func getTlsParams(params *[]LinkParam, tls map[string]interface{}, protocol string) {
 	if reality, ok := tls["reality"].(map[string]interface{}); ok && boolOr(reality["enabled"]) {
 		*params = append(*params, LinkParam{"security", "reality"})
@@ -846,6 +871,11 @@ func getTlsParams(params *[]LinkParam, tls map[string]interface{}, protocol stri
 		}
 		if disableSni, ok := tls["disable_sni"].(bool); ok && disableSni {
 			*params = append(*params, LinkParam{"disable_sni", "1"})
+		}
+		if ech, ok := tls["ech"].(map[string]interface{}); ok && boolOr(ech["enabled"]) {
+			if config := ECHConfigBase64(ech["config"]); config != "" {
+				*params = append(*params, LinkParam{"ech", config})
+			}
 		}
 	}
 	if utls, ok := tls["utls"].(map[string]interface{}); ok {

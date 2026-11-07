@@ -288,20 +288,16 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 			}
 			// ech outbounds
 			if ech, ok := tls["ech"].(map[string]interface{}); ok && asBool(ech["enabled"]) {
-				ech_config, _ := ech["config"].([]interface{})
-				ech_string := ""
-				// The whole config, not [1:len-1]. The loop dropped the first
-				// and last line of every ECH key, so the value Clash received
-				// was never the one that was configured.
-				for _, line := range ech_config {
-					if s, ok := line.(string); ok {
-						ech_string += s
-					}
+				// Mihomo takes the bare base64 ECHConfigList, without the PEM
+				// armour lines the panel stores around it.
+				echOpts := map[string]interface{}{"enable": true}
+				if config := util.ECHConfigBase64(ech["config"]); config != "" {
+					echOpts["config"] = config
 				}
-				proxy["ech-opts"] = map[string]interface{}{
-					"enable": true,
-					"config": ech_string,
+				if name, ok := ech["query_server_name"].(string); ok && name != "" {
+					echOpts["query-server-name"] = name
 				}
+				proxy["ech-opts"] = echOpts
 			}
 		}
 

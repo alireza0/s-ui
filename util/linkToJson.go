@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -631,16 +632,36 @@ func getTls(security string, q *url.Values) map[string]interface{} {
 			"fingerprint": tls_fp,
 		}
 	}
-	if len(tls_ech) > 0 {
-		tls["ech"] = map[string]interface{}{
-			"enabled": true,
-			"config": []string{
-				tls_ech,
-			},
-		}
+	if ech := echFromLink(tls_ech); ech != nil {
+		tls["ech"] = ech
 	}
 	if disable_sni == "1" || disable_sni == "true" {
 		tls["disable_sni"] = true
 	}
 	return tls
+}
+
+// echFromLink reads a link's ech value: the base64 ECHConfigList, which
+// sing-box takes as a PEM block, or Xray's "domain+DNS" form, whose domain is
+// where the config is looked up instead.
+func echFromLink(value string) map[string]interface{} {
+	// A raw + in the query decodes to a space
+	value = strings.ReplaceAll(strings.TrimSpace(value), " ", "+")
+	if value == "" {
+		return nil
+	}
+	if list, err := base64.StdEncoding.DecodeString(value); err == nil &&
+		len(list) > 2 && int(list[0])<<8|int(list[1]) == len(list)-2 {
+		return map[string]interface{}{
+			"enabled": true,
+			"config":  []string{"-----BEGIN ECH CONFIGS-----", value, "-----END ECH CONFIGS-----"},
+		}
+	}
+	if name, _, found := strings.Cut(value, "+"); found && strings.Contains(name, ".") {
+		return map[string]interface{}{
+			"enabled":           true,
+			"query_server_name": name,
+		}
+	}
+	return nil
 }
