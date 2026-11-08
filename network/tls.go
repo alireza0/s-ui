@@ -3,6 +3,7 @@ package network
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"sync"
@@ -70,9 +71,15 @@ func NewTLSConfig(certFile, keyFile, domain string) (*tls.Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	serverName := domain
+	if net.ParseIP(domain) != nil {
+		// Clients send no SNI for an IP address (RFC 6066), so every
+		// handshake was refused; the Host check still pins the address.
+		serverName = ""
+	}
 	return &tls.Config{
 		GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-			if domain != "" && !strings.EqualFold(hello.ServerName, domain) {
+			if domain != "" && !strings.EqualFold(hello.ServerName, serverName) {
 				return nil, fmt.Errorf("tls: unrecognized server name %q", hello.ServerName)
 			}
 			return reloader.getCertificate(), nil
