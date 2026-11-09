@@ -33,11 +33,42 @@ func GetOutbound(uri string, i int) (*map[string]interface{}, string, error) {
 			return tuic(u, i)
 		case "ss", "shadowsocks":
 			return ss(u, i)
+		case "http":
+			return httpProxy(u, i)
 		case "naive+https", "naive+quic", "http2":
 			return parseNaiveLink(u, i)
 		}
 	}
 	return nil, "", common.NewError("Unsupported link format")
+}
+
+func httpProxy(u *url.URL, i int) (*map[string]interface{}, string, error) {
+	host := u.Hostname()
+	port, err := strconv.Atoi(u.Port())
+	if host == "" || err != nil || port < 1 || port > 65535 {
+		return nil, "", common.NewError("Invalid HTTP proxy link")
+	}
+	tag := u.Fragment
+	if tag == "" {
+		tag = net.JoinHostPort(host, u.Port())
+	}
+	if i > 0 {
+		tag = fmt.Sprintf("%d.%s", i, tag)
+	}
+	var username, password string
+	if u.User != nil {
+		username = u.User.Username()
+		password, _ = u.User.Password()
+	}
+	outbound := map[string]interface{}{
+		"type":        "http",
+		"tag":         tag,
+		"server":      host,
+		"server_port": port,
+		"username":    username,
+		"password":    password,
+	}
+	return &outbound, tag, nil
 }
 
 func vmess(data string, i int) (*map[string]interface{}, string, error) {
