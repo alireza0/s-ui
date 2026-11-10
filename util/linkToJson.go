@@ -33,8 +33,8 @@ func GetOutbound(uri string, i int) (*map[string]interface{}, string, error) {
 			return tuic(u, i)
 		case "ss", "shadowsocks":
 			return ss(u, i)
-		case "http":
-			return httpProxy(u, i)
+		case "http", "https", "socks5":
+			return parseProxyLink(u, i)
 		case "naive+https", "naive+quic", "http2":
 			return parseNaiveLink(u, i)
 		}
@@ -42,11 +42,11 @@ func GetOutbound(uri string, i int) (*map[string]interface{}, string, error) {
 	return nil, "", common.NewError("Unsupported link format")
 }
 
-func httpProxy(u *url.URL, i int) (*map[string]interface{}, string, error) {
+func parseProxyLink(u *url.URL, i int) (*map[string]interface{}, string, error) {
 	host := u.Hostname()
 	port, err := strconv.Atoi(u.Port())
-	if host == "" || err != nil || port < 1 || port > 65535 {
-		return nil, "", common.NewError("Invalid HTTP proxy link")
+	if host == "" || err != nil || port < 1 || port > 65535 || u.Path != "" {
+		return nil, "", common.NewError("Invalid proxy link")
 	}
 	tag := u.Fragment
 	if tag == "" {
@@ -67,6 +67,14 @@ func httpProxy(u *url.URL, i int) (*map[string]interface{}, string, error) {
 		"server_port": port,
 		"username":    username,
 		"password":    password,
+	}
+	switch u.Scheme {
+	case "https":
+		query := u.Query()
+		outbound["tls"] = getTls("tls", &query)
+	case "socks5":
+		outbound["type"] = "socks"
+		outbound["version"] = "5"
 	}
 	return &outbound, tag, nil
 }

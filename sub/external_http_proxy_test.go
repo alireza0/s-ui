@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestExternalHTTPProxyLinksAndSubscriptions(t *testing.T) {
+func TestExternalProxyLinksAndSubscriptions(t *testing.T) {
 	openClashTestSettings(t)
 	service := &ClashService{}
 	uris := []string{
@@ -18,8 +18,10 @@ func TestExternalHTTPProxyLinksAndSubscriptions(t *testing.T) {
 		"http://user%40name:p%40ss%3Aword%2B%23%25@proxy.example:8080#%D0%A1%D0%A8%D0%90%20%7C%20HTTP",
 		"http://user:pass@192.0.2.2:3071",
 		"http://192.0.2.3:8080#USA",
+		"https://user:pass@192.0.2.4:8443?sni=tls.example&insecure=1#TLS",
+		"socks5://user%40name:p%40ss%3Aword@proxy.example:1080#SOCKS",
 	}
-	wantNames := []string{"USA", "США | HTTP", "192.0.2.2:3071", "USA-1"}
+	wantNames := []string{"USA", "США | HTTP", "192.0.2.2:3071", "USA-1", "TLS", "SOCKS"}
 	decoded := "\r\n  " + strings.Join(uris, "  \r\n\r\n  ") + "  \r\n"
 	for _, format := range []string{"direct", "plaintext", "base64"} {
 		t.Run(format, func(t *testing.T) {
@@ -43,7 +45,7 @@ func TestExternalHTTPProxyLinksAndSubscriptions(t *testing.T) {
 			ordinary, tags := service.GetExternalOutbounds(&raw)
 			clash, clashTags := service.GetExternalOutboundsForClash(&raw)
 			if len(ordinary) != len(uris) || !reflect.DeepEqual(tags, wantNames) || !reflect.DeepEqual(tags, clashTags) || !reflect.DeepEqual(ordinary, clash) {
-				t.Fatalf("HTTP import lost nodes or names: %v / %v", tags, clashTags)
+				t.Fatalf("proxy import lost nodes or names: %v / %v", tags, clashTags)
 			}
 			proxies := externalSubTestProxies(t, service, clash)
 			if len(proxies) != len(uris) {
@@ -51,15 +53,23 @@ func TestExternalHTTPProxyLinksAndSubscriptions(t *testing.T) {
 			}
 			for i, proxy := range proxies {
 				outbound := ordinary[i]
-				if proxy["type"] != "http" || proxy["name"] != wantNames[i] || proxy["server"] != outbound["server"] || proxy["port"] != outbound["server_port"] || proxy["username"] != outbound["username"] || proxy["password"] != outbound["password"] {
-					t.Errorf("HTTP proxy changed during Clash conversion: %v", proxy)
+				wantType := "http"
+				if outbound["type"] == "socks" {
+					wantType = "socks5"
 				}
-				if proxy["tls"] == true || proxy["udp"] == true {
-					t.Errorf("plain HTTP proxy enabled TLS or UDP: %v", proxy)
+				if proxy["type"] != wantType || proxy["name"] != wantNames[i] || proxy["server"] != outbound["server"] || proxy["port"] != outbound["server_port"] || proxy["username"] != outbound["username"] || proxy["password"] != outbound["password"] {
+					t.Errorf("proxy changed during Clash conversion: %v", proxy)
+				}
+				if strings.HasPrefix(uris[i], "https://") {
+					if proxy["tls"] != true || proxy["sni"] != "tls.example" || proxy["skip-cert-verify"] != true {
+						t.Errorf("HTTPS proxy lost TLS options: %v", proxy)
+					}
+				} else if proxy["tls"] == true {
+					t.Errorf("plain proxy enabled TLS: %v", proxy)
 				}
 			}
 			if got := service.GetLinks(&raw, "all", ""); !reflect.DeepEqual(got, wantRaw) || !reflect.DeepEqual([]byte(raw), original) {
-				t.Fatal("HTTP import changed raw links or source JSON")
+				t.Fatal("proxy import changed raw links or source JSON")
 			}
 		})
 	}
@@ -78,7 +88,12 @@ func TestExternalHTTPProxyDoesNotFetchSubscription(t *testing.T) {
 	if len(outbounds) != 1 || requests.Load() != 0 {
 		t.Fatal("an HTTP proxy link was fetched as a subscription")
 	}
-	raw = externalSubTestLinks(t, []Link{{Type: "sub", Uri: provider.URL}})
+	raw = externalSubTestLinks(t, []Link{{Type: "external", Uri: provider.URL + "/subscription"}})
+	outbounds, _ = service.GetExternalOutbounds(&raw)
+	if len(outbounds) != 0 || requests.Load() != 0 {
+		t.Fatal("a subscription path was accepted as a proxy or fetched")
+	}
+	raw = externalSubTestLinks(t, []Link{{Type: "sub", Uri: provider.URL + "/subscription"}})
 	outbounds, tags := service.GetExternalOutbounds(&raw)
 	if len(outbounds) != 1 || len(tags) != 1 || tags[0] != "Provider-node" || requests.Load() != 1 {
 		t.Fatal("an external subscription URL was parsed as an HTTP proxy")
