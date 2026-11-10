@@ -537,7 +537,7 @@ enable_bbr() {
     centos | almalinux | rocky | oracle)
         yum -y update && yum -y install ca-certificates
         ;;
-    fedora)
+    fedora | rhel)
         dnf -y update && dnf -y install ca-certificates
         ;;
     arch | manjaro | parch)
@@ -626,7 +626,7 @@ ssl_cert_issue() {
     centos | almalinux | rocky | oracle)
         yum -y update && yum -y install socat
         ;;
-    fedora)
+    fedora | rhel)
         dnf -y update && dnf -y install socat
         ;;
     arch | manjaro | parch)
