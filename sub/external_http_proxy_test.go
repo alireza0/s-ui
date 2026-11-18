@@ -20,8 +20,9 @@ func TestExternalProxyLinksAndSubscriptions(t *testing.T) {
 		"http://192.0.2.3:8080#USA",
 		"https://user:pass@192.0.2.4:8443?sni=tls.example&insecure=1#TLS",
 		"socks5://user%40name:p%40ss%3Aword@proxy.example:1080#SOCKS",
+		"socks://user:pass@192.0.2.5:1080#SOCKS-URI",
 	}
-	wantNames := []string{"USA", "США | HTTP", "192.0.2.2:3071", "USA-1", "TLS", "SOCKS"}
+	wantNames := []string{"USA", "США | HTTP", "192.0.2.2:3071", "USA-1", "TLS", "SOCKS", "SOCKS-URI"}
 	decoded := "\r\n  " + strings.Join(uris, "  \r\n\r\n  ") + "  \r\n"
 	for _, format := range []string{"direct", "plaintext", "base64"} {
 		t.Run(format, func(t *testing.T) {

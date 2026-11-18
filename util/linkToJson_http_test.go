@@ -9,7 +9,7 @@ import (
 
 func TestGetOutboundProxyLink(t *testing.T) {
 	// Proxy links must keep credentials and remain usable without a fragment.
-	for _, scheme := range []string{"http", "https", "socks5"} {
+	for _, scheme := range []string{"http", "https", "socks", "socks5"} {
 		for _, test := range []struct {
 			name, uri, tag, host, username, password string
 			port, index                              int
@@ -28,7 +28,7 @@ func TestGetOutboundProxyLink(t *testing.T) {
 				want := map[string]interface{}{"type": "http", "tag": test.tag, "server": test.host, "server_port": test.port, "username": test.username, "password": test.password}
 				if scheme == "https" {
 					want["tls"] = map[string]interface{}{"enabled": true}
-				} else if scheme == "socks5" {
+				} else if scheme == "socks" || scheme == "socks5" {
 					want["type"] = "socks"
 					want["version"] = "5"
 				}
@@ -48,7 +48,7 @@ func TestGetOutboundProxyLink(t *testing.T) {
 }
 
 func TestGetOutboundRejectsInvalidProxyLink(t *testing.T) {
-	for _, scheme := range []string{"http", "https", "socks5"} {
+	for _, scheme := range []string{"http", "https", "socks", "socks5"} {
 		for _, uri := range []string{
 			"http://user:pass@:3071", "http://proxy.example", "http://proxy.example:",
 			"http://proxy.example:0", "http://proxy.example:65536", "http://proxy.example:abc",
