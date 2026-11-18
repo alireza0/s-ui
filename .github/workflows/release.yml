@@ -45,12 +45,30 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
+      # node_modules itself, so a lockfile that did not change skips npm ci.
+      # setup-node's cache above only keeps the tarballs npm ci unpacks.
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache/restore@v6
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install frontend dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+        working-directory: frontend
+
+      - name: Save node_modules
+        if: github.ref == 'refs/heads/main' && steps.node-modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: frontend/node_modules
+          key: ${{ steps.node-modules.outputs.cache-primary-key }}
+
       - name: Build frontend
-        run: |
-          cd frontend
-          npm ci
-          npm run build
-          cd ..
+        run: npm run build
+        working-directory: frontend
 
       - name: Upload frontend dist
         uses: actions/upload-artifact@v7
@@ -92,9 +110,11 @@ jobs:
           cache: false
           go-version-file: go.mod
 
-      - name: Locate Go module cache
+      - name: Locate Go caches
         id: go-env
-        run: echo "modcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "modcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+          echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
 
       - name: Restore Go module cache
         id: go-mod-cache
@@ -102,6 +122,17 @@ jobs:
         with:
           path: ${{ steps.go-env.outputs.modcache }}
           key: go-mod-${{ runner.os }}-${{ hashFiles('go.sum') }}
+
+      # Per platform: every target compiles its own objects. Keyed on what
+      # decides the dependency objects, which are most of the build; a stale
+      # copy of s-ui's own packages costs only their recompile.
+      - name: Restore Go build cache
+        id: go-build-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: go-build-${{ runner.os }}-${{ matrix.platform }}-${{ hashFiles('go.sum', 'build-tags.sh') }}
+          restore-keys: go-build-${{ runner.os }}-${{ matrix.platform }}-
 
       - name: Resolve cronet-go commit
         if: matrix.naive
@@ -230,6 +261,15 @@ jobs:
           cp s-ui.service s-ui/
           cp s-ui.sh s-ui/
 
+      # Only main saves: a tag's cache is scoped to that tag and no later run
+      # could read it.
+      - name: Save Go build cache
+        if: github.ref == 'refs/heads/main' && steps.go-build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: ${{ steps.go-build-cache.outputs.cache-primary-key }}
+
       - name: Package
         run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
 
@@ -267,10 +307,12 @@ jobs:
           cache: false
           go-version-file: go.mod
 
-      - name: Locate Go module cache
+      - name: Locate Go caches
         id: go-env
         shell: bash
-        run: echo "modcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "modcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+          echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
 
       - name: Restore Go module cache
         id: go-mod-cache
@@ -278,6 +320,14 @@ jobs:
         with:
           path: ${{ steps.go-env.outputs.modcache }}
           key: go-mod-${{ runner.os }}-${{ hashFiles('go.sum') }}
+
+      - name: Restore Go build cache
+        id: go-build-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: go-build-${{ runner.os }}-windows-${{ matrix.arch }}-${{ hashFiles('go.sum', 'build-tags.sh') }}
+          restore-keys: go-build-${{ runner.os }}-windows-${{ matrix.arch }}-
 
       - name: Install zip for Windows
         if: matrix.arch == 'amd64'
@@ -319,6 +369,13 @@ jobs:
         with:
           path: ${{ steps.go-env.outputs.modcache }}
           key: ${{ steps.go-mod-cache.outputs.cache-primary-key }}
+
+      - name: Save Go build cache
+        if: github.ref == 'refs/heads/main' && steps.go-build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: ${{ steps.go-build-cache.outputs.cache-primary-key }}
 
       - name: Download libcronet-go
         shell: bash

@@ -24,11 +24,21 @@ jobs:
           node-version: 26
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-      - name: Install dependencies and build frontend
-        run: |
-          cd frontend
-          npm ci
-          npm run build
+      # Read only: this runs on tags, whose caches no later run can see.
+      # release.yml saves the entry on main under the same key.
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache/restore@v6
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ runner.os }}-node26-${{ hashFiles('frontend/package-lock.json') }}
+      - name: Install frontend dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+        working-directory: frontend
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
       - name: Upload frontend build artifact
         uses: actions/upload-artifact@v7
         with:

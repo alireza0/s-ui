@@ -12,6 +12,12 @@ permissions:
 
 # Three independent jobs, so the race run does not wait on the plain one and a
 # formatting slip fails in seconds. A caller's `needs` waits for all of them.
+#
+# Caches: the module cache is the one release.yml uses, shared by key. Each job
+# keeps its own build cache, since vet, test and -race compile different
+# objects, keyed on what decides the dependency objects. Only main saves: a
+# pull request's cache is scoped to that pull request, reaches nobody else and
+# would push main's out of the repository's 10 GB.
 jobs:
   lint:
     name: lint
@@ -23,7 +29,42 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
+          cache: false
           go-version-file: go.mod
+
+      - name: Locate Go caches
+        id: go-env
+        run: |
+          echo "modcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+          echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Go module cache
+        id: go-mod-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.go-env.outputs.modcache }}
+          key: go-mod-${{ runner.os }}-${{ hashFiles('go.sum') }}
+
+      - name: Restore Go build cache
+        id: go-build-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: go-build-${{ runner.os }}-lint-${{ hashFiles('go.sum', 'build-tags.sh') }}
+          restore-keys: go-build-${{ runner.os }}-lint-
+
+      # Every module, not only the host's: the release builds restore this
+      # same key and need the other platforms' cronet libraries in it.
+      - name: Download Go modules
+        if: steps.go-mod-cache.outputs.cache-hit != 'true'
+        run: go mod download
+
+      - name: Save Go module cache
+        if: github.ref == 'refs/heads/main' && steps.go-mod-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.go-env.outputs.modcache }}
+          key: ${{ steps.go-mod-cache.outputs.cache-primary-key }}
 
       - name: Check formatting
         run: |
@@ -54,6 +95,13 @@ jobs:
             exit 1
           fi
 
+      - name: Save Go build cache
+        if: github.ref == 'refs/heads/main' && steps.go-build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: ${{ steps.go-build-cache.outputs.cache-primary-key }}
+
   test:
     name: test
     runs-on: ubuntu-26.04
@@ -64,7 +112,28 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
+          cache: false
           go-version-file: go.mod
+
+      - name: Locate Go caches
+        id: go-env
+        run: |
+          echo "modcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+          echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Go module cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.go-env.outputs.modcache }}
+          key: go-mod-${{ runner.os }}-${{ hashFiles('go.sum') }}
+
+      - name: Restore Go build cache
+        id: go-build-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: go-build-${{ runner.os }}-test-${{ hashFiles('go.sum', 'build-tags.sh') }}
+          restore-keys: go-build-${{ runner.os }}-test-
 
       # "test", not "dev": same protocols, minus the cronet tags no stock
       # toolchain can link. It is what release.yml builds for armv6/armv5/s390x.
@@ -74,6 +143,13 @@ jobs:
           . ./build-tags.sh
           TAGS=$(tags_for test)
           go test -tags "$TAGS" ./...
+
+      - name: Save Go build cache
+        if: github.ref == 'refs/heads/main' && steps.go-build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: ${{ steps.go-build-cache.outputs.cache-primary-key }}
 
   race:
     name: race
@@ -85,7 +161,28 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
+          cache: false
           go-version-file: go.mod
+
+      - name: Locate Go caches
+        id: go-env
+        run: |
+          echo "modcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+          echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Go module cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.go-env.outputs.modcache }}
+          key: go-mod-${{ runner.os }}-${{ hashFiles('go.sum') }}
+
+      - name: Restore Go build cache
+        id: go-build-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: go-build-${{ runner.os }}-race-${{ hashFiles('go.sum', 'build-tags.sh') }}
+          restore-keys: go-build-${{ runner.os }}-race-
 
       - name: Test with race detector
         run: |
@@ -93,3 +190,10 @@ jobs:
           . ./build-tags.sh
           TAGS=$(tags_for test)
           go test -race -short -tags "$TAGS" ./...
+
+      - name: Save Go build cache
+        if: github.ref == 'refs/heads/main' && steps.go-build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.go-env.outputs.gocache }}
+          key: ${{ steps.go-build-cache.outputs.cache-primary-key }}
