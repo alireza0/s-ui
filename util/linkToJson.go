@@ -33,7 +33,7 @@ func GetOutbound(uri string, i int) (*map[string]interface{}, string, error) {
 			return tuic(u, i)
 		case "ss", "shadowsocks":
 			return ss(u, i)
-		case "http", "https", "socks5":
+		case "http", "https", "socks", "socks5":
 			return parseProxyLink(u, i)
 		case "naive+https", "naive+quic", "http2":
 			return parseNaiveLink(u, i)
@@ -72,7 +72,7 @@ func parseProxyLink(u *url.URL, i int) (*map[string]interface{}, string, error) 
 	case "https":
 		query := u.Query()
 		outbound["tls"] = getTls("tls", &query)
-	case "socks5":
+	case "socks", "socks5":
 		outbound["type"] = "socks"
 		outbound["version"] = "5"
 	}
