@@ -2,11 +2,6 @@ package sub
 
 import "strings"
 
-func isHappUserAgent(userAgent string) bool {
-	product, _, _ := strings.Cut(userAgent, "/")
-	return strings.EqualFold(product, "Happ")
-}
-
 // Happ accepts socks:// for SOCKS5 and has no URI format for HTTP proxies.
 func happLinks(links []string) []string {
 	result := links[:0]

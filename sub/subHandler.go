@@ -35,9 +35,7 @@ func (s *SubHandler) subs(c *gin.Context) {
 	format, isFormat := c.GetQuery("format")
 	if !isFormat {
 		c.Writer.Header().Add("Vary", "User-Agent")
-		if isHappUserAgent(c.Request.UserAgent()) {
-			format = "happ"
-		}
+		format = formatForUserAgent(c.Request.UserAgent())
 	}
 	switch {
 	case format == "json":
