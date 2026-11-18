@@ -49,8 +49,6 @@ type JsonService struct {
 }
 
 func (j *JsonService) GetJson(subId string, format string) (*string, []string, error) {
-	var jsonConfig map[string]interface{}
-
 	client, inDatas, err := j.getData(subId)
 	if err != nil {
 		return nil, nil, err
@@ -65,25 +63,46 @@ func (j *JsonService) GetJson(subId string, format string) (*string, []string, e
 	*outbounds = append(*outbounds, extOutbounds...)
 	*outTags = append(*outTags, extTags...)
 
-	j.addDefaultOutbounds(outbounds, outTags)
-
-	err = json.Unmarshal([]byte(defaultJson), &jsonConfig)
+	template, err := j.SettingService.GetSubJsonExt()
+	if err != nil {
+		return nil, nil, err
+	}
+	result, err := j.buildJSONConfig(template, *outbounds, *outTags)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	jsonConfig["outbounds"] = outbounds
-
-	// Add other objects from settings
-	j.addOthers(&jsonConfig)
-
-	result, _ := json.MarshalIndent(jsonConfig, "", "  ")
 	resultStr := string(result)
 
 	updateInterval, _ := j.SettingService.GetSubUpdates()
 	headers := util.GetHeaders(client, updateInterval)
 
 	return &resultStr, headers, nil
+}
+
+func (j *JsonService) buildJSONConfig(template string, nodes []map[string]interface{}, tags []string) ([]byte, error) {
+	var config map[string]interface{}
+	if err := json.Unmarshal([]byte(defaultJson), &config); err != nil {
+		return nil, err
+	}
+	j.addDefaultOutbounds(&nodes, &tags)
+	config["outbounds"] = nodes
+
+	var settings map[string]interface{}
+	// Keep the existing response for a legacy template that cannot be parsed.
+	if template == "" || json.Unmarshal([]byte(template), &settings) == nil {
+		j.addOthers(&config, settings)
+		if groups, ok := settings["outbound_groups"]; ok {
+			merged, err := mergeSubscriptionGroups(nodes, tags, groups)
+			if err != nil {
+				return nil, err
+			}
+			if merged != nil {
+				config["outbounds"] = merged
+			}
+		}
+	}
+	return json.MarshalIndent(config, "", "  ")
 }
 
 // uniqueOutboundTag keeps a name as the operator wrote it, falling back to a
@@ -297,7 +316,7 @@ func (j *JsonService) addDefaultOutbounds(outbounds *[]map[string]interface{}, o
 	*outbounds = append(outbound, *outbounds...)
 }
 
-func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
+func (j *JsonService) addOthers(jsonConfig *map[string]interface{}, othersJson map[string]interface{}) {
 	// Default routing rules, used only when the template doesn't define its own.
 	// When the template provides `rules`, they are used verbatim so the user has
 	// full control over ordering (e.g. rules before sniff) and which rules exist.
@@ -322,19 +341,6 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 		"rules":                 defaultRules,
 	}
 
-	othersStr, err := j.SettingService.GetSubJsonExt()
-	if err != nil {
-		return err
-	}
-	if len(othersStr) == 0 {
-		(*jsonConfig)["route"] = route
-		return nil
-	}
-	var othersJson map[string]interface{}
-	err = json.Unmarshal([]byte(othersStr), &othersJson)
-	if err != nil {
-		return err
-	}
 	if _, ok := othersJson["log"]; ok {
 		(*jsonConfig)["log"] = othersJson["log"]
 	}
@@ -370,8 +376,6 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 		route["final"] = final
 	}
 	(*jsonConfig)["route"] = route
-
-	return nil
 }
 
 // fallbackDomainResolver returns the DNS server dial fields should resolve

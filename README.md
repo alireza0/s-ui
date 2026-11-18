@@ -57,6 +57,23 @@ Full documentation lives in the [Wiki](https://github.com/alireza0/s-ui/wiki):
 | [Configuration Objects](https://github.com/alireza0/s-ui/wiki/Configuration-Objects) | Shape of the objects read and written through the API |
 | [Settings Reference](https://github.com/alireza0/s-ui/wiki/Settings-Reference) | Every panel setting and its default |
 
+In the JSON subscription template's raw editor, use the optional
+`outbound_groups` array to add `selector` and `urltest` groups. Each `"$nodes"`
+member expands to the current subscriber's nodes in subscription order. A
+selector may set `default` to `"$nodes"` to select the first of those nodes.
+Groups can also reference `proxy`, `auto`, `direct`, or another custom group.
+Group tags must be unique, and a subscription with custom groups requires at
+least one node. Use the group tag in top-level template rules or `final`.
+
+```json
+{
+  "outbound_groups": [
+    { "type": "selector", "tag": "Streaming", "outbounds": ["auto", "$nodes"] }
+  ],
+  "final": "Streaming"
+}
+```
+
 ## Default Installation Information
 - Panel Port: 2095
 - Panel Path: /app/
