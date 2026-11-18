@@ -14,9 +14,6 @@ const emptyCoreConfig = `{"log":{"level":"error"}}`
 // used to have no mutex, so this tripped -race on both fields. Without -race it
 // only proves the accessors do not panic.
 func TestCoreConcurrentLifecycle(t *testing.T) {
-	if raceEnabled {
-		t.Skip("starting a Box trips sing-box's own race in route.NetworkManager; see race_on_test.go")
-	}
 	c := NewCore()
 	t.Cleanup(func() { _ = c.Stop() })
 
@@ -64,9 +61,6 @@ func TestCoreConcurrentLifecycle(t *testing.T) {
 // The accessors must agree across a full cycle, and a second Stop must be
 // harmless: three separate paths reach it.
 func TestCoreStartStopState(t *testing.T) {
-	if raceEnabled {
-		t.Skip("starting a Box trips sing-box's own race in route.NetworkManager; see race_on_test.go")
-	}
 	c := NewCore()
 
 	if c.IsRunning() {
@@ -150,9 +144,9 @@ func TestFailedStartLeavesNoInstance(t *testing.T) {
 	}
 }
 
-// Core's own mutex without starting a Box, so this runs under -race where the
-// tests above cannot. The invariant is the one the lock-free struct broke: no
-// caller may observe isRunning true together with a nil instance.
+// Core's own mutex without starting a Box, so it hammers the lock far harder
+// than the tests above can. The invariant is the one the lock-free struct
+// broke: no caller may observe isRunning true together with a nil instance.
 func TestCoreLockConcurrency(t *testing.T) {
 	c := NewCore()
 

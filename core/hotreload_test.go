@@ -31,9 +31,6 @@ func portBound(port int) bool {
 // edits a running core, so core/manager keeps both. An inbound added to a
 // running box must listen, and removing it must free the port for the next.
 func TestHotInboundAddRemove(t *testing.T) {
-	if raceEnabled {
-		t.Skip("starting a Box trips sing-box's own race in route.NetworkManager; see race_on_test.go")
-	}
 	c := NewCore()
 	t.Cleanup(func() { _ = c.Stop() })
 	if err := c.Start([]byte(emptyCoreConfig)); err != nil {
@@ -67,9 +64,6 @@ func TestHotInboundAddRemove(t *testing.T) {
 // An inbound present at boot is closed by Remove the same way as a hot one,
 // and Stop afterwards must not close it a second time.
 func TestBootInboundRemoveThenStop(t *testing.T) {
-	if raceEnabled {
-		t.Skip("starting a Box trips sing-box's own race in route.NetworkManager; see race_on_test.go")
-	}
 	c := NewCore()
 	t.Cleanup(func() { _ = c.Stop() })
 	port := freePort(t)
@@ -94,9 +88,6 @@ func TestBootInboundRemoveThenStop(t *testing.T) {
 // An outbound another one dials through cannot be removed; once the dependent
 // is gone it can, and the tag is free to be added again.
 func TestHotOutboundDependency(t *testing.T) {
-	if raceEnabled {
-		t.Skip("starting a Box trips sing-box's own race in route.NetworkManager; see race_on_test.go")
-	}
 	c := NewCore()
 	t.Cleanup(func() { _ = c.Stop() })
 	if err := c.Start([]byte(emptyCoreConfig)); err != nil {

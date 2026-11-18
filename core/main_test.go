@@ -29,3 +29,16 @@ func skipIfFeatureMissing(t *testing.T, err error) {
 		t.Skip(err.Error())
 	}
 }
+
+// skipUnstartedEndpointInShort skips a case that builds an endpoint and closes
+// it without starting it. sing-box adds an endpoint's device Close to the start
+// scope, so such an endpoint leaks its gvisor stack, whose goroutines keep
+// waking for the rest of the package. Under -race that slows every later test
+// by minutes. Building is not concurrent, so -race finds nothing here, and the
+// run without -short still covers it.
+func skipUnstartedEndpointInShort(t *testing.T) {
+	t.Helper()
+	if testing.Short() {
+		t.Skip("an unstarted endpoint leaks its gvisor stack; covered without -short")
+	}
+}

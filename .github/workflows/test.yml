@@ -10,9 +10,11 @@ on:
 permissions:
   contents: read
 
+# Three independent jobs, so the race run does not wait on the plain one and a
+# formatting slip fails in seconds. A caller's `needs` waits for all of them.
 jobs:
-  test:
-    name: test
+  lint:
+    name: lint
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
@@ -52,6 +54,18 @@ jobs:
             exit 1
           fi
 
+  test:
+    name: test
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
       # "test", not "dev": same protocols, minus the cronet tags no stock
       # toolchain can link. It is what release.yml builds for armv6/armv5/s390x.
       - name: Test
@@ -61,11 +75,21 @@ jobs:
           TAGS=$(tags_for test)
           go test -tags "$TAGS" ./...
 
-      # Scoped to the packages that are clean today, so this fails on a race we
-      # introduce rather than the known upstream one in route.NetworkManager.
+  race:
+    name: race
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
       - name: Test with race detector
         run: |
           set -e
           . ./build-tags.sh
           TAGS=$(tags_for test)
-          go test -race -short -tags "$TAGS" ./api/... ./service/... ./sub/... ./database/... ./util/... ./logger/... ./network/...
+          go test -race -short -tags "$TAGS" ./...

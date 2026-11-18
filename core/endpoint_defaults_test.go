@@ -60,6 +60,7 @@ func TestEndpointDefaults(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			skipUnstartedEndpointInShort(t)
 			endpoint := map[string]any{"tag": testCase.name + "-ep"}
 			for key, value := range testCase.options {
 				endpoint[key] = value
@@ -186,6 +187,9 @@ func TestEndpointInlineTLS(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			if testCase.endpoint.Type != "openvpn-server" {
+				skipUnstartedEndpointInShort(t)
+			}
 			endpointJSON, err := testCase.endpoint.MarshalJSON()
 			if err != nil {
 				t.Fatal(err)
