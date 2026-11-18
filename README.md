@@ -74,6 +74,29 @@ least one node. Use the group tag in top-level template rules or `final`.
 }
 ```
 
+Use the optional `custom_outbounds` array to name additional `direct` and
+`block` outbounds for routing rules or group members. A custom `direct`
+outbound can set `connect_timeout`. A `block` outbound can be selected in a
+group to reject connections. Custom tags must be unique and cannot replace
+the built-in `proxy`, `auto`, or `direct` outbounds.
+
+```json
+{
+  "custom_outbounds": [
+    { "type": "direct", "tag": "Direct with timeout", "connect_timeout": "10s" },
+    { "type": "block", "tag": "Block" }
+  ],
+  "outbound_groups": [
+    {
+      "type": "selector",
+      "tag": "Ads",
+      "outbounds": ["Direct with timeout", "Block"],
+      "default": "Block"
+    }
+  ]
+}
+```
+
 ## Default Installation Information
 - Panel Port: 2095
 - Panel Path: /app/

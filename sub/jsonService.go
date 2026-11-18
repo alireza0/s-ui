@@ -92,6 +92,14 @@ func (j *JsonService) buildJSONConfig(template string, nodes []map[string]interf
 	// Keep the existing response for a legacy template that cannot be parsed.
 	if template == "" || json.Unmarshal([]byte(template), &settings) == nil {
 		j.addOthers(&config, settings)
+		if custom, ok := settings["custom_outbounds"]; ok {
+			merged, err := appendSubscriptionOutbounds(nodes, len(tags) > 0, custom)
+			if err != nil {
+				return nil, err
+			}
+			nodes = merged
+			config["outbounds"] = nodes
+		}
 		if groups, ok := settings["outbound_groups"]; ok {
 			merged, err := mergeSubscriptionGroups(nodes, tags, groups)
 			if err != nil {
