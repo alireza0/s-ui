@@ -20,8 +20,10 @@ type SubService struct {
 }
 
 func (s *SubService) GetSubs(subId string) (*string, []string, error) {
-	var err error
+	return s.getSubs(subId, nil)
+}
 
+func (s *SubService) getSubs(subId string, transform func([]string) []string) (*string, []string, error) {
 	client, err := s.getClientBySubId(subId)
 	if err != nil {
 		return nil, nil, err
@@ -38,6 +40,9 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 		return nil, nil, err
 	}
 	linksArray := s.LinkService.GetLinks(&links, "all", clientInfo)
+	if transform != nil {
+		linksArray = transform(linksArray)
+	}
 	result := strings.Join(linksArray, "\n")
 
 	headers := s.getClientHeaders(client)

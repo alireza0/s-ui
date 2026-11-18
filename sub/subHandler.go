@@ -33,25 +33,26 @@ func (s *SubHandler) subs(c *gin.Context) {
 	var err error
 	subId := c.Param("subid")
 	format, isFormat := c.GetQuery("format")
-	if isFormat {
-		switch format {
-		case "json":
-			result, headers, err = s.JsonService.GetJson(subId, format)
-		case "clash":
-			result, headers, err = s.ClashService.GetClash(subId)
+	if !isFormat {
+		c.Writer.Header().Add("Vary", "User-Agent")
+		if isHappUserAgent(c.Request.UserAgent()) {
+			format = "happ"
 		}
-		if err != nil || result == nil {
-			logger.Error(err)
-			c.String(400, "Error!")
-			return
-		}
-	} else {
+	}
+	switch {
+	case format == "json":
+		result, headers, err = s.JsonService.GetJson(subId, format)
+	case format == "clash":
+		result, headers, err = s.ClashService.GetClash(subId)
+	case format == "happ":
+		result, headers, err = s.SubService.getSubs(subId, happLinks)
+	case !isFormat:
 		result, headers, err = s.SubService.GetSubs(subId)
-		if err != nil || result == nil {
-			logger.Error(err)
-			c.String(400, "Error!")
-			return
-		}
+	}
+	if err != nil || result == nil {
+		logger.Error(err)
+		c.String(400, "Error!")
+		return
 	}
 
 	s.addHeaders(c, headers)
