@@ -269,6 +269,18 @@ func (s *InboundService) hasUser(inboundType string) bool {
 	return false
 }
 
+// validInboundTypes whitelists the inbound types that may be spliced into the
+// json_extract path: inbound definitions come in through the API, and the
+// type is formatted into the SQL string, so anything outside this set is
+// rejected instead of trusted. shadowsocks16 is a method-mapped alias from
+// util.ShadowsocksClientConfigKey, not a real inbound type.
+var validInboundTypes = map[string]bool{
+	"mixed": true, "socks": true, "http": true, "shadowsocks": true,
+	"shadowsocks16": true, "vmess": true, "trojan": true, "naive": true,
+	"hysteria": true, "shadowtls": true, "tuic": true, "hysteria2": true,
+	"vless": true, "anytls": true, "snell": true,
+}
+
 func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition string, args []any, inbound map[string]interface{}) ([]json.RawMessage, error) {
 	if inboundType == "shadowtls" {
 		version, _ := inbound["version"].(float64)
@@ -279,6 +291,10 @@ func (s *InboundService) fetchUsers(db *gorm.DB, inboundType string, condition s
 	if inboundType == "shadowsocks" {
 		method, _ := inbound["method"].(string)
 		inboundType = util.ShadowsocksClientConfigKey(method)
+	}
+
+	if !validInboundTypes[inboundType] {
+		return nil, common.NewErrorf("invalid inbound type: %s", inboundType)
 	}
 
 	var users []string
