@@ -10,6 +10,8 @@ import (
 
 	"github.com/alireza0/s-ui/config"
 	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/util"
+	"github.com/alireza0/s-ui/util/common"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -25,11 +27,27 @@ func initUser() error {
 		return err
 	}
 	if count == 0 {
+		// A random credential, stored as a hash: admin/admin was on every
+		// installation, and it was the first thing a scanner looked for.
+		randomPassword := common.Random(16)
+		hashedPassword, err := util.HashPassword(randomPassword)
+		if err != nil {
+			return err
+		}
 		user := &model.User{
 			Username: "admin",
-			Password: "admin",
+			Password: string(hashedPassword),
 		}
-		return db.Create(user).Error
+		err = db.Create(user).Error
+		if err != nil {
+			return err
+		}
+		log.Println("============================================")
+		log.Println(" Initial admin credentials generated")
+		log.Println(" Username: admin")
+		log.Println(" Password: (hashed, use 's-ui admin reset' to set a custom password)")
+		log.Println(" Please change the password after login!")
+		log.Println("============================================")
 	}
 	return nil
 }

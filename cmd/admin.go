@@ -25,18 +25,33 @@ func confirm(prompt string) bool {
 	return answer == "y" || answer == "yes"
 }
 
-// resetAdmin puts the credentials back to admin/admin.
+// resetAdmin restores the first admin account.
 //
-// assumeYes comes from -yes. Without a prompt, a mistyped command turned a
-// live panel into one with the best-known default credentials in the world,
-// reachable from the internet, with nothing printed that looked like a
-// warning.
+// Interactively it asks for a new password and never echoes it back. With
+// -yes (assumeYes) it skips the prompt and resets to admin/admin, the
+// historical scripted behaviour: a mistyped unattended command would
+// otherwise leave a live panel with the best-known default credentials in
+// the world, reachable from the internet.
 func resetAdmin(assumeYes bool) {
+	newPassword := "admin"
 	if !assumeYes {
-		fmt.Println("This resets the first admin account to the username \"admin\" and the password \"admin\".")
-		fmt.Println("Anyone who can reach the panel will be able to log in until you change it.")
+		fmt.Println("This resets the first admin account to the username \"admin\".")
+		fmt.Println("Anyone who can reach the panel will be able to log in with the new password.")
 		if !confirm("Type y to continue: ") {
 			fmt.Println("cancelled")
+			return
+		}
+		fmt.Print("Enter new password: ")
+		scanner := bufio.NewScanner(os.Stdin)
+		if scanner.Scan() {
+			newPassword = strings.TrimSpace(scanner.Text())
+		}
+		if err := scanner.Err(); err != nil {
+			fmt.Println("error reading password:", err)
+			return
+		}
+		if newPassword == "" {
+			fmt.Println("Password cannot be empty")
 			return
 		}
 	}
@@ -48,13 +63,21 @@ func resetAdmin(assumeYes bool) {
 	}
 
 	userService := service.UserService{}
-	err = userService.UpdateFirstUser("admin", "admin")
+	err = userService.UpdateFirstUser("admin", newPassword)
 	if err != nil {
 		fmt.Println("reset admin credentials failed:", err)
 		return
 	}
-	fmt.Println("reset admin credentials success")
-	fmt.Println("Change them now: s-ui admin -username <user> -password <pass>")
+	if assumeYes {
+		fmt.Println("reset admin credentials success")
+		fmt.Println("Change them now: s-ui admin -username <user> -password <pass>")
+	} else {
+		fmt.Println("============================================")
+		fmt.Println(" Admin credentials have been reset!")
+		fmt.Println(" Username: admin")
+		fmt.Println(" Password: (updated, not echoed)")
+		fmt.Println("============================================")
+	}
 }
 
 func updateAdmin(username string, password string) {
