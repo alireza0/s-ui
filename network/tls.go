@@ -78,6 +78,10 @@ func NewTLSConfig(certFile, keyFile, domain string) (*tls.Config, error) {
 		serverName = ""
 	}
 	return &tls.Config{
+		// Go 1.18+ defaults to TLS 1.2 already; pinned here so a dependency
+		// or toolchain change cannot silently lower the floor on the panel
+		// and subscription listeners.
+		MinVersion: tls.VersionTLS12,
 		GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 			if domain != "" && !strings.EqualFold(hello.ServerName, serverName) {
 				return nil, fmt.Errorf("tls: unrecognized server name %q", hello.ServerName)
