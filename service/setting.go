@@ -541,6 +541,38 @@ func (s *SettingService) Save(tx *gorm.DB, data json.RawMessage) error {
 			}
 		}
 	}
+	// The web and sub servers refuse to start when only one of a cert/key
+	// pair is set, and the per-key checks above cannot see that: a half pair
+	// saved here only fails at the next restart, when the panel is already
+	// down and the operator cannot fix it from the panel. Reject a save that
+	// touches a pair and leaves it half set, with the same message the
+	// servers log, while the operator is still here to act on it.
+	for _, pair := range [][2]string{
+		{"webCertFile", "webKeyFile"},
+		{"subCertFile", "subKeyFile"},
+	} {
+		if _, touched := settings[pair[0]]; !touched {
+			if _, touched := settings[pair[1]]; !touched {
+				continue
+			}
+		}
+		values := make([]string, 2)
+		for i, key := range pair {
+			var row model.Setting
+			if err := tx.Where("key = ?", key).Limit(1).Find(&row).Error; err != nil {
+				return err
+			}
+			values[i] = row.Value
+		}
+		if (values[0] == "") != (values[1] == "") {
+			set, missing := pair[0], pair[1]
+			if values[0] == "" {
+				set, missing = pair[1], pair[0]
+			}
+			return common.NewError("TLS needs both a certificate and a key: ", set,
+				" is set but ", missing, " is empty. Set both to serve HTTPS, or clear both to serve HTTP.")
+		}
+	}
 	return nil
 }
 
