@@ -142,9 +142,33 @@ func addTls(out *map[string]interface{}, tls *model.Tls) {
 	(*out)["tls"] = tlsConfig
 }
 
+// naiveUnsupportedTls lists the TLS fields sing-box's naive outbound refuses
+// to start with (protocol/naive/outbound.go): it negotiates through cronet,
+// which picks ALPN, versions and ciphers itself. Copying any of them from the
+// server profile made the whole client profile fail to load.
+var naiveUnsupportedTls = []string{
+	"disable_sni", "insecure", "alpn", "min_version", "max_version",
+	"cipher_suites", "curve_preferences",
+	"client_certificate", "client_certificate_path", "client_key", "client_key_path",
+	"fragment", "fragment_fallback_delay", "record_fragment",
+	"kernel_tx", "kernel_rx", "utls", "reality",
+}
+
+// StripNaiveTls removes the TLS fields a naive outbound does not accept.
+func StripNaiveTls(out map[string]interface{}) {
+	tls, ok := out["tls"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	for _, key := range naiveUnsupportedTls {
+		delete(tls, key)
+	}
+}
+
 func naiveOut(out *map[string]interface{}, inbound map[string]interface{}) {
 	delete(*out, "quic")
 	delete(*out, "quic_congestion_control")
+	StripNaiveTls(*out)
 
 	if quic_congestion_control, ok := inbound["quic_congestion_control"].(string); ok && quic_congestion_control != "" {
 		(*out)["quic"] = true

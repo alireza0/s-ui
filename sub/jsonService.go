@@ -159,6 +159,9 @@ func (j *JsonService) getOutbounds(clientConfig json.RawMessage, inbounds []*mod
 			return nil, nil, err
 		}
 		protocol, _ := outbound["type"].(string)
+		if protocol == "naive" {
+			util.StripNaiveTls(outbound)
+		}
 
 		// Shadowsocks
 		if protocol == "shadowsocks" {
