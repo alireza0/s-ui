@@ -190,6 +190,18 @@ func validateImport(path string) error {
 			return common.NewErrorf("Not an s-ui database: table %q is missing", required)
 		}
 	}
+
+	// The file parses and carries the expected tables, but its pages may still
+	// be corrupt: quick_check is the cheap integrity scan (a full
+	// integrity_check re-validates every index entry, which an upload is not
+	// worth while the panel waits on the answer).
+	var integrityResult string
+	if err := candidate.Raw("PRAGMA quick_check").Scan(&integrityResult).Error; err != nil {
+		return common.NewErrorf("Error checking db integrity: %v", err)
+	}
+	if integrityResult != "ok" {
+		return common.NewErrorf("Database integrity check failed: %s", integrityResult)
+	}
 	return nil
 }
 
