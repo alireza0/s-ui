@@ -136,11 +136,22 @@ jobs:
 
       - name: Resolve cronet-go commit
         if: matrix.naive
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          SHORT=$(go list -m -f '{{.Version}}' github.com/sagernet/cronet-go | sed 's/.*-//')
-          FULL=$(curl -fsSL "https://api.github.com/repos/SagerNet/cronet-go/commits/${SHORT}" | jq -r '.sha')
+          VERSION=$(go list -m -f '{{.Version}}' github.com/sagernet/cronet-go)
+          SHORT=${VERSION##*-}
+          # The module proxy records the full commit of a pseudo-version and
+          # has no rate limit; the unauthenticated GitHub API answered 403
+          # once the shared runner IPs used up their quota.
+          FULL=$(curl -fsSL "https://proxy.golang.org/github.com/sagernet/cronet-go/@v/${VERSION}.info" | jq -r '.Origin.Hash // empty' || true)
+          if [ -z "$FULL" ]; then
+            FULL=$(curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" \
+              "https://api.github.com/repos/SagerNet/cronet-go/commits/${SHORT}" | jq -r '.sha')
+          fi
           [ -n "$FULL" ] && [ "$FULL" != "null" ] || { echo "could not resolve cronet-go commit ${SHORT}" >&2; exit 1; }
+          case "$FULL" in "$SHORT"*) ;; *) echo "cronet-go commit $FULL does not match ${SHORT}" >&2; exit 1 ;; esac
           echo "cronet-go: $FULL"
           echo "CRONET_COMMIT=$FULL" >> "$GITHUB_ENV"
 
