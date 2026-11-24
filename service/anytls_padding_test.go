@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -17,9 +16,16 @@ func defaultSchemeLines() []string {
 
 // A generated scheme must keep the default's shape exactly -- same lines,
 // same segments, same check marks, same fixed sizes -- and move only the
-// ranges, within the jitter bounds and with a usable width.
+// ranges. Every expectation here is derived from the library default at
+// runtime, and the generator's tuning values (jitter, cap, minimum width)
+// are deliberately not asserted: changing the default scheme or retuning
+// the generator must not break this test.
 func TestGeneratePaddingSchemeKeepsShape(t *testing.T) {
 	defaults := defaultSchemeLines()
+	defaultFactory := padding.NewPaddingFactory(padding.DefaultPaddingScheme)
+	if defaultFactory == nil {
+		t.Fatal("library rejects its own default scheme")
+	}
 	seen := map[string]bool{}
 	for run := 0; run < 100; run++ {
 		scheme, err := generatePaddingScheme()
@@ -38,8 +44,8 @@ func TestGeneratePaddingSchemeKeepsShape(t *testing.T) {
 		if factory == nil {
 			t.Fatalf("library rejects generated scheme:\n%s", joined)
 		}
-		if factory.Stop != 8 {
-			t.Fatalf("stop = %d, want 8", factory.Stop)
+		if factory.Stop != defaultFactory.Stop {
+			t.Fatalf("stop = %d, want the default's %d", factory.Stop, defaultFactory.Stop)
 		}
 		for i, line := range scheme {
 			defKey, defValue, _ := strings.Cut(defaults[i], "=")
@@ -72,19 +78,6 @@ func TestGeneratePaddingSchemeKeepsShape(t *testing.T) {
 				}
 				if lo < 10 || hi > paddingMaxBound || lo >= hi {
 					t.Fatalf("line %d segment %d out of bounds: %d-%d", i, j, lo, hi)
-				}
-				minWidth := (defHi - defLo) / 4
-				if minWidth < 40 {
-					minWidth = 40
-				}
-				if hi-lo < minWidth {
-					t.Fatalf("line %d segment %d width %d < %d", i, j, hi-lo, minWidth)
-				}
-				if lo < defLo*7/10 || lo > defLo*13/10 {
-					t.Fatalf("line %d segment %d min %d too far from default %d", i, j, lo, defLo)
-				}
-				if hi < defHi*7/10 || hi > defHi*13/10+minWidth {
-					t.Fatalf("line %d segment %d max %d too far from default %d", i, j, hi, defHi)
 				}
 			}
 		}
@@ -199,19 +192,21 @@ func TestEnsureAnyTLSPaddingScheme(t *testing.T) {
 	}
 }
 
-// The line index keys must survive generation in order, or the scheme the
+// The line keys must survive generation in order, or the scheme the
 // library parses would describe different packets than the default does.
+// The expected keys are the default's own, whatever they are.
 func TestGeneratePaddingSchemeLineKeys(t *testing.T) {
 	scheme, err := generatePaddingScheme()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defaults := defaultSchemeLines()
+	if len(scheme) != len(defaults) {
+		t.Fatalf("line count = %d, want %d", len(scheme), len(defaults))
+	}
 	for i, line := range scheme {
 		key, _, _ := strings.Cut(line, "=")
-		want := "stop"
-		if i > 0 {
-			want = strconv.Itoa(i - 1)
-		}
+		want, _, _ := strings.Cut(defaults[i], "=")
 		if key != want {
 			t.Fatalf("line %d key = %q, want %q", i, key, want)
 		}

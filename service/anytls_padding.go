@@ -30,7 +30,10 @@ import (
 
 // paddingJitterPct bounds how far a range bound may move from the default,
 // in percent, and paddingMaxBound caps a generated bound so a scheme stays
-// in the size territory the default occupies.
+// in the size territory the default occupies. They are the generator's only
+// tuning knobs, and the generator derives from padding.DefaultPaddingScheme
+// at runtime, so changing the default scheme or retuning these values is a
+// local edit: the tests assert the shape invariants, never today's values.
 const (
 	paddingJitterPct = 20
 	paddingMaxBound  = 1400
