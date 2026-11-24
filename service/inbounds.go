@@ -113,6 +113,13 @@ func (s *InboundService) Save(tx *gorm.DB, act string, data json.RawMessage, ini
 		if err != nil {
 			return err
 		}
+		// An AnyTLS inbound saved with no padding scheme at all gets a
+		// generated one before it reaches the core or the database, so
+		// it is the scheme both run with.
+		err = ensureAnyTLSPaddingScheme(&inbound)
+		if err != nil {
+			return err
+		}
 		if inbound.TlsId > 0 {
 			err = tx.Model(model.Tls{}).Where("id = ?", inbound.TlsId).Find(&inbound.Tls).Error
 			if err != nil {
