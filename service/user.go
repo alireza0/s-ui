@@ -27,11 +27,37 @@ func (s *UserService) GetFirstUser() (*model.User, error) {
 	return user, nil
 }
 
+// checkPasswordStrength warns (without blocking) when a freshly set password
+// is obviously weak.
+func checkPasswordStrength(password string) string {
+	if len(password) < 8 {
+		return "password is shorter than 8 characters, consider using a stronger password"
+	}
+	var hasUpper, hasLower, hasDigit bool
+	for _, c := range password {
+		switch {
+		case c >= 'A' && c <= 'Z':
+			hasUpper = true
+		case c >= 'a' && c <= 'z':
+			hasLower = true
+		case c >= '0' && c <= '9':
+			hasDigit = true
+		}
+	}
+	if !hasUpper || !hasLower || !hasDigit {
+		return "password lacks complexity (recommend using uppercase, lowercase, and digits)"
+	}
+	return ""
+}
+
 func (s *UserService) UpdateFirstUser(username string, password string) error {
 	if username == "" {
 		return common.NewError("username can not be empty")
 	} else if password == "" {
 		return common.NewError("password can not be empty")
+	}
+	if warning := checkPasswordStrength(password); warning != "" {
+		logger.Warning("Weak password for user '", username, "': ", warning)
 	}
 	hashedPass, err := util.HashPassword(password)
 	if err != nil {
@@ -155,6 +181,9 @@ func (s *UserService) ChangePass(loginUser string, oldPass string, newUser strin
 	hashedPass, err := util.HashPassword(newPass)
 	if err != nil {
 		return err
+	}
+	if warning := checkPasswordStrength(newPass); warning != "" {
+		logger.Warning("Weak password for user '", loginUser, "': ", warning)
 	}
 	user.Username = newUser
 	user.Password = hashedPass
