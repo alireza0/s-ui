@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log"
 
 	"github.com/alireza0/s-ui/config"
@@ -8,6 +9,7 @@ import (
 	"github.com/alireza0/s-ui/cronjob"
 	"github.com/alireza0/s-ui/database"
 	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/nodes"
 	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/sub"
 	"github.com/alireza0/s-ui/web"
@@ -23,6 +25,7 @@ type APP struct {
 	cronJob       *cronjob.CronJob
 	logger        *logging.Logger
 	core          *core.Core
+	nodeCancel    context.CancelFunc
 }
 
 func NewApp() *APP {
@@ -95,10 +98,15 @@ func (a *APP) Start() error {
 		}
 	}
 
+	a.nodeCancel = nodes.Start(context.Background(), nodes.TrafficConfig{Enabled: trafficAge > 0, BucketSeconds: statsBucketSeconds})
 	return nil
 }
 
 func (a *APP) Stop() {
+	if a.nodeCancel != nil {
+		a.nodeCancel()
+		a.nodeCancel = nil
+	}
 	a.cronJob.Stop()
 	err := a.subServer.Stop()
 	if err != nil {

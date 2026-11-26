@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -21,6 +22,7 @@ import (
 	"time"
 
 	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/nodes"
 	"github.com/alireza0/s-ui/util/common"
 )
 
@@ -178,11 +180,18 @@ func (s *UpdateService) upgradeTo(tag string) error {
 	if err := checkBinary(newBin, strings.TrimPrefix(tag, "v")); err != nil {
 		return err
 	}
+	finishAgents, err := nodes.InstallReleaseAgents(stage, filepath.Dir(exe))
+	if err != nil {
+		return common.NewError("unable to install node agents: ", err)
+	}
 
 	// The running process keeps its own inode; the rename only changes what
 	// the next start executes.
 	if err := os.Rename(newBin, exe); err != nil {
-		return err
+		return errors.Join(err, finishAgents(false))
+	}
+	if err := finishAgents(true); err != nil {
+		logger.Warning("update: unable to remove previous agent bundle:", err)
 	}
 	// The same files install.sh refreshes. Neither is needed to come back up,
 	// so a failure is reported and the update goes on.
@@ -249,9 +258,8 @@ func checksumFor(sums, name string) string {
 	return ""
 }
 
-// extractRelease takes the three files a release ships from its s-ui/
-// directory and ignores everything else, so no entry name can reach a path
-// outside dst.
+// extractRelease takes the panel files and the allowlisted node agent bundle
+// from s-ui/, ignoring other entries.
 func extractRelease(archive, dst string) error {
 	f, err := os.Open(archive)
 	if err != nil {
@@ -279,6 +287,12 @@ func extractRelease(archive, dst string) error {
 			continue
 		}
 		dir, name := path.Split(strings.TrimPrefix(path.Clean(hdr.Name), "./"))
+		if dir == "s-ui/agents/" {
+			if err := nodes.ExtractReleaseAgent(dst, name, io.LimitReader(tr, maxArchiveSize)); err != nil {
+				return err
+			}
+			continue
+		}
 		mode, ok := wanted[name]
 		if dir != "s-ui/" || !ok {
 			continue

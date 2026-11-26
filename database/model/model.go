@@ -33,14 +33,22 @@ type Client struct {
 	Name     string          `json:"name" form:"name" gorm:"index"`
 	Config   json.RawMessage `json:"config,omitempty" form:"config"`
 	Inbounds json.RawMessage `json:"inbounds" form:"inbounds"`
-	Links    json.RawMessage `json:"links,omitempty" form:"links"`
-	Volume   int64           `json:"volume" form:"volume"`
-	Expiry   int64           `json:"expiry" form:"expiry"`
-	Down     int64           `json:"down" form:"down"`
-	Up       int64           `json:"up" form:"up"`
-	Desc     string          `json:"desc" form:"desc"`
-	Group    string          `json:"group" form:"group"`
-	Remark   string          `json:"remark" form:"remark"`
+	// Read-only projection of applied remote listener IDs.
+	NodeInbounds json.RawMessage `json:"nodeinbounds,omitempty" form:"nodeinbounds" gorm:"-"`
+	// Whole-node assignments are independent of local and remote inbound IDs.
+	Nodes             json.RawMessage `json:"nodes,omitempty" form:"nodes" gorm:"-"`
+	NodeAccessChanged bool            `json:"-" gorm:"-"`
+	// Persist access changes even if disable/re-enable or unassign/reassign
+	// happens between controller polls. A new epoch closes old node sessions.
+	NodeGeneration uint64          `json:"-" gorm:"default:0;not null"`
+	Links          json.RawMessage `json:"links,omitempty" form:"links"`
+	Volume         int64           `json:"volume" form:"volume"`
+	Expiry         int64           `json:"expiry" form:"expiry"`
+	Down           int64           `json:"down" form:"down"`
+	Up             int64           `json:"up" form:"up"`
+	Desc           string          `json:"desc" form:"desc"`
+	Group          string          `json:"group" form:"group"`
+	Remark         string          `json:"remark" form:"remark"`
 
 	// Timestamps (unix seconds): creation time and last time the client had traffic
 	CreatedAt int64 `json:"createdAt" form:"createdAt" gorm:"default:0;not null"`

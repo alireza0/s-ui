@@ -44,7 +44,8 @@ RUN if [ "$TARGETARCH" = "arm" ]; then export GOARM=7; [ "$TARGETVARIANT" = "v6"
     . ./build-tags.sh && \
     TAGS=$(tags_for docker) && \
     LDFLAGS=$(ldflags_for docker) && \
-    go build -ldflags="$LDFLAGS" -tags "$TAGS" -o sui main.go
+    go build -ldflags="$LDFLAGS" -tags "$TAGS" -o sui main.go && \
+    sh ./build-node-agents.sh /app/agents
 
 FROM alpine:3
 LABEL org.opencontainers.image.authors="alireza7@gmail.com"
@@ -55,6 +56,7 @@ RUN set -ex && apk upgrade --no-cache --scripts=no apk-tools && \
     addgroup -S -g 10001 sui && \
     adduser -S -u 10001 -G sui -h /app -s /sbin/nologin sui
 COPY --from=backend-builder /app/sui /app/libcronet.so /app/
+COPY --from=backend-builder /app/agents /app/agents/
 COPY entrypoint.sh /app/
 
 # Asks the binary, which reads the port the operator actually configured. A

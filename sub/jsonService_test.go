@@ -168,7 +168,7 @@ func TestGetOutboundsRealmIgnoresAddrs(t *testing.T) {
 	}
 	clientConfig := json.RawMessage(`{"hysteria2": {"name": "user", "password": "secret"}}`)
 
-	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "")
+	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +193,7 @@ func TestGetOutboundsKeepsPerAddressTLS(t *testing.T) {
 	}
 	clientConfig := json.RawMessage(`{"vless": {"name": "user", "uuid": "00000000-0000-0000-0000-000000000000"}}`)
 
-	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "")
+	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +221,7 @@ func TestGetOutboundsFallsBackToSniForWsHost(t *testing.T) {
 	}
 	clientConfig := json.RawMessage(`{"vless": {"name": "user", "uuid": "00000000-0000-0000-0000-000000000000"}}`)
 
-	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "")
+	outbounds, _, err := (&JsonService{}).getOutbounds(clientConfig, []*model.Inbound{inbound}, "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

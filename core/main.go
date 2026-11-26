@@ -32,7 +32,14 @@ type Core struct {
 }
 
 func NewCore() *Core {
-	ctx := sb.Context(context.Background(), InboundRegistry(), OutboundRegistry(),
+	return NewCoreWithContext(context.Background())
+}
+
+// NewCoreWithContext lets standalone users bind asynchronous provider work to
+// the lifetime of one runtime instance. The panel's default constructor stays
+// unchanged; a replacement node runtime must cancel its retired instance.
+func NewCoreWithContext(parent context.Context) *Core {
+	ctx := sb.Context(parent, InboundRegistry(), OutboundRegistry(),
 		EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry(), CertificateProviderRegistry())
 	return &Core{ctx: ctx}
 }

@@ -19,7 +19,7 @@ type table struct {
 
 // schema is the whole database: adding a model here migrates it and backs it up.
 func schema() []table {
-	return []table{
+	return append([]table{
 		{"settings", &model.Setting{}, copyRows[model.Setting]},
 		{"tls", &model.Tls{}, copyRows[model.Tls]},
 		{"inbounds", &model.Inbound{}, copyRows[model.Inbound]},
@@ -31,7 +31,7 @@ func schema() []table {
 		{"stats", &model.Stats{}, copyRows[model.Stats]},
 		{"clients", &model.Client{}, copyRows[model.Client]},
 		{"changes", &model.Changes{}, copyRows[model.Changes]},
-	}
+	}, nodeSchema()...)
 }
 
 // schemaModels returns the models in schema order, for AutoMigrate.

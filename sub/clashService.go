@@ -1,10 +1,14 @@
 package sub
 
 import (
+	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/alireza0/s-ui/database"
 	"github.com/alireza0/s-ui/logger"
+	"github.com/alireza0/s-ui/nodes"
 	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/util"
 
@@ -78,7 +82,11 @@ func (s *ClashService) GetClash(subId string) (*string, []string, error) {
 		return nil, nil, err
 	}
 
-	outbounds, outTags, err := s.getOutbounds(client.Config, inDatas, nodeRemark(&s.SettingService, client))
+	remote, err := nodes.ClientInbounds(database.GetDB(), *client)
+	if err != nil {
+		return nil, nil, err
+	}
+	outbounds, outTags, err := s.getOutbounds(client.Config, append(inDatas, remote...), nodeRemark(&s.SettingService, client), nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -122,9 +130,8 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 		if t == "selector" || t == "urltest" || t == "direct" {
 			continue
 		}
-		// Clash has no hysteria realm, and without it there is no address to
-		// reach the server at.
-		if _, viaRealm := obMap["realm"]; viaRealm {
+		realm, viaRealm := obMap["realm"].(map[string]interface{})
+		if transport, ok := obMap["transport"].(map[string]interface{}); ok && transport["type"] == "quic" {
 			continue
 		}
 
@@ -136,6 +143,33 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 		proxy["server"] = util.NormalizeHost(server)
 
 		proxy["port"] = obMap["server_port"]
+		if viaRealm {
+			raw, _ := realm["server_url"].(string)
+			realmURL, err := url.Parse(raw)
+			id, _ := realm["realm_id"].(string)
+			if err != nil || realmURL.Hostname() == "" || id == "" || t != "hysteria2" {
+				continue
+			}
+			opts := map[string]interface{}{"enable": true, "server-url": raw, "realm-id": id}
+			if servers, ok := realm["stun_servers"]; ok {
+				opts["stun-servers"] = servers
+			}
+			if token, ok := realm["token"].(string); ok && token != "" {
+				opts["token"] = token
+			}
+			proxy["realm-opts"] = opts
+			if server == "" {
+				proxy["server"] = realmURL.Hostname()
+				if tls, ok := obMap["tls"].(map[string]interface{}); ok {
+					if name, ok := tls["server_name"].(string); ok && name != "" {
+						proxy["server"] = name
+					}
+				}
+			}
+			if proxy["port"] == nil {
+				proxy["port"] = 443
+			}
+		}
 
 		switch t {
 		case "vmess", "vless", "tuic":
@@ -160,6 +194,17 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 				proxy["password"] = obMap["password"]
 				if congestion_control, ok := obMap["congestion_control"].(string); ok {
 					proxy["congestion-controller"] = congestion_control
+				}
+				if reduceRTT, ok := obMap["zero_rtt_handshake"].(bool); ok {
+					proxy["reduce-rtt"] = reduceRTT
+				}
+				if heartbeat, ok := obMap["heartbeat"].(string); ok {
+					if interval, err := time.ParseDuration(heartbeat); err == nil && interval.Milliseconds() > 0 {
+						proxy["heartbeat-interval"] = interval.Milliseconds()
+					}
+				}
+				if relay, ok := obMap["udp_relay_mode"].(string); ok && relay != "" {
+					proxy["udp-relay-mode"] = relay
 				}
 			}
 		case "trojan":
@@ -203,9 +248,31 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 					ports = append(ports, strings.ReplaceAll(portRange, ":", "-"))
 				}
 				proxy["ports"] = strings.Join(ports, ",")
+				if interval, ok := obMap["hop_interval"].(string); ok {
+					if hop, err := time.ParseDuration(interval); err == nil && hop >= time.Second {
+						proxy["hop-interval"] = int64(hop / time.Second)
+					}
+				}
 			}
 		case "anytls":
 			proxy["password"] = obMap["password"]
+		case "snell":
+			proxy["psk"], proxy["version"] = obMap["psk"], obMap["version"]
+			if version, _ := obMap["version"].(float64); version == 6 {
+				proxy["userkey"] = obMap["userkey"]
+			}
+			for _, key := range []string{"mode", "reuse"} {
+				if value, ok := obMap[key]; ok {
+					proxy[key] = value
+				}
+			}
+			if mode, ok := obMap["obfs_mode"].(string); ok && mode != "" {
+				obfs := map[string]interface{}{"mode": mode}
+				if host, ok := obMap["obfs_host"].(string); ok && host != "" {
+					obfs["host"] = host
+				}
+				proxy["obfs-opts"] = obfs
+			}
 		case "shadowsocks":
 			proxy["type"] = "ss"
 			proxy["cipher"] = obMap["method"]
@@ -226,8 +293,13 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 			case "vmess", "vless":
 				proxy["udp"] = true
 				proxy["packet-encoding"] = "xudp"
-			case "trojan", "ss", "socks5", "anytls":
+			case "trojan", "ss", "socks5", "anytls", "snell":
 				proxy["udp"] = true
+			}
+		}
+		if proxy["type"] == "vless" {
+			if encoding, ok := obMap["packet_encoding"].(string); ok && encoding != "" {
+				proxy["packet-encoding"] = encoding
 			}
 		}
 
@@ -312,15 +384,23 @@ func (s *ClashService) ConvertToClashMeta(outbounds *[]map[string]interface{}, b
 				} else if path, ok := transport["path"].(string); ok {
 					httpOpts["path"] = path
 				}
-				if host, ok := transport["host"].([]interface{}); ok && len(host) > 0 {
-					httpOpts["host"] = host[0]
-				}
+				hosts := util.HTTPTransportHosts(transport["host"])
 				if isTls {
+					if len(hosts) > 0 {
+						httpOpts["host"] = hosts
+					}
 					proxy["network"] = "h2"
 					proxy["h2-opts"] = httpOpts
 				} else {
 					proxy["network"] = "http"
-					proxy["http-opts"] = map[string]interface{}{"path": []interface{}{httpOpts["path"]}, "host": httpOpts["host"]}
+					opts := map[string]interface{}{}
+					if path, ok := httpOpts["path"].(string); ok && path != "" {
+						opts["path"] = []string{path}
+					}
+					if len(hosts) > 0 {
+						opts["headers"] = map[string][]string{"Host": hosts}
+					}
+					proxy["http-opts"] = opts
 				}
 			case "ws", "httpupgrade":
 				proxy["network"] = "ws"

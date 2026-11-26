@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -114,7 +115,11 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	// response rewrote the cookie as a session cookie, so "remember me" lasted
 	// until the browser was closed whatever the operator configured.
 	store.Options(api.BaseSessionOptions(sessionMaxAge))
-	engine.Use(sessions.Sessions("s-ui", store))
+	cookieName := strings.TrimSpace(os.Getenv("SUI_SESSION_COOKIE_NAME"))
+	if cookieName == "" {
+		cookieName = "s-ui"
+	}
+	engine.Use(sessions.Sessions(cookieName, store))
 
 	// The panel is an admin surface: nothing may frame it, guess its
 	// content types, or learn panel URLs from a Referer. A page the

@@ -90,6 +90,9 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 	case "http":
 		return httpLink(userConfig["http"], Addrs)
 	case "mixed":
+		if config := userConfig["mixed"]; len(config) != 0 {
+			return append(socksLink(config, Addrs), httpLink(config, Addrs)...)
+		}
 		return append(
 			socksLink(userConfig["socks"], Addrs),
 			httpLink(userConfig["http"], Addrs)...,
@@ -101,6 +104,9 @@ func LinkGenerator(clientConfig json.RawMessage, i *model.Inbound, hostname stri
 	case "hysteria":
 		return hysteriaLink(userConfig["hysteria"], *inbound, Addrs)
 	case "hysteria2":
+		if _, viaRealm := (*inbound)["realm"].(map[string]interface{}); viaRealm {
+			return nil
+		}
 		return hysteria2Link(userConfig["hysteria2"], *inbound, Addrs)
 	case "tuic":
 		return tuicLink(userConfig["tuic"], *inbound, Addrs)
@@ -733,13 +739,7 @@ func getTransportParams(t interface{}) []LinkParam {
 
 	switch transportType {
 	case "http":
-		if host, ok := trasport["host"].([]interface{}); ok {
-			var hosts []string
-			for _, v := range host {
-				if h, ok := v.(string); ok {
-					hosts = append(hosts, h)
-				}
-			}
+		if hosts := HTTPTransportHosts(trasport["host"]); len(hosts) > 0 {
 			params = append(params, LinkParam{"host", strings.Join(hosts, ",")})
 		}
 		if path, ok := trasport["path"].(string); ok {

@@ -42,7 +42,7 @@ func TestAddClientInfoOnMalformedVmess(t *testing.T) {
 		name    string
 		payload map[string]interface{}
 	}{
-		{"no ps at all", map[string]interface{}{"add": "1.2.3.4", "port": "443"}},
+		{"no ps at all", map[string]interface{}{"add": "192.0.2.10", "port": "443"}},
 		{"ps is null", map[string]interface{}{"ps": nil}},
 		{"ps is a number", map[string]interface{}{"ps": 42}},
 		{"ps is an object", map[string]interface{}{"ps": map[string]interface{}{}}},

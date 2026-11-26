@@ -16,7 +16,7 @@ func TestGetOutboundsSnellPerAddress(t *testing.T) {
 		OutJson: json.RawMessage(`{"type": "snell", "tag": "snell", "server": "origin.example.com", "server_port": 8443, "version": 6, "psk": "secret"}`),
 		Addrs:   json.RawMessage(`[{"server": "one.example.com", "server_port": 443, "remark": "-a"}, {"server": "two.example.com", "server_port": 8443, "remark": "-b"}]`),
 	}
-	outbounds, tags, err := (&JsonService{}).getOutbounds(json.RawMessage(`{}`), []*model.Inbound{inbound}, "")
+	outbounds, tags, err := (&JsonService{}).getOutbounds(json.RawMessage(`{}`), []*model.Inbound{inbound}, "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

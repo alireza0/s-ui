@@ -37,12 +37,12 @@ func TestShadowsocksLinkFormats(t *testing.T) {
 
 // vmess payloads are often unpadded too.
 func TestVmessUnpaddedLink(t *testing.T) {
-	payload := base64.RawStdEncoding.EncodeToString([]byte(`{"v":"2","ps":"vm","add":"1.2.3.4","port":"443","id":"b831381d-6324-4d53-ad4f-8cda48b30811","net":"tcp"}`))
+	payload := base64.RawStdEncoding.EncodeToString([]byte(`{"v":"2","ps":"vm","add":"192.0.2.10","port":"443","id":"b831381d-6324-4d53-ad4f-8cda48b30811","net":"tcp"}`))
 	out, _, err := GetOutbound("vmess://"+payload, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if (*out)["server"] != "1.2.3.4" {
+	if (*out)["server"] != "192.0.2.10" {
 		t.Errorf("got %v", *out)
 	}
 }

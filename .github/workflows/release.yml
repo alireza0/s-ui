@@ -271,6 +271,7 @@ jobs:
           cp sui s-ui/
           cp s-ui.service s-ui/
           cp s-ui.sh s-ui/
+          sh ./build-node-agents.sh s-ui/agents
 
       # Only main saves: a tag's cache is scoped to that tag and no later run
       # could read it.

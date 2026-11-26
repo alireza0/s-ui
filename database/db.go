@@ -45,6 +45,9 @@ func OpenDB(dbPath string) error {
 	if err := os.Chmod(dir, 0o700); err != nil {
 		return err
 	}
+	if err := recoverBackupPair(dbPath); err != nil {
+		return err
+	}
 
 	var gormLogger logger.Interface
 

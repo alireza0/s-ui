@@ -10,6 +10,36 @@ import (
 	"testing"
 )
 
+func TestClashNodeTransportAndQUICOptions(t *testing.T) {
+	openClashTestSettings(t)
+	endpoint := map[string]interface{}{"server": "node.example", "server_port": 443}
+	vless := func(name, transport string) map[string]interface{} {
+		return map[string]interface{}{"type": "vless", "tag": name, "server": "node.example", "server_port": 443,
+			"uuid": "11111111-1111-4111-8111-111111111111", "packet_encoding": "packetaddr",
+			"tls": map[string]interface{}{"enabled": true}, "transport": map[string]interface{}{"type": transport, "host": "node.example", "path": "/test"}}
+	}
+	tuic := map[string]interface{}{"type": "tuic", "tag": "TUIC", "uuid": "11111111-1111-4111-8111-111111111111", "password": "synthetic", "zero_rtt_handshake": true, "heartbeat": "2s", "udp_relay_mode": "quic"}
+	for key, value := range endpoint {
+		tuic[key] = value
+	}
+	realm := map[string]interface{}{"type": "hysteria2", "tag": "Realm", "password": "synthetic", "realm": map[string]interface{}{"server_url": "https://realm.example", "realm_id": "test", "token": "synthetic-client"}}
+	proxies := externalSubTestProxies(t, &ClashService{}, []map[string]interface{}{vless("HTTP", "http"), vless("QUIC", "quic"), tuic, realm})
+	if len(proxies) != 3 {
+		t.Fatalf("Clash exported QUIC transport or dropped a supported option: %d proxies", len(proxies))
+	}
+	h2, _ := proxies[0]["h2-opts"].(map[string]interface{})
+	if !reflect.DeepEqual(h2["host"], []interface{}{"node.example"}) || proxies[0]["packet-encoding"] != "packetaddr" {
+		t.Fatal("the VLESS host or packet encoding was lost")
+	}
+	if proxies[1]["reduce-rtt"] != true || proxies[1]["heartbeat-interval"] != 2000 || proxies[1]["udp-relay-mode"] != "quic" {
+		t.Fatal("the TUIC client options were lost")
+	}
+	options, _ := proxies[2]["realm-opts"].(map[string]interface{})
+	if options["server-url"] != "https://realm.example" || options["token"] != "synthetic-client" {
+		t.Fatal("the Realm endpoint or client token was lost")
+	}
+}
+
 func TestExternalProxyLinksAndSubscriptions(t *testing.T) {
 	openClashTestSettings(t)
 	service := &ClashService{}

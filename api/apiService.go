@@ -291,14 +291,26 @@ func (a *ApiService) Upgrade(c *gin.Context) {
 }
 
 func (a *ApiService) GetDb(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
 	exclude := c.Query("exclude")
+	if c.Query("format") == "archive" {
+		body, err := database.GetFullBackup(exclude)
+		if err != nil {
+			jsonMsg(c, "", err)
+			return
+		}
+		c.Header(contentTypeHeader, "application/zip")
+		c.Header(contentDispositionHeader, "attachment; filename=s-ui_"+time.Now().Format(backupTimeLayout)+".zip")
+		c.Writer.Write(body)
+		return
+	}
 	db, err := database.GetDb(exclude)
 	if err != nil {
 		jsonMsg(c, "", err)
 		return
 	}
-	c.Header("Content-Type", "application/octet-stream")
-	c.Header("Content-Disposition", "attachment; filename=s-ui_"+time.Now().Format("20060102-150405")+".db")
+	c.Header(contentTypeHeader, "application/octet-stream")
+	c.Header(contentDispositionHeader, "attachment; filename=s-ui_"+time.Now().Format(backupTimeLayout)+".db")
 	c.Writer.Write(db)
 }
 
@@ -358,6 +370,9 @@ func (a *ApiService) Save(c *gin.Context, loginUser string) {
 	act := c.Request.FormValue("action")
 	data := c.Request.FormValue("data")
 	initUsers := c.Request.FormValue("initUsers")
+	if saveNodeObject(c, obj, act, json.RawMessage(data), loginUser) {
+		return
+	}
 	objs, err := a.ConfigService.Save(obj, act, json.RawMessage(data), initUsers, loginUser, hostname)
 	if err != nil {
 		jsonMsg(c, "save", err)
@@ -473,8 +488,8 @@ func (a *ApiService) GetSingboxConfig(c *gin.Context) {
 		c.Writer.WriteString(err.Error())
 		return
 	}
-	c.Header("Content-Type", "application/json")
-	c.Header("Content-Disposition", "attachment; filename=config_"+time.Now().Format("20060102-150405")+".json")
+	c.Header(contentTypeHeader, "application/json")
+	c.Header(contentDispositionHeader, "attachment; filename=config_"+time.Now().Format(backupTimeLayout)+".json")
 	c.Writer.Write(*rawConfig)
 }
 

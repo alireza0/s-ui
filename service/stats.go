@@ -123,7 +123,7 @@ func (s *StatsService) SaveStats(enableTraffic bool, bucketSeconds int64) error 
 	}
 
 	for name, t := range userTraffic {
-		update := map[string]interface{}{"online_at": now}
+		update := map[string]interface{}{"online_at": gorm.Expr("MAX(COALESCE(online_at, 0), ?)", now)}
 		if t.up > 0 {
 			update["up"] = gorm.Expr("up + ?", t.up)
 		}

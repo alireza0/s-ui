@@ -10,6 +10,7 @@ import (
 
 	"github.com/alireza0/s-ui/database"
 	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/nodes"
 	"github.com/alireza0/s-ui/service"
 	"github.com/alireza0/s-ui/util"
 )
@@ -40,6 +41,13 @@ func (s *SubService) getSubs(subId string, transform func([]string) []string) (*
 		return nil, nil, err
 	}
 	linksArray := s.LinkService.GetLinks(&links, "all", clientInfo)
+	remote, err := nodes.ClientInbounds(database.GetDB(), *client)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, inbound := range remote {
+		linksArray = append(linksArray, util.LinkGenerator(client.Config, inbound, "", nodeRemark(&s.SettingService, client))...)
+	}
 	if transform != nil {
 		linksArray = transform(linksArray)
 	}

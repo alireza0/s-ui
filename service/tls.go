@@ -5,6 +5,7 @@ import (
 
 	"github.com/alireza0/s-ui/database"
 	"github.com/alireza0/s-ui/database/model"
+	"github.com/alireza0/s-ui/nodes"
 	"github.com/alireza0/s-ui/util"
 	"github.com/alireza0/s-ui/util/common"
 
@@ -38,6 +39,11 @@ func (s *TlsService) Save(tx *gorm.DB, action string, data json.RawMessage, host
 			return err
 		}
 		setCertFingerprint(&tls)
+		if action == "edit" {
+			if err := nodes.QueueTLSProfileChange(tx, tls); err != nil {
+				return err
+			}
+		}
 		err = tx.Save(&tls).Error
 		if err != nil {
 			return err
@@ -96,6 +102,9 @@ func (s *TlsService) Save(tx *gorm.DB, action string, data json.RawMessage, host
 		}
 		if inboundCount > 0 || serviceCount > 0 {
 			return common.NewError("tls in use")
+		}
+		if err := nodes.CheckTLSProfileDeletion(tx, id); err != nil {
+			return err
 		}
 		err = tx.Where("id = ?", id).Delete(model.Tls{}).Error
 		if err != nil {

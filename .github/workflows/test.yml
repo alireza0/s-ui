@@ -144,6 +144,9 @@ jobs:
           TAGS=$(tags_for test)
           go test -tags "$TAGS" ./...
 
+      - name: Check node upgrade with systemd
+        run: sudo python3 -B nodes/test_upgrade_agent.py
+
       - name: Save Go build cache
         if: github.ref == 'refs/heads/main' && steps.go-build-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6

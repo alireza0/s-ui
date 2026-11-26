@@ -37,6 +37,7 @@ func (a *APIv2Handler) initRouter(g *gin.RouterGroup) {
 	g.Use(func(c *gin.Context) {
 		a.checkToken(c)
 	})
+	a.ApiService.registerNodeRoutes(g, a.findUsername)
 	g.POST("/:postAction", a.postHandler)
 	g.GET("/:getAction", a.getHandler)
 }
