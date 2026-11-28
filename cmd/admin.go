@@ -25,20 +25,54 @@ func confirm(prompt string) bool {
 	return answer == "y" || answer == "yes"
 }
 
-// resetAdmin puts the credentials back to admin/admin.
+// resetAdmin resets the first admin account to a new password (interactive)
+// or to admin/admin (-yes).
 //
-// assumeYes comes from -yes. Without a prompt, a mistyped command turned a
-// live panel into one with the best-known default credentials in the world,
-// reachable from the internet, with nothing printed that looked like a
-// warning.
+// Interactively it asks for the new password twice and never echoes it back.
+// With -yes it skips the prompt and resets to admin/admin, the historical
+// scripted behaviour: a mistyped unattended command would otherwise leave a
+// live panel with the best-known default credentials in the world, reachable
+// from the internet.
 func resetAdmin(assumeYes bool) {
+	var newPassword = "admin"
+
 	if !assumeYes {
-		fmt.Println("This resets the first admin account to the username \"admin\" and the password \"admin\".")
-		fmt.Println("Anyone who can reach the panel will be able to log in until you change it.")
+		fmt.Println("This resets the first admin account to the username \"admin\".")
+		fmt.Println("Anyone who can reach the panel will be able to log in with the new password.")
 		if !confirm("Type y to continue: ") {
 			fmt.Println("cancelled")
 			return
 		}
+
+		// Read new password twice for confirmation. No echo on the terminal.
+		fmt.Print("Enter new password: ")
+		pass1, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil {
+			fmt.Println("error reading password:", err)
+			return
+		}
+		pass1 = strings.TrimSpace(pass1)
+		if pass1 == "" {
+			fmt.Println("Password cannot be empty")
+			return
+		}
+
+		fmt.Print("Confirm new password: ")
+		pass2, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil {
+			fmt.Println("error reading password:", err)
+			return
+		}
+		pass2 = strings.TrimSpace(pass2)
+		if pass2 == "" {
+			fmt.Println("Passwords do not match")
+			return
+		}
+		if pass1 != pass2 {
+			fmt.Println("Passwords do not match")
+			return
+		}
+		newPassword = pass1
 	}
 
 	err := database.InitDB(config.GetDBPath())
@@ -48,13 +82,23 @@ func resetAdmin(assumeYes bool) {
 	}
 
 	userService := service.UserService{}
-	err = userService.UpdateFirstUser("admin", "admin")
+	err = userService.UpdateFirstUser("admin", newPassword)
 	if err != nil {
 		fmt.Println("reset admin credentials failed:", err)
 		return
 	}
-	fmt.Println("reset admin credentials success")
-	fmt.Println("Change them now: s-ui admin -username <user> -password <pass>")
+
+	if assumeYes {
+		fmt.Println("reset admin credentials success")
+		fmt.Println("Change them now: s-ui admin -username <user> -password <pass>")
+	} else {
+		fmt.Println("============================================")
+		fmt.Println(" Admin credentials have been reset!")
+		fmt.Println(" Username: admin")
+		fmt.Println(" Password: (updated, not echoed)")
+		fmt.Println(" A weak password will trigger a warning.")
+		fmt.Println("============================================")
+	}
 }
 
 func updateAdmin(username string, password string) {
